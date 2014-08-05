@@ -37,7 +37,7 @@ from NysaGui.host.nysa_gui.nysa_gui import NysaGui
 
 DESCRIPTION = "\n" \
 "\n"\
-"usage: nysa.py [options]\n"
+"usage: nui [options]\n"
 
 EPILOG = "\n" \
 "\n"\
