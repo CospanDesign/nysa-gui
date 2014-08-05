@@ -35,8 +35,9 @@ from PyQt4 import QtCore
 import status
 
 from nysa.host.userland.python.driver.gpio import GPIO
-from NysaGui.host.common.nysa_base_controller import NysaBaseController
 from nysa.host.userland.python.common.platform_scanner import PlatformScanner
+
+from NysaGui.host.common.nysa_base_controller import NysaBaseController
 
 from view.gpio_widget import GPIOWidget
 

@@ -26,6 +26,9 @@ import os
 import sys
 import argparse
 import time
+
+import importlib
+
 from array import array as Array
 
 from PyQt4.Qt import QApplication
@@ -33,19 +36,21 @@ from PyQt4 import QtCore
 
 from uart_actions import UARTActions
 
+#Nysa Imports
 from nysa.host.userland.python.driver.uart import UART
-
-from NysaGui.host.common.nysa_base_controller import NysaBaseController
 from nysa.host.userland.python.common.platform_scanner import PlatformScanner
+from nysa.host.userland.python.protocol_utils.uart.uart_engine import UARTEngine
+
+#App Template
+from NysaGui.host.common.nysa_base_controller import NysaBaseController
 
 from view.uart_widget import UARTWidget
 
 #Module Defines
-n = str(os.path.split(__file__)[1])
+script_name = str(os.path.split(__file__)[1])
 
 import status
 
-from nysa.host.userland.python.protocol_utils.uart.uart_engine import UARTEngine
 
 
 DESCRIPTION = "\n" \
@@ -57,7 +62,7 @@ EPILOG = "\n" \
 "Examples:\n"\
 "\tSomething\n" \
 "\t\t%s Something\n"\
-"\n" % n
+"\n" % script_name
 
 
 class Controller(NysaBaseController):
