@@ -61,5 +61,5 @@ class UARTConsole(QTextEdit):
         self.moveCursor(QTextCursor.End)
 
     def enable_local_edit(self, enable):
-        self.status.Verbose(self, "Enable Local Edits: %s" % str(enable))
+        self.status.Verbose( "Enable Local Edits: %s" % str(enable))
         self.local_echo = enable

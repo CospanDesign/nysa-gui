@@ -56,7 +56,7 @@ class CameraViewer(QGraphicsView):
             self.scale(factor, factor)
 
     def scale_fit(self):
-        self.status.Debug(self, "Scale Fit")
+        self.status.Debug( "Scale Fit")
         self.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
 
     def reload_image(self):

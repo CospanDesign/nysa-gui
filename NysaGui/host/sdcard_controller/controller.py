@@ -33,22 +33,18 @@ from PyQt4 import QtCore
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
-                             os.pardir))
+                             os.pardir,
+                             "common"))
 
-from apps.common.nysa_base_controller import NysaBaseController
+from nysa_base_controller import NysaBaseController
+
 import apps
 
 #View Interface
 from view.view import View
 
 #Platform Scanner
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             "common"))
-
-
-from platform_scanner import PlatformScanner
+from nysa.host.platform_scanner import PlatformScanner
 import status
 
 
@@ -111,8 +107,8 @@ class Controller(NysaBaseController):
         self._initialize(platform)
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform, debug = False):
-        self.status = status.Status()
+    def start_tab_view(self, platform, status):
+        self.status = status
         self._initialize(platform)
 
     def get_view(self):

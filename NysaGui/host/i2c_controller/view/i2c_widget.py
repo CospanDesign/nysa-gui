@@ -54,10 +54,10 @@ from save_loader import SaveLoader
 DEFAULT_SCRIPT_PATH = os.path.join(os.path.dirname(__file__),
                                    os.pardir,
                                    os.pardir,
-                                   os.pardir,
-                                   os.pardir,
-                                   "protocols",
-                                   "i2c")
+                                   "common",
+                                   "protocol_utils",
+                                   "i2c",
+                                   "default_scripts")
 
 
 SINGLE_SHOT_TIMEOUT = 1000

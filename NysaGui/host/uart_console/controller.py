@@ -34,15 +34,29 @@ from array import array as Array
 from PyQt4.Qt import QApplication
 from PyQt4 import QtCore
 
+
+from nysa.host.platform_scanner import PlatformScanner
+
 from uart_actions import UARTActions
 
-#Nysa Imports
-from nysa.host.userland.python.driver.uart import UART
-from nysa.host.userland.python.common.platform_scanner import PlatformScanner
-from nysa.host.userland.python.protocol_utils.uart.uart_engine import UARTEngine
-
 #App Template
-from NysaGui.host.common.nysa_base_controller import NysaBaseController
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             "common"))
+
+from nysa_base_controller import NysaBaseController
+
+#Nysa Imports
+from nysa.host.driver.uart import UART
+from nysa.host.platform_scanner import PlatformScanner
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             "common"))
+
+from protocol_utils.uart.uart_engine import UARTEngine
+
 
 from view.uart_widget import UARTWidget
 
@@ -81,7 +95,7 @@ class Controller(NysaBaseController):
         return "UART Console"
 
     def _initialize(self, platform, device_index):
-        self.uart = UART(platform[2], device_index)
+        self.uart = UART(platform[2], device_index, status)
         self.v = UARTWidget(self.status, self.actions)
 
         #Setup the UART
@@ -97,7 +111,7 @@ class Controller(NysaBaseController):
         self.actions.uart_data_in.connect(self.uart_data_in)
         self.uart.enable_read_interrupt()
 
-    def start_standalone_app(self, platform, device_index, debug = False):
+    def start_standalone_app(self, platform, device_index, status, debug = False):
         app = QApplication (sys.argv)
         self.status = status.ClStatus()
         if debug:
@@ -106,11 +120,11 @@ class Controller(NysaBaseController):
             self.status.set_level(status.StatusLevel.INFO)
 
         self._initialize(platform, device_index)
-        self.status.Verbose(self, "Starting I2C Application")
+        self.status.Verbose( "Starting I2C Application")
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform, device_index):
-        self.status = status.Status()
+    def start_tab_view(self, platform, device_index, status):
+        self.status = status
         self._initialize(platform, device_index)
 
     def get_view(self):
@@ -246,7 +260,7 @@ def main(argv):
     if dev_index is None:
         sys.exit("Failed to find an I2C Device")
 
-    c.start_standalone_app(plat, dev_index, debug)
+    c.start_standalone_app(plat, dev_index, status, debug)
 
 if __name__ == "__main__":
     main(sys.argv)

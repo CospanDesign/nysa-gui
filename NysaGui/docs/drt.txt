@@ -1,0 +1,181 @@
+Version
+  8/??/2011:
+    0.00.1  Initial DRT Version
+  9/11/2011:
+    0.00.2  Proposed String functionality
+  10/25/2011:
+    0.00.3  Added "mem flag" in the flags area to identify slaves on the memory
+            bus modified the FLAGS: now bits 32:16 are only settable by the
+            cbuilder script
+  12/02/2011:
+    0.00.4  Changed the DRT size from 4 to 8 for the header and devices
+
+  4/16/2013:
+    0.00.5  Removed DRT Device declaration (it is in it's own file drt.json)
+            Removed references to sap and saplib, this is now cbuilder
+  12/02/2013:
+    0.00.6  Added a Board ID:
+              If two board use the same FPGA there is a chance that
+              an incorrect image can be loaded. This value can
+              uniquely identify a board so that a software program
+              can either warn the user or not allow them to use
+              the image
+            Added an Image ID:
+              In the future there will be place where users can
+              download FPGA image to execute specific functions
+              with a board (like an image aquisition system or
+              a 5 axis CNC Machine). This value can be used by
+              the software to identify the image to verify
+              the board will behave correctly
+            Split the device ID into two portions
+              - A device identification number that will
+                separate one device from another
+                  EXAMPLE:
+                    GPIO:     0
+                    MEMORY:   5
+              - A device sub-identification number that will
+                separate one device of a specific ID from another
+                  EXAMPLE:
+                    New Haven 4.3" LCD:   0
+                    Sparkfun SPI LCD:     1
+
+  2/25/2014:
+    0.00.7  Added a Flags entry into the DRT Image Flags
+              Flags:
+                bits 1:0 indicates what bus is used:
+                  00: Wishbone
+                  01: Axie
+                  10: RFU
+                  11: RFU
+
+
+
+DESCRIPTION START
+
+Device Rom Table (DRT)
+
+A ROM within all Nysa FPGA images automatically generated and inserted by the FPGA image builer.
+
+The purpose of the DRT is to provide all information necessary to interface with an FPGA image without external documentation.
+
+Except for special projects where an entire image is designed for one purpose (for example interfacince with a custom sensor that spans multiple cores) The host side software should be capable of interfacing with all cores on the FPGA with existing software.
+
+The DRT is always located at address 0x00 on the peripheral bus. The host side controller should query the DRT in order to determine what drivers and software to load.
+
+Features:
+  -Lists all Perpheral (I/O) and Memory devices
+  -ID values for each type of device: (Example: GPIO = 1, I2C = 2)
+  -Optional Sub ID for each device to support features in generic interfaces
+  (As an example a GPIO core that provides PWM control could be identified
+  by a unique Sub ID)
+  -Optional User ID for each device to support multiple instantiations of the
+  same core (As an example multiple stepper motors controlled by the same
+  core type can be identified by the User ID)
+  -Provides address for each core
+  -Identifies special features of the cores or image
+
+DESCRIPTION END
+
+Organization of the ROM 32 bit address location
+
+0x00              DRT_VERSION (version number), DRT_ID (DRT ID)
+  (Addr: 31-16) : Version X.Y.ZZ
+  (Addr: 15-0)  : DRT_ID (C594)
+0x01              DRT_NUM_DEVICES (Number of devices attached)
+0x02              STRING_OFFSET: (String Table: Offset for all the strings,
+                    that accompany all the slave and memory devices)
+0x03              BOARD ID: 32-bit unique board identification number
+0x04              IMAGE ID: 32-bit unique image identification number
+                    (0 - 255) are available to use, request an image ID
+                    from dave.mccoy@cospandesign.com
+0x05              RFU,FLAGS
+  (Addr: 31-16) : RFU
+  (Addr: 15-0)  : FLAGS: DRT Flags
+                BIT (1 - 0):
+                    11: RFU
+                    10: RFU
+                    01: Axie
+                    00: Wishbone
+0x06              RFU
+0x07              RFU
+
+0x08:DEV_OFFSET beginning of device offset (DRT_DEV_OFFSET)
+
+DRT_DEV_OFFSET[x * 8] + 0:    Device ID (this is associated with the flags
+                              register bit 0 to indicate this is a standard
+                              device or not)
+  (Addr: 31-16) : device Sub ID number (see below)
+  (Addr: 15-0 ) : device ID number (see below)
+DRT_DEV_OFFSET[x * 8] + 1:    FLAGS
+    Note: bit 31:16 are set by cbuilder
+  (Addr: 31-16)   : memory device (access this device in the memory bus)
+              use commands with the flag MEMORY for read and write
+  (Addr: 15-0 )   :
+                  BIT: 1      Memory Slave
+                  BIT: 0      Standard device (can use generic drivers)
+DRT_DEV_OFFSET[x * 8] + 2:    Address Location of slave
+DRT_DEV_OFFSET[x * 8] + 3:    Size
+                                Size of address space for device
+                                  For a peripheral this is the number of
+                                    registers
+                                  For a memory device this is the size of the
+                                    Memory
+DRT_DEV_OFFSET[x * 8] + 4:    User ID
+  (Addr: 31-16)   : RFU
+  (Addr: 15-0 )   : If there are two devices with the same
+                    IDs and Sub IDs this will differentiate the two
+DRT_DEV_OFFSET[x * 8] + 4:    RFU
+DRT_DEV_OFFSET[x * 8] + 5:    RFU
+DRT_DEV_OFFSET[x * 8] + 6:    RFU
+DRT_DEV_OFFSET[x * 8] + 7:    RFU
+
+
+
+THIS IS NOT BY ANY MEANS FINAL, BUT MAKING DEVICE IDENTIFICATION NUMBER
+Device Identification
+
+0000  : Nothing
+0001  : GPIO
+0002  : UART
+0003  : I2C
+0004  : SPI
+0005  : Memory
+0006  : Console
+0007  : FSMC
+0008  : LEDs
+0009  : Buttons
+000A  : Frame Buffer
+000B  : I2S
+000C  : Logic Analyzer
+
+Device Sub-Identification (There are many different types of LCDs so the device may specify their own sub identification number)
+
+Strings (Tentative)
+
+The slave devices can contain strings that will identify the slave, registers,
+  and flags
+SLAVE_OFFSET + 0        size (in bytes) of the string table
+SLAVE_OFFSET + 1        number of strings in the string table
+SLAVE_OFFSET + X[0]       data entry
+
+  X + 0
+
+    first word:
+    (Addr: 31:24)   : (S_SIZE) Size in bytes of the string
+    (Addr: 23:16)   : Flags
+              23: Memory
+              22: Slave
+              21: ??
+              20: ??
+              19: ??
+              18: Flag
+              17: Register
+              16: Name
+    (Addr: 15:8)  : Device Index (Either slave index or memory index)
+    (Addr: 7:0)   : Optional (If Register, register index, if flag,
+                      flag bit index)
+
+  X + 1 - X + 1 + S_SIZE    : Actual string
+
+SLAVE_OFFSET + X[1] = SLAVE_OFFSET + X[0] + 1 + S_SIZE : Next entry
+

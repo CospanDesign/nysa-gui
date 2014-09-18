@@ -69,7 +69,7 @@ class UDPServer(QtCore.QObject):
         self.status = status
         self.actions = actions
 
-        self.status.Verbose(self, "Starting UDP Server on Port 0x%0X" % self.port)
+        self.status.Verbose( "Starting UDP Server on Port 0x%0X" % self.port)
         self.worker = UDPServerWorker(self.udp_socket,
                                       self.port,
                                       self.actions)
@@ -89,11 +89,11 @@ class UDPServer(QtCore.QObject):
             del(self.worker_thread)
 
     def write_data(self, data):
-        self.status.Verbose(self, "Sending Data")
+        self.status.Verbose( "Sending Data")
         #Need to create a QByteArray
         self.worker.udp_send_data.emit(data)
         #self.upd_socket.writeDatagram(data, QtNetwork.QHostAddress.Broadcast, self.port)
 
     def work_finished(self):
-        self.status.Verbose(self, "Data Sent")
+        self.status.Verbose( "Data Sent")
 

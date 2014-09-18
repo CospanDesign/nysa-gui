@@ -87,7 +87,7 @@ class UARTControlView(QWidget):
 
     def baudrate_changed(self):
         br = self.get_baudrate()
-        self.status.Verbose(self, "Set Baudrate to: %d" % br)
+        self.status.Verbose( "Set Baudrate to: %d" % br)
         self.actions.uart_baudrate_change.emit(br)
 
     def local_echo_changed(self):

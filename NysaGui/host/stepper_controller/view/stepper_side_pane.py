@@ -45,9 +45,6 @@ Stepper_DESC_LOC = os.path.join(os.path.dirname(__file__),
                             os.pardir,
                             os.pardir,
                             os.pardir,
-                            os.pardir,
-                            os.pardir,
-                            os.pardir,
                             "docs",
                             "stepper.txt")
 

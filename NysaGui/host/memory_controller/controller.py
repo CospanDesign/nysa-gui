@@ -35,11 +35,10 @@ from PyQt4 import QtCore
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
-                             os.pardir))
+                             os.pardir,
+                             "common"))
 
-
-from apps.common.nysa_base_controller import NysaBaseController
-import apps
+from nysa_base_controller import NysaBaseController
 
 from view.view import View
 from model.model import AppModel
@@ -109,7 +108,7 @@ class Controller(NysaBaseController):
     def __del__(self):
         if self.reader_thread is not None:
 
-            self.status.Important(self, "Waiting for reader thread to finish")
+            self.status.Important( "Waiting for reader thread to finish")
             self.reader_thread.join()
 
     def _initialize(self, platform, dev_index):
@@ -124,14 +123,14 @@ class Controller(NysaBaseController):
         self.v.set_memory_size(self.n.get_device_size(dev_index))
 
 
-    def start_standalone_app(self, plat, dev_index):
+    def start_standalone_app(self, plat, dev_index, status):
         app = QApplication (sys.argv)
         self.status = status.ClStatus()
         self._initialize(plat, dev_index)
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform, dev_index):
-        self.status = status.Status()
+    def start_tab_view(self, platform, dev_index, status):
+        self.status = status
         self._initialize(platform, dev_index)
 
     def get_view(self):
@@ -185,11 +184,11 @@ class Controller(NysaBaseController):
 
     def test_single_rw_start(self):
         status = "Passed"
-        size = self.n.get_device_size(self.dev_index)
+        size = self.n.get_device_size(self.dev_index, status)
         if self.status.is_command_line():
             print "Command Line %s" % str(type(self.status))
-            self.status.Verbose(self, "Clearing Memory")
-            self.status.Verbose(self, "Memory Size: 0x%08X" % size)
+            self.status.Verbose( "Clearing Memory")
+            self.status.Verbose( "Memory Size: 0x%08X" % size)
         data_out = Array('B')
         for i in range(0, ((size / 4) - 1)):
             num = 0x00
@@ -198,7 +197,7 @@ class Controller(NysaBaseController):
         self.n.write_memory(0, data_out)
 
         if self.status.is_command_line():
-            self.status.Verbose(self, "Test Single Read/Write at Beginning")
+            self.status.Verbose( "Test Single Read/Write at Beginning")
         data_out = Array('B', [0xAA, 0xBB, 0xCC, 0xDD, 0x55, 0x66, 0x77, 0x88])
         self.n.write_memory(0, data_out)
         data_in = self.n.read_memory(0, 2)
@@ -210,10 +209,10 @@ class Controller(NysaBaseController):
 
     def test_single_rw_end(self):
         status = "Passed"
-        size = self.n.get_device_size(self.dev_index)
+        size = self.n.get_device_size(self.dev_index, status)
         if self.status.is_command_line():
-            self.status.Verbose(self, "Clearing Memory")
-            self.status.Verbose(self, "Memory Size: 0x%08X" % size)
+            self.status.Verbose( "Clearing Memory")
+            self.status.Verbose( "Memory Size: 0x%08X" % size)
         data_out = Array('B')
         for i in range(0, ((size / 4) - 1)):
             num = 0x00
@@ -222,7 +221,7 @@ class Controller(NysaBaseController):
 
 
         if self.status.is_command_line():
-            self.status.Verbose(self, "Test Single Read/Write at End")
+            self.status.Verbose( "Test Single Read/Write at End")
         data_out = Array('B', [0xAA, 0xBB, 0xCC, 0xDD, 0x55, 0x66, 0x77, 0x88])
         self.n.write_memory((size - 16), data_out)
         print "Reading from location: 0x%08X" % (size - 16)
@@ -237,10 +236,10 @@ class Controller(NysaBaseController):
 
     def test_long_burst(self):
         status = "Passed"
-        size = self.n.get_device_size(self.dev_index)
+        size = self.n.get_device_size(self.dev_index, status)
         if self.status.is_command_line():
-            self.status.Verbose(self, "Clearing Memory")
-            self.status.Verbose(self, "Memory Size: 0x%08X" % size)
+            self.status.Verbose( "Clearing Memory")
+            self.status.Verbose( "Memory Size: 0x%08X" % size)
         data_out = Array('B')
         for i in range(0, ((size / 4) - 1)):
             num = 0x00
@@ -250,32 +249,32 @@ class Controller(NysaBaseController):
 
 
         if self.status.is_command_line():
-            self.status.Verbose(self, "long rw")
+            self.status.Verbose( "long rw")
         data_out = Array('B')
         for i in range (0, size):
             data_out.append((i % 255))
 
         if self.status.is_command_line():
-            self.status.Verbose(self, "Writing 0x%08X bytes of data" % (len(data_out)))
+            self.status.Verbose( "Writing 0x%08X bytes of data" % (len(data_out)))
         start = time.time()
         self.n.write_memory(0, data_out)
         end = time.time()
         if self.status.is_command_line(): 
-            self.status.Verbose(self, "Write Time : %f" % (end - start))
-            self.status.Verbose(self, "Reading 0x%08X bytes of data" % (len(data_out)))
+            self.status.Verbose( "Write Time : %f" % (end - start))
+            self.status.Verbose( "Reading 0x%08X bytes of data" % (len(data_out)))
         start = time.time()
         data_in = self.n.read_memory(0, len(data_out) / 4)
         end = time.time()
         if self.status.is_command_line():
-            self.status.Verbose(self, "Read Time: %f" % (end - start))
-            self.status.Verbose(self, "Comparing Values")
+            self.status.Verbose( "Read Time: %f" % (end - start))
+            self.status.Verbose( "Comparing Values")
         fail = False
         fail_count = 0
         if len(data_out) != len(data_in):
             if self.status.is_command_line():
-                self.status.Error(self, "Data in lenght not equal to data_out length")
-                self.status.Error(self, "\toutgoing: %d" % len(data_out))
-                self.status.Error(self, "\tincomming: %d" % len(data_in))
+                self.status.Error( "Data in lenght not equal to data_out length")
+                self.status.Error( "\toutgoing: %d" % len(data_out))
+                self.status.Error( "\tincomming: %d" % len(data_in))
 
         
         dout = data_out.tolist()
@@ -290,7 +289,7 @@ class Controller(NysaBaseController):
                 fail = True
                 status = "Failed"
                 if self.status.is_command_line(): 
-                    self.status.Error(self,
+                    self.status.Error(
                         "Mismatch at: {0:>8}: WRITE (Hex):[{0:>8}] Read (Hex): [{0:>8}]".format(
                         hex(i),
                         hex(data_out[i]),
@@ -388,7 +387,7 @@ def main(argv):
     if dev_index is None:
         sys.exit("Failed to find a Memory")
 
-    c.start_standalone_app(plat, dev_index)
+    c.start_standalone_app(plat, dev_index, status)
 
 if __name__ == "__main__":
     main(sys.argv)

@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import inspect
 
 #from PyQt4 import QtGui
@@ -37,12 +38,25 @@ blue = '\033[94m'
 purple = '\033[95m'
 cyan = '\033[96m'
 
+if os.name == "nt":
+    white  = ''
+    gray   = ''
+    red    = ''
+    green  = ''
+    yellow = ''
+    blue   = ''
+    purple = ''
+    cyan   = ''
+
+
+
+
+
 StatusLevel = enum ('FATAL', 'ERROR', 'WARNING', 'INFO', 'IMPORTANT', 'DEBUG', 'VERBOSE')
 
 _status_instance = None
 _cl_status_instance = None
 
-#Singleton!
 def Status(*args, **kw):
     global _status_instance
     if _status_instance is None:
@@ -55,44 +69,42 @@ def ClStatus(*args, **kw):
         _cl_status_instance = _ClStatus(*args, **kw)
     return _cl_status_instance
 
-
 class _ClStatus(object):
     @staticmethod
     def is_command_line():
         return True
 
     def __init__(self):
-        super(_ClStatus, self).__init__()
-        #print "Staring CL Status"
-        self.level = StatusLevel.VERBOSE
+        super(_Status, self).__init__()
+        self.level = StatusLevel.INFO
 
-    def Verbose (self, c, text):
+    def Verbose (self, text):
         if self.CheckLevel(StatusLevel.VERBOSE):
-            self.status_output("Verbose", c, text, color = cyan)
+            self.status_output("Verbose", text, color = cyan)
 
-    def Debug (self, c, text):
+    def Debug (self, text):
         if self.CheckLevel(StatusLevel.DEBUG):
-            self.status_output("Debug", c, text, color = green)
+            self.status_output("Debug", text, color = green)
 
-    def Info (self, c, text):
+    def Info (self, text):
         if self.CheckLevel(StatusLevel.INFO):
-            self.status_output("Info", c, text, color = white)
+            self.status_output("Info", text, color = white)
 
-    def Important (self, c, text):
+    def Important (self, text):
         if self.CheckLevel(StatusLevel.IMPORTANT):
-            self.status_output("Important", c, text, color = blue)
+            self.status_output("Important", text, color = blue)
 
-    def Warning (self, c, text):
+    def Warning (self, text):
         if self.CheckLevel(StatusLevel.WARNING):
-            self.status_output("Warning", c, text, color = blue)
+            self.status_output("Warning", text, color = yellow)
 
-    def Error (self, c, text):
+    def Error (self, text):
         if self.CheckLevel(StatusLevel.ERROR):
-            self.status_output("Error", c, text, color=red)
+            self.status_output("Error", text, color=red)
 
-    def Fatal (self, c, text):
+    def Fatal (self, text):
         if self.CheckLevel(StatusLevel.FATAL):
-            self.status_output("Fatal", c, text, color=red)
+            self.status_output("Fatal", text, color=red)
 
     def Print (self, text):
         self.status_output("", None, text)
@@ -100,16 +112,40 @@ class _ClStatus(object):
     def PrintLine(self, text):
         self.status_output("", None, text)
 
-    def status_output(self, level, c, text, color=white):
-        if c is not None:
-            f = str(inspect.stack()[2][3])
-            #print "inspace: %s" % str(inspect.stack()[2])
-            d = "%s:%s " % (c.__class__.__name__, f)
-            text=d + text
-            print "%s%s: %s%s" % (color, level, text, white)
+    def status_output(self, level, text, color=white):
+        
+        function_name = str(inspect.stack()[2][3])
+        #print "function_name: %s" % function_name
+        if function_name == "<module>":
+            function_name = str(inspect.stack()[2][1]).rpartition("./")[2] + ":main"
+
+        class_name = None
+
+        #print "\t%s" % str(dir(inspect.stack()[2][0].f_code))
+        #print "\t%s" % str(inspect.stack()[2][0].f_code.co_name)
+        #print "\t%s" % str(inspect.stack()[2][0].f_trace)
+        #print "\t%s" % str(inspect.stack()[2][0].f_globals["__name__"])
+        #print "\t%s" % str(inspect.stack()[2][0].f_globals.viewitems())
+        #print "\t%s" % str(inspect.stack()[2][0].f_locals["__class__"])
+        if "self" in inspect.stack()[2][0].f_locals.keys():
+            #print "\t%s" % str(inspect.stack()[2][0].f_locals["self"])
+            #print "\t%s" % str(dir(inspect.stack()[2][0].f_locals["self"]))
+            
+            class_name = str(inspect.stack()[2][0].f_locals["self"])
+            while class_name.find(".") != -1:
+                class_name = class_name.partition(".")[2]
+            class_name = class_name.partition(" ")[0]
+
+            class_name = class_name.strip("(")
+            class_name = class_name.strip(")")
+
+        if class_name is not None and (len(class_name) > 0) and (class_name.strip() != "<module>"):
+            d = "%s:%s: " % (class_name, function_name)
         else:
-            #print "inspace: %s" % str(inspect.stack()[2])
-            print "%s%s: %s%s" % (color, level, text, white)
+            d = "%s: " % (function_name)
+
+        text = d + text
+        print "%s%s: %s%s" % (color, level, text, white)
 
     def set_level(self, level):
         self.level = level
@@ -189,10 +225,10 @@ class _Status(QWidget):
 
     def __init__(self):
         QWidget.__init__(self)
-        self.level = StatusLevel.VERBOSE
+        self.level = StatusLevel.INFO
         self.init_ui()
        
-        self.Verbose(self, "Hello World!")
+        #self.Verbose("Hello World!")
 
     def init_ui(self):
         self.setWindowTitle('Status')
@@ -223,33 +259,33 @@ class _Status(QWidget):
         self.setLayout(layout)
         self.show()
 
-    def Verbose (self, c, text):
+    def Verbose (self, text):
         if self.CheckLevel(StatusLevel.VERBOSE):
-            self.status_output("Verbose", c, text, fg = "White", bg="Blue")
+            self.status_output("Verbose", text, fg = "White", bg="Blue")
 
-    def Debug (self, c, text):
+    def Debug (self, text):
         if self.CheckLevel(StatusLevel.DEBUG):
-            self.status_output("Debug", c, text, fg = "White", bg="Black")
+            self.status_output("Debug", text, fg = "White", bg="Black")
 
-    def Info (self, c, text):
+    def Info (self, text):
         if self.CheckLevel(StatusLevel.INFO):
-            self.status_output("Info", c, text, fg="Green", bg="Black")
+            self.status_output("Info", text, fg="Green", bg="Black")
 
-    def Important (self, c, text):
+    def Important (self, text):
         if self.CheckLevel(StatusLevel.IMPORTANT):
-            self.status_output("Important:", c, text, fg="Blue", bg="Black")
+            self.status_output("Important:", text, fg="Blue", bg="Black")
 
-    def Warning (self, c, text):
+    def Warning (self, text):
         if self.CheckLevel(StatusLevel.WARNING):
-            self.status_output("Warning", c, text, fg="Yellow", bg="Black")
+            self.status_output("Warning", text, fg="Yellow", bg="Black")
 
-    def Error (self, c, text):
+    def Error (self, text):
         if self.CheckLevel(StatusLevel.ERROR):
-            self.status_output("Error", c, text, fg="Red", bg='White')
+            self.status_output("Error", text, fg="Red", bg='White')
 
-    def Fatal (self, c, text):
+    def Fatal (self, text):
         if self.CheckLevel(StatusLevel.FATAL):
-            self.status_output("Fatal", c, text, fg="Red", bg="Black")
+            self.status_output("Fatal", text, fg="Red", bg="Black")
 
     def Print (self, text):
         self.status_output("Extra", self, text, fg="Black", bg="White")
@@ -257,12 +293,35 @@ class _Status(QWidget):
     def PrintLine(self, text):
         self.status_output("Extra", self, text, fg="Black", bg="White")
 
-    def status_output(self, level, c, text, fg = None, bg = None):
+    def status_output(self, level, text, fg = None, bg = None):
         pos = self.mdl.rowCount()
         #print "Position: %d" % pos
         self.mdl.insertRows(pos, 1)
+
+
+        function_name = str(inspect.stack()[2][3])
+        if function_name == "<module>":
+            function_name = str(inspect.stack()[2][1]).rpartition("./")[2] + ":main"
+
+        class_name = None
+
+        d = None
+        if "self" in inspect.stack()[2][0].f_locals.keys():
+            class_name = str(inspect.stack()[2][0].f_locals["self"])
+            while class_name.find(".") != -1:
+                class_name = class_name.partition(".")[2]
+            class_name = class_name.partition(" ")[0]
+
+            class_name = class_name.strip("(")
+            class_name = class_name.strip(")")
+
+        if class_name is not None and (len(class_name) > 0) and (class_name.strip() != "<module>"):
+            d = "%s:%s: " % (class_name, function_name)
+        else:
+            d = "%s: " % (function_name)
+
         f = str(inspect.stack()[2][3])
-        d = "%s:%s" % (c.__class__.__name__, f)
+
         self.mdl.set_line_data([str(pos), level, d, text, fg, bg])
         self.status_list.resizeColumnsToContents()
         self.status_list.scrollToBottom()

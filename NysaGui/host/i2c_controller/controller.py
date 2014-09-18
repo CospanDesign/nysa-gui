@@ -31,19 +31,32 @@ import argparse
 from PyQt4.Qt import QApplication
 from PyQt4 import QtCore
 
-#I2C Driver
-from nysa.host.userland.python.driver.i2c import I2C
+#Platform Scanner
+from nysa.host.platform_scanner import PlatformScanner
 
-from NysaGui.host.common.nysa_base_controller import NysaBaseController
-from nysa.host.userland.python.common.platform_scanner import PlatformScanner
+#I2C Driver
+from nysa.host.driver.i2c import I2C
+
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             "common"))
+
+from nysa_base_controller import NysaBaseController
 
 #I2C Protocol Utility
 from view.i2c_widget import I2CWidget
-from nysa.host.userland.python.protocol_utils.i2c.i2c_controller import I2CController
-from nysa.host.userland.python.protocol_utils.i2c.i2c_engine import I2CEngine
-from nysa.host.userland.python.protocol_utils.i2c.i2c_engine import I2CEngineError
 
-#Platform Scanner
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             "common"))
+
+
+from protocol_utils.i2c.i2c_controller import I2CController
+from protocol_utils.i2c.i2c_engine import I2CEngine
+from protocol_utils.i2c.i2c_engine import I2CEngineError
+
 import status
 
 #Module Defines
@@ -64,7 +77,7 @@ EPILOG = "\n" \
 
 from i2c_actions import I2CActions
 
-from apps.common.udp_server import UDPServer
+from NysaGui.common.udp_server import UDPServer
 I2C_PORT = 0xC594
 
 class Controller(NysaBaseController):
@@ -83,7 +96,7 @@ class Controller(NysaBaseController):
         return "I2C Controller"
 
     def _initialize(self, platform, device_index):
-        self.i2c = I2C(platform[2], device_index)
+        self.i2c = I2C(platform[2], device_index, status)
         self.m = I2CController(self.status, self.actions)
         self.server = UDPServer(self.status, self.actions, I2C_PORT)
 
@@ -102,21 +115,21 @@ class Controller(NysaBaseController):
         self.actions.i2c_step.connect(self.i2c_step)
         self.actions.i2c_loop_step.connect(self.i2c_loop_step)
 
-    def start_standalone_app(self, platform, device_index, debug = False):
+    def start_standalone_app(self, platform, device_index, status, debug = False):
         app = QApplication (sys.argv)
         self.status = status.ClStatus()
         if debug:
             self.status.set_level(status.StatusLevel.VERBOSE)
         else:
             self.status.set_level(status.StatusLevel.INFO)
-        self.status.Verbose(self, "Starting Standalone Application")
-        self._initialize(platform, device_index)
+        self.status.Verbose( "Starting Standalone Application")
+        self._initialize(platform, device_index, status)
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform, device_index):
-        self.status = status.Status()
-        self.status.Verbose(self, "Starting I2C Application")
-        self._initialize(platform, device_index)
+    def start_tab_view(self, platform, device_index, status):
+        self.status = status
+        self.status.Verbose( "Starting I2C Application")
+        self._initialize(platform, device_index, status)
 
     def get_view(self):
         return self.v
@@ -170,18 +183,18 @@ class Controller(NysaBaseController):
         filename = self.v.get_filename()
         name = self.v.get_config_name()
         description = self.v.get_config_description()
-        self.status.Important(self, "Saving I2C Config File: %s" % filename)
+        self.status.Important( "Saving I2C Config File: %s" % filename)
         self.m.save_i2c_commands(filename, name, description)
         
     def load_default_callback(self, filename):
-        self.status.Important(self, "Loading Default I2C Config File: %s" % filename)
+        self.status.Important( "Loading Default I2C Config File: %s" % filename)
         self.m.load_i2c_commands(filename)
         self.v.set_config_name(self.m.get_config_name())
         self.v.set_config_description(self.m.get_config_description())
 
     def load_callback(self):
         filename = self.v.get_filename()
-        self.status.Important(self, "Loading I2C Config File: %s" % filename)
+        self.status.Important( "Loading I2C Config File: %s" % filename)
         self.m.load_i2c_commands(filename)
 
         self.v.set_config_name(self.m.get_config_name())
@@ -265,7 +278,7 @@ def main(argv):
     if dev_index is None:
         sys.exit("Failed to find an I2C Device")
 
-    c.start_standalone_app(plat, dev_index, debug)
+    c.start_standalone_app(plat, dev_index, status, debug)
 
 if __name__ == "__main__":
     main(sys.argv)

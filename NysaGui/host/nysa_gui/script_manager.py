@@ -70,6 +70,7 @@ class ScriptManager(QObject):
         from NysaGui.host.i2c_controller.controller import Controller as i2c_controller
         from NysaGui.host.sf_camera_controller.controller import Controller as sf_controller
         from NysaGui.host.uart_console.controller import Controller as uart_controller
+        from NysaGui.host.stepper_controller.controller import Controller as stepper_controller
         #print "DIR: %s" % (str(dir(self)))
 
         script_list = NysaBaseController.plugins
@@ -105,10 +106,10 @@ class ScriptManager(QObject):
 
     def get_device_script(self, dev_id, sub_id = None, unique_id = None):
         script_dict = {}
-        print "Number of scripts: %d" % len(self.scripts)
+        #print "Number of scripts: %d" % len(self.scripts)
         for script_entry in self.scripts:
-            print "Looking at: %d, %s, %s" % (dev_id, str(type(sub_id)), str(type(unique_id)))
-            print "Comparing: %s, %s, %s" % (script_entry[DEV_ID_POS], script_entry[DEV_SUB_ID_POS], script_entry[DEV_UNIQUE_ID_POS])
+            #print "Looking at: %d, %s, %s" % (dev_id, str(type(sub_id)), str(type(unique_id)))
+            #print "Comparing: %s, %s, %s" % (script_entry[DEV_ID_POS], script_entry[DEV_SUB_ID_POS], script_entry[DEV_UNIQUE_ID_POS])
             if dev_id != script_entry[DEV_ID_POS]:
                 continue
             if sub_id is not None and sub_id != 0:

@@ -86,7 +86,7 @@ class TabManager(QObject):
     def tab_remove_request(self, index):
         widget = self.tab_view.widget(index)
         if isinstance(widget, FPGAImage):
-            self.status.Important(self, "Cannot remove bus view")
+            self.status.Important( "Cannot remove bus view")
             return
 
         for i in range(len(self.tabs)):

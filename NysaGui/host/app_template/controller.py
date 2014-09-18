@@ -84,21 +84,21 @@ class Controller(NysaBaseController):
         self.v = View(self.status, self.actions)
         self.v.setup_simple_text_output_view()
 
-    def start_standalone_app(self, platform, device_index, debug = False):
+    def start_standalone_app(self, platform, device_index, status, debug = False):
         app = QApplication (sys.argv)
         self.status = status.ClStatus()
         if debug:
             self.status.set_level(status.StatusLevel.VERBOSE)
         else:
             self.status.set_level(status.StatusLevel.INFO)
-        self.status.Verbose(self, "Starting Standalone Application")
-        self._initialize(platform, device_index)
+        self.status.Verbose( "Starting Standalone Application")
+        self._initialize(platform, device_index, status)
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform, device_index):
-        self.status = status.Status()
-        self.status.Verbose(self, "Starting Template Application")
-        self._initialize(platform, device_index)
+    def start_tab_view(self, platform, device_index, status):
+        self.status = status
+        self.status.Verbose( "Starting Template Application")
+        self._initialize(platform, device_index, status)
 
     def get_view(self):
         return self.v
@@ -216,7 +216,7 @@ def main(argv):
     if dev_index is None:
         sys.exit("Failed to find an Device")
 
-    c.start_standalone_app(plat, dev_index, debug)
+    c.start_standalone_app(plat, dev_index, status, debug)
 
 if __name__ == "__main__":
     main(sys.argv)

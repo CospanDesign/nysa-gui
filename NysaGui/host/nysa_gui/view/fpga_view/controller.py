@@ -163,8 +163,8 @@ class DesignControlError(Exception):
 
 class Controller (QObject):
 
-    def __init__(self, model):
-        self.status = Status()
+    def __init__(self, model, status):
+        self.status = status
         QObject.__init__(self)
 
         self.fd = None
@@ -286,7 +286,7 @@ class Controller (QObject):
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
                                      "please select either axi or bus")
-        self.status.Debug(self, "set the configuration file")
+        self.status.Debug( "set the configuration file")
         self.model.load_config_file(config_file)
         self.model.initialize_graph(self)
 

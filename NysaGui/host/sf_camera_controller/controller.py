@@ -31,31 +31,27 @@ import argparse
 from PyQt4.Qt import QApplication
 from PyQt4 import QtCore
 
+#Platform Scanner
+from nysa.host.platform_scanner import PlatformScanner
+from nysa.host.driver.sf_camera import SFCamera
+
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
-                             os.pardir))
+                             os.pardir,
+                             "common"))
 
-from apps.common.nysa_base_controller import NysaBaseController
-import apps
-
+from nysa_base_controller import NysaBaseController
+import status
 
 from sf_camera_actions import SFCameraActions
 from view.camera_widget import CameraWidget
 from model.model import AppModel
 
 
-
-#Platform Scanner
 sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
                              os.pardir,
                              "common"))
 
-
-from platform_scanner import PlatformScanner
-import status
-
-from driver.sf_camera import SFCamera
 from protocol_utils.sf_camera.camera_utils import CameraUtils
 
 
@@ -112,8 +108,8 @@ class Controller(NysaBaseController):
         self._initialize(platform)
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform):
-        self.status = status.Status()
+    def start_tab_view(self, platform, status):
+        self.status = status
         self._initialize(platform)
 
     def get_view(self):
@@ -142,15 +138,15 @@ class Controller(NysaBaseController):
         return None
 
     def run(self):
-        self.status.Important(self, "Initiate new thread")
+        self.status.Important( "Initiate new thread")
         self.camera_util.run()
 
     def stop(self):
-        self.status.Important(self, "Stop Reading")
+        self.status.Important( "Stop Reading")
         self.camera_util.stop()
 
     def reset(self):
-        self.status.Important(self, "Reset Camera")
+        self.status.Important( "Reset Camera")
         self.camera_util.reset()
 
 

@@ -34,10 +34,15 @@ from PyQt4 import QtCore
 
 import status
 
-from nysa.host.userland.python.driver.gpio import GPIO
-from nysa.host.userland.python.common.platform_scanner import PlatformScanner
+from nysa.host.driver.gpio import GPIO
+from nysa.host.platform_scanner import PlatformScanner
 
-from NysaGui.host.common.nysa_base_controller import NysaBaseController
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             "common"))
+
+from nysa_base_controller import NysaBaseController
 
 from view.gpio_widget import GPIOWidget
 
@@ -155,7 +160,7 @@ class Controller(NysaBaseController):
         self._initialize(platform, device_index)
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform, device_index):
+    def start_tab_view(self, platform, device_index, status):
         #print "Device Index: %d" % device_index
         self._initialize(platform, device_index)
 
@@ -330,7 +335,7 @@ def main(argv):
     if dev_index is None:
         sys.exit("Failed to find a GPIO Device")
 
-    c.start_standalone_app(plat, dev_index)
+    c.start_standalone_app(plat, dev_index, status)
 
 if __name__ == "__main__":
     main(sys.argv)

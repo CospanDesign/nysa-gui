@@ -50,7 +50,7 @@ class FPGABusView(GraphicsWidget):
         self.fi = parent
 
     def clear(self):
-        #self.status.Verbose(self, "Clearing the FPGA Image")
+        #self.status.Verbose( "Clearing the FPGA Image")
         #print "Items: %s" % str(self.view.items())
         self.scene.clear()
         self.boxes = {}

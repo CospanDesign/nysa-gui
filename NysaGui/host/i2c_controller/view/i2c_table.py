@@ -31,7 +31,7 @@ class I2CTable(QTableWidget):
 
     def add_row(self):
         self.row_pos = self.rowCount()
-        self.status.Verbose(self, "Row Pos: %d" % self.row_pos)
+        self.status.Verbose( "Row Pos: %d" % self.row_pos)
         self.column_pos = 0
         self.add_i2c_token()
         self.resizeColumnsToContents()

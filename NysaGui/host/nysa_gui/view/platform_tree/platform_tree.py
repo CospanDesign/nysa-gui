@@ -194,7 +194,7 @@ class PlatformTreeTableModel(QAbstractItemModel):
 
     def asRecord(self, index):
         node = self.nodeFromIndex(index)
-        self.status.Debug(self, "node: %s" % str(node))
+        self.status.Debug( "node: %s" % str(node))
 
         #Only return valid records
         if node is None:
@@ -386,7 +386,7 @@ class PlatformTree(QTreeView):
         self.actions.add_device_signal.connect(self.add_device)
         self.actions.clear_platform_tree_signal.connect(self.clear)
         self.actions.platform_tree_get_first_dev.connect(self.select_first_item)
-        self.status.Debug(self, "Platform Tree View Started!")
+        self.status.Debug( "Platform Tree View Started!")
         self.setMaximumWidth(300)
         
         hdr = self.header()
@@ -420,14 +420,14 @@ class PlatformTree(QTreeView):
         l = self.m.asRecord(index)
 
     def activated(self, index):
-        self.status.Debug(self, "Activated: %d, %d" % (index.row(), index.column()))
+        self.status.Debug( "Activated: %d, %d" % (index.row(), index.column()))
         #super(PlatformTree, self).activated(index)
 
     def clear(self):
         self.m.clear()
 
     def select_first_item(self):
-        self.status.Debug(self, "Selecting first device in platform tree")
+        self.status.Debug( "Selecting first device in platform tree")
         index = self.m.first_device_index()
         if index is not None:
             nysa_dev = self.m.get_nysa_device(index)
@@ -440,7 +440,7 @@ class PlatformTree(QTreeView):
             self.actions.platform_tree_changed_signal.emit(uid, nysa_type, nysa_dev)
 
     def item_pressed(self, index):
-        self.status.Debug(self, "Pressed: %d, %d" % (index.row(), index.column()))
+        self.status.Debug( "Pressed: %d, %d" % (index.row(), index.column()))
         if not self.m.is_nysa_device(index):
             return
 

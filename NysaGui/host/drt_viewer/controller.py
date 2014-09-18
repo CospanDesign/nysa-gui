@@ -30,8 +30,14 @@ import argparse
 
 from PyQt4.Qt import QApplication
 
-from NysaGui.host.common.nysa_base_controller import NysaBaseController
-from nysa.host.userland.python.common.platform_scanner import PlatformScanner
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             "common"))
+
+from nysa_base_controller import NysaBaseController
+
+from nysa.host.platform_scanner import PlatformScanner
 import status
 
 from view.view import View
@@ -47,15 +53,13 @@ DESCRIPTION = "\n" \
 
 EPILOG = "\n"
 
-DRT_DESC_LOC = os.path.join(os.pardir,
-                            os.pardir,
-                            os.pardir,
+DRT_DESC_LOC = os.path.join(os.path.dirname(__file__),
                             os.pardir,
                             os.pardir,
                             "docs",
                             "drt.txt")
 
-#print "DLOC: %s" % os.path.abspath(DRT_DESC_LOC)
+print "DLOC: %s" % os.path.abspath(DRT_DESC_LOC)
 
 
 class Controller(NysaBaseController):
@@ -96,7 +100,7 @@ class Controller(NysaBaseController):
         self._initialize(platform)
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform, device_index = None):
+    def start_tab_view(self, platform, device_index = None, status = None):
         self._initialize(platform)
 
     def get_view(self):

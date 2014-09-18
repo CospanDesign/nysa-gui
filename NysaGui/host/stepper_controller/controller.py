@@ -31,14 +31,7 @@ import argparse
 from PyQt4.Qt import QApplication
 from PyQt4 import QtCore
 
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir))
-
-from driver.stepper import Stepper
-
-from apps.common.nysa_base_controller import NysaBaseController
-import apps
+from nysa.host.driver.stepper import Stepper
 
 from view.view import View
 
@@ -50,7 +43,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 
 from platform_scanner import PlatformScanner
-import status
+from nysa_base_controller import NysaBaseController
+
+#App Template
+
 
 #Module Defines
 n = str(os.path.split(__file__)[1])
@@ -59,11 +55,9 @@ from stepper_actions import StepperActions
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
-                             os.pardir,
-                             "protocol_utils"))
+                             "common"))
 
-
-from stepper.stepper_engine import StepperEngine
+from protocol_utils.stepper.stepper_engine import StepperEngine
 
 
 
@@ -90,25 +84,25 @@ class Controller(NysaBaseController):
         return "Manual Stepper Controller"
 
     def _initialize(self, platform, device_index):
-        self.stepper = Stepper(platform[2], device_index)
+        self.stepper = Stepper(platform[2], device_index, self.status)
         self.v = View(self.status, self.actions)
         self.engine = StepperEngine(self.stepper, self.status, self.actions)
         self.engine.update_configuration(self.v.get_configuration())
 
-    def start_standalone_app(self, platform, device_index, debug = False):
+    def start_standalone_app(self, platform, device_index, status, debug = False):
         app = QApplication (sys.argv)
-        self.status = status.ClStatus()
+        self.status = status
         if debug:
             self.status.set_level(status.StatusLevel.VERBOSE)
         else:
             self.status.set_level(status.StatusLevel.INFO)
-        self.status.Verbose(self, "Starting Standalone Application")
+        self.status.Verbose( "Starting Standalone Application")
         self._initialize(platform, device_index)
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform, device_index):
-        self.status = status.Status()
-        self.status.Verbose(self, "Starting Template Application")
+    def start_tab_view(self, platform, device_index, status):
+        self.status = status
+        self.status.Verbose( "Starting Template Application")
         self._initialize(platform, device_index)
 
     def get_view(self):
@@ -120,7 +114,7 @@ class Controller(NysaBaseController):
 
     @staticmethod
     def get_device_id():
-        return 16
+        return Stepper.get_core_id();
 
     @staticmethod
     def get_device_sub_id():
@@ -208,7 +202,7 @@ def main(argv):
     if dev_index is None:
         sys.exit("Failed to find an Device")
 
-    c.start_standalone_app(plat, dev_index, debug)
+    c.start_standalone_app(plat, dev_index, status, debug)
 
 if __name__ == "__main__":
     main(sys.argv)

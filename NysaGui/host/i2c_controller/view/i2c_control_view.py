@@ -52,9 +52,6 @@ I2C_DESC_LOC = os.path.join(os.path.dirname(__file__),
                             os.pardir,
                             os.pardir,
                             os.pardir,
-                            os.pardir,
-                            os.pardir,
-                            os.pardir,
                             "docs",
                             "i2c.txt")
 
@@ -171,14 +168,14 @@ class I2CControlView(QWidget):
         try:
             val = int(str(self.default_slave_addr.text()), 16)
         except ValueError:
-            self.status.Error(self, "I2C Address Formatted incorrectly, must be a number")
+            self.status.Error( "I2C Address Formatted incorrectly, must be a number")
             return
 
         if not self.is_address_good(val):
-            self.status.Error(self, "Unable to update I2C address with invalid value")
+            self.status.Error( "Unable to update I2C address with invalid value")
             return
 
-        self.status.Important(self, "Update all base address with: 0x%02X" % val)
+        self.status.Important( "Update all base address with: 0x%02X" % val)
         self.actions.i2c_default_i2c_address.emit(val)
 
     def is_address_good(self, value):

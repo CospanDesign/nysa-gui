@@ -34,11 +34,12 @@ from PyQt4.QtCore import Qt
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
-                os.pardir,
-                os.pardir,
-                os.pardir))
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             os.pardir))
 
-from apps.common.register_view import RegisterView
+from NysaGui.host.common.register_view import RegisterView
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                 os.pardir))

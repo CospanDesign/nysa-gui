@@ -27,7 +27,7 @@ Log
 '''
 
 
-
+import sys
 import os
 import sys
 import json
@@ -59,14 +59,13 @@ from .wishbone_model import WishboneModel
 
 class WishboneController (controller.Controller):
 
-    def __init__(self, config_dict, scene, debug = False):
-        self.status = Status()
-        self.dbg = debug
+    def __init__(self, config_dict, scene, status):
+        self.s = status
         self.model = WishboneModel(config_dict)
         self.scene = scene
 
-        super(WishboneController, self).__init__(self.model)
-        self.status.Debug(self, "Wishbone controller started")
+        super(WishboneController, self).__init__(self.model, status)
+        self.s.Debug( "Wishbone controller started")
         self.bus = "wishbone"
         if "INTERFACE" not in config_dict.keys():
             self.model.set_default_board_project(config_dict["board"])
@@ -77,24 +76,24 @@ class WishboneController (controller.Controller):
         #self.initialize_view()
 
     def initialize_view(self):
-        self.status.Debug(self, "Add Master")
+        self.s.Debug( "Add Master")
         m = Master(scene = self.scene)
         self.boxes["master"] = m
 
-        self.status.Debug(self, "Add Host Interface")
+        self.s.Debug( "Add Host Interface")
         hi_name = self.model.get_host_interface_name()
         hi = HostInterface(self.scene,
                            hi_name)
         hi.link_master(m)
         self.boxes["host_interface"] = hi
 
-        self.status.Debug(self, "Add Peripheral Bus")
+        self.s.Debug( "Add Peripheral Bus")
         pb = PeripheralBus(self.scene,
                            m)
         m.link_peripheral_bus(pb)
         self.boxes["peripheral_bus"] = pb
 
-        self.status.Debug(self, "Add Memory Bus")
+        self.s.Debug( "Add Memory Bus")
         mb = MemoryBus(self.scene,
                        m)
         self.boxes["memory_bus"] = mb
@@ -105,7 +104,7 @@ class WishboneController (controller.Controller):
         self.add_link(arb_master, slave, lt.arbitor, st.right)
 
     def refresh_slaves(self):
-        if self.dbg: print "WBC: refresh_slaves"
+        self.s.Debug("WBC: refresh_slaves")
         #Create a list of slaves to send to the bus
         slave_type = SlaveType.PERIPHERAL
         nslaves = self.model.get_number_of_slaves(slave_type)
@@ -117,7 +116,7 @@ class WishboneController (controller.Controller):
 
         pb = self.boxes["peripheral_bus"]
         #update the bus
-        if self.dbg: print "\tupdating slave view"
+        self.s.Debug("updating slave view")
         pb.update_slaves(slave_list)
 
         slave_type = SlaveType.MEMORY
@@ -130,7 +129,7 @@ class WishboneController (controller.Controller):
 
         mb = self.boxes["memory_bus"]
         #update the bus
-        if self.dbg: print "WBC: updating slave view"
+        self.s.Debug("WBC: updating slave view")
         mb.update_slaves(slave_list)
 
     def connect_arbitor_master(self, from_type, from_index, arbitor_name, to_type, to_index):

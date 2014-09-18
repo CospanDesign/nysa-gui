@@ -31,7 +31,10 @@ import collections
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
 
-from nysa.host.userland.python.common.platform_scanner import PlatformScanner
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)))
+
+from nysa.host.platform_scanner import PlatformScanner
 from script_manager import ScriptManager
 
 from NysaGui.common.status import Status
@@ -53,7 +56,7 @@ class NysaGui(QObject):
         self.status = Status()
         self.mf = MainForm(self.status, self.actions)
         self.fv = self.mf.get_fpga_view()
-        self.status.Debug(self, "Created main form!")
+        self.status.Debug( "Created main form!")
         QThread.currentThread().setObjectName("Nysa GUI Main")
 
         self.uid = None
@@ -84,35 +87,41 @@ class NysaGui(QObject):
         self.actions.clear_platform_tree_signal.emit()
         ps = PlatformScanner(self.status)
         platforms_dict = ps.get_platforms()
-
+        
+        #print "platform: %s" % str(platforms_dict)
         for pis in platforms_dict:
-            for pi in platforms_dict[pis]:
-                self.status.Info(self, "Refresh The Platformsical Tree")
-                t = platforms_dict[pis][pi]
+            #pis: dionysus
+            pf = platforms_dict[pis](self.status)
+            print "PF: %s" % pf
+            #pi: platforms_dict[pis]: dionysus (nysa class)
+            for pi in pf.scan():
+                self.status.Info( "Refresh The Platformsical Tree")
                 #print "pis: %s" % str(pis)
+                #print "pf: %s" % str(pf)
                 #print "pi: %s" % str(pi)
-                #print "t: %s" % str(t)
-                self.actions.add_device_signal.emit(pis, pi, t)
+                self.actions.add_device_signal.emit(pis, pi, pf)
          
             self.actions.platform_tree_get_first_dev.emit()
 
     def platform_changed(self, uid, platform_type, nysa_device):
         if self.uid == uid:
             #Don't change anything if it's the same UID
-            self.status.Verbose(self, "Same UID, no change")
+            self.status.Verbose( "Same UID, no change")
             return
 
-        self.status.Debug(self, "Platform Changed")
+        self.status.Debug( "Platform Changed")
         self.platform_type = platform_type
         if platform_type is None:
             self.n = None
-            self.status.Info(self, "No Platform Selected")
+            self.status.Info( "No Platform Selected")
             self.fv.clear()
             return
 
+        print "uid: %s" % str(uid)
         self.uid = uid
-        self.n = nysa_device
+        self.n = nysa_device.scan()[str(uid)]
 
+        print "Nysa: %s" % str(self.n)
         self.n.read_drt()
         self.config_dict = drt_to_config(self.n)
         self.fv.update_nysa_image(self.n, self.config_dict)
@@ -120,7 +129,7 @@ class NysaGui(QObject):
         self.device_index = None
 
     def module_selected(self, name):
-        self.status.Verbose(self, "Module %s Selected" % name)
+        self.status.Verbose( "Module %s Selected" % name)
         self.device_index = None
         self.fv.module_selected(name)
         self.device_index = None
@@ -130,7 +139,7 @@ class NysaGui(QObject):
         self.device_index = None
 
     def slave_selected(self, name, bus):
-        #self.status.Verbose(self, "Slave: %s on %s bus selected" % (name, bus))
+        #self.status.Verbose( "Slave: %s on %s bus selected" % (name, bus))
         scripts = []
         #Change the Qt4 String to a normal python string (This is needed
         #for using the OrderedDict
@@ -148,14 +157,14 @@ class NysaGui(QObject):
                 self.device_index = 0
             else:
 
-                self.device_index = self.config_dict["SLAVES"][name]["device_index"]
+                self.device_index = self.config_dict["SLAVES"][name]["device_index, status"]
 
                 dev_id = self.config_dict["SLAVES"][name]["id"]
                 dev_sub_id = self.config_dict["SLAVES"][name]["sub_id"]
                 dev_unique_id = self.config_dict["SLAVES"][name]["unique_id"]
         elif bus == "Memory":
-            print "Name: %s" % name
-            self.device_index = self.config_dict["MEMORY"][name]["device_index"]
+            #print "Name: %s" % name
+            self.device_index = self.config_dict["MEMORY"][name]["device_index, status"]
 
             dev_id = self.config_dict["MEMORY"][name]["id"]
             dev_sub_id = self.config_dict["MEMORY"][name]["sub_id"]
@@ -188,10 +197,10 @@ class NysaGui(QObject):
         self.scripts.append([uid, name, widget])
         if self.device_index is not None:
             print "Index: %d" % self.device_index
-            widget.start_tab_view(platform, self.device_index)
+            widget.start_tab_view(platform, self.device_index, self.status)
         else:
             print "image ID: %d" % script.get_unique_image_id()
-            widget.start_tab_view(platform)
+            widget.start_tab_view(platform, self.status)
 
         view = widget.get_view()
        
@@ -237,13 +246,13 @@ def drt_to_config(n):
             config_dict["MEMORY"][name]["unique_id"] = n.get_device_unique_id(i)
             config_dict["MEMORY"][name]["address"] = n.get_device_address(i)
             config_dict["MEMORY"][name]["size"] = n.get_device_size(i)
-            config_dict["MEMORY"][name]["device_index"] = i
+            config_dict["MEMORY"][name]["device_index, status"] = i
             continue
 
         name = n.get_device_name_from_id(n.get_device_id(i))
         name = "%s %d" % (name, i)
         config_dict["SLAVES"][name] = {}
-        config_dict["SLAVES"][name]["device_index"] = i
+        config_dict["SLAVES"][name]["device_index, status"] = i
         print "Name: %s" % n.get_device_name_from_id(n.get_device_id(i))
         config_dict["SLAVES"][name]["id"] = n.get_device_id(i)
         config_dict["SLAVES"][name]["sub_id"] = n.get_device_sub_id(i)

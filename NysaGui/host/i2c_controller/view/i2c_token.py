@@ -47,7 +47,7 @@ class I2CToken(QWidget):
         self.rw_toggle.setObjectName("rw_check")
         self.rw_toggle.clicked.connect(self.rw_clicked)
 
-        #self.status.Debug(self, "Inserting token")
+        #self.status.Debug( "Inserting token")
 
         #Writing Line Edit
         self.write_value_line_hex = QLineEdit("0x00")
@@ -158,7 +158,7 @@ class I2CToken(QWidget):
     def setup_start(self):
         self.layout().addWidget(self.type_label, 0, 0, 1, 1)
         self.type_label.setVisible(True)
-        self.status.Debug(self, "Setup Start")
+        self.status.Debug( "Setup Start")
         self.layout().addWidget(QLabel("Start Address:"), 1, 0)
         self.layout().addWidget(self.slave_address_line, 2, 0)
         self.rw_toggle.setCheckable(True)
@@ -177,7 +177,7 @@ class I2CToken(QWidget):
         self.type_sel.addItems(["Stop", "Repeat Start"])
         self.type_sel_no_change = False
         self.type_sel.setVisible(True)
-        self.status.Debug(self, "Setup Stop")
+        self.status.Debug( "Setup Stop")
         l = QLabel("Add a new Row with 'Add Row'")
         l.setWordWrap(True)
         self.layout().addWidget(l, 1, 0, 1, 3)
@@ -190,13 +190,13 @@ class I2CToken(QWidget):
         self.type_sel.setCurrentIndex(1)
         self.type_sel_no_change = False
         self.type_sel.setVisible(True)
-        self.status.Debug(self, "Setup Start/Start")
+        self.status.Debug( "Setup Start/Start")
         l = QLabel("Add a new Row with 'Add Row', end transaction on next")
         l.setWordWrap(True)
         self.layout().addWidget(l, 1, 0, 1, 3)
 
     def setup_write(self):
-        self.status.Debug(self, "Setup Write")
+        self.status.Debug( "Setup Write")
 
         self.layout().addWidget(self.add_token_button, 0, 3, 1, 1)
         self.add_token_button.setVisible(True)
@@ -216,7 +216,7 @@ class I2CToken(QWidget):
         self.write_value_line_dec.setVisible(True)
 
     def setup_read(self):
-        self.status.Debug(self, "Setup Read")
+        self.status.Debug( "Setup Read")
 
         self.layout().addWidget(self.add_token_button, 0, 3, 1, 1)
         self.add_token_button.setVisible(True)
@@ -242,7 +242,7 @@ class I2CToken(QWidget):
             self.rw_toggle.setText("Write")
 
     def rw_clicked(self):
-        self.status.Debug(self, "RW Changed for row: %d" % self.row)
+        self.status.Debug( "RW Changed for row: %d" % self.row)
         self.actions.i2c_reading_row_changed.emit(self.row, self.rw_toggle.isChecked(), self.loop)
 
         #self.table.setSelection(QRect(self.row, self.column, self.row + 1, self.column + 1), QItemSelectionModel.Clear)
@@ -262,15 +262,15 @@ class I2CToken(QWidget):
         self.process_token_type()
 
     def get_slave_address(self):
-        self.status.Info(self, "Slave Address: %s" % self.slave_address_line.text())
+        self.status.Info( "Slave Address: %s" % self.slave_address_line.text())
         return int(str(self.slave_address_line.text()), 16)
 
     def clear_layout(self):
         #print "clear layout: in thread: %s" % str(QThread.currentThread().objectName())
-        #self.status.Debug(self, "Clear the layout")
+        #self.status.Debug( "Clear the layout")
         for i in range(self.layout().count(), -1, -1):
             #print "Working on %d" % i
-            #self.status.Debug(self, "Working on: %d" % i)
+            #self.status.Debug( "Working on: %d" % i)
             item = self.layout().itemAt(i)
             #print "Type: %s" % type(item)
             if item is None:

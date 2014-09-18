@@ -64,7 +64,7 @@ class NysaBaseController:
         self.actions = actions
         self.status = status
    
-    def start_tab_view(self, platform, device_index = None):
+    def start_tab_view(self, platform, device_index = None, status = None):
         self._initialize()
 
     def get_view(self):
