@@ -36,8 +36,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
 
-
-
 from control_view import ControlView
 direction_ss = os.path.join(os.path.dirname(__file__), "stylesheet.css")
 

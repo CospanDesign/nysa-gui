@@ -38,6 +38,7 @@ from nysa.host.platform_scanner import PlatformScanner
 from script_manager import ScriptManager
 
 from NysaGui.common.status import Status
+from NysaGui.common.status import StatusLevel
 
 from view.main_view import MainForm
 from actions import Actions
@@ -48,12 +49,15 @@ debug = False
 
 class NysaGui(QObject):
 
-    def __init__(self):
+    def __init__(self, debug = False):
         super (NysaGui, self).__init__()
 
         app = QApplication(sys.argv)
         self.actions = Actions()
         self.status = Status()
+        if debug:
+            self.status.set_level(StatusLevel.VERBOSE)
+            
         self.mf = MainForm(self.status, self.actions)
         self.fv = self.mf.get_fpga_view()
         self.status.Debug( "Created main form!")
@@ -89,17 +93,17 @@ class NysaGui(QObject):
         platforms_dict = ps.get_platforms()
         
         #print "platform: %s" % str(platforms_dict)
-        for pis in platforms_dict:
-            #pis: dionysus
-            pf = platforms_dict[pis](self.status)
-            print "PF: %s" % pf
-            #pi: platforms_dict[pis]: dionysus (nysa class)
-            for pi in pf.scan():
+        for platform_name in platforms_dict:
+            #platform_name: dionysus
+            platform_instance = platforms_dict[platform_name](self.status)
+            print "PF: %s" % platform_instance
+            #platform_uid: platforms_dict[platform_name]: dionysus (nysa class)
+            for platform_uid in platform_instance.scan():
                 self.status.Info( "Refresh The Platformsical Tree")
-                #print "pis: %s" % str(pis)
-                #print "pf: %s" % str(pf)
-                #print "pi: %s" % str(pi)
-                self.actions.add_device_signal.emit(pis, pi, pf)
+                #print "platform_name: %s" % str(platform_name)
+                #print "platform_instance: %s" % str(platform_instance)
+                #print "platform_uid: %s" % str(platform_uid)
+                self.actions.add_device_signal.emit(platform_name, platform_uid, platform_instance)
          
             self.actions.platform_tree_get_first_dev.emit()
 

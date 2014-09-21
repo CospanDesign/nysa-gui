@@ -63,11 +63,7 @@ def main(argv):
 
     args = parser.parse_args()
 
-    if args.debug:
-        print ("Debug Enable")
-        debug = True
-
-    n = NysaGui()
+    n = NysaGui(args.debug)
 
 if __name__ == "__main__":
     main(sys.argv)

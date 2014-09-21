@@ -32,8 +32,8 @@ import time
 from PyQt4.Qt import QApplication
 from PyQt4 import QtCore
 
-import status
 
+from nysa.common import status
 from nysa.host.driver.gpio import GPIO
 from nysa.host.platform_scanner import PlatformScanner
 
@@ -93,8 +93,8 @@ class ReaderThread(QtCore.QThread):
                     self.value = value
                     self.gpio_actions.gpio_input_changed.emit(value)
                 self.mutex.unlock()
-            
-        
+
+
     def read_rate_change(self, rate):
         self.timeout = rate
 
@@ -147,22 +147,28 @@ class Controller(NysaBaseController):
         self.v.add_register(3, "GPIO Interrupt Enable", initial_value = self.gpio.get_interrupt_enable())
         self.v.add_register(4, "GPIO Interrupt Edge", initial_value = self.gpio.get_interrupt_edge())
 
-        self.v.set_register(0, self.gpio.get_port_raw())
-        self.v.set_register(1, self.gpio.get_port_direction())
-        self.v.set_register(2, self.gpio.get_interrupts())
-        self.v.set_register(3, self.gpio.get_interrupt_enable())
-        self.v.set_register(4, self.gpio.get_interrupt_edge())
+        #self.v.set_register(0, self.gpio.get_port_raw())
+        #self.v.set_register(1, self.gpio.get_port_direction())
+        #self.v.set_register(2, self.gpio.get_interrupts())
+        #self.v.set_register(3, self.gpio.get_interrupt_enable())
+        #self.v.set_register(4, self.gpio.get_interrupt_edge())
+
         self.gpio.register_interrupt_callback(self.interrupt_callback)
 
-    def start_standalone_app(self, platform, device_index):
+    def start_standalone_app(self, platform, device_index, status):
         #print "Device Index: %d" % device_index
+        self.status = status
         app = QApplication (sys.argv)
         self._initialize(platform, device_index)
+        QtCore.QThread.currentThread().setObjectName("Main")
+        self.status.Verbose("Thread name: %s" % QtCore.QThread.currentThread().objectName())
         sys.exit(app.exec_())
 
     def start_tab_view(self, platform, device_index, status):
         #print "Device Index: %d" % device_index
+        self.status = status
         self._initialize(platform, device_index)
+        self.status.Verbose("Thread name: %s" % QtCore.QThread.currentThread().objectName())
 
     def get_view(self):
         return self.v
@@ -244,7 +250,10 @@ class Controller(NysaBaseController):
         print "Interrupt Edge Changed: %d : %s" % (index, str(val))
         self.n.enable_register_bit(self.dev_index, 4, index, val)
 
+    @QtCore.pyqtSlot(object, object)
     def process_interrupts(self):
+        print "Process interrupts"
+        print "Current thread ID: %s" % QtCore.QThread.currentThread().objectName()
         value = self.gpio.get_port_raw()
         interrupts = self.gpio.get_interrupts()
         self.v.set_register(2, interrupts)
@@ -254,12 +263,12 @@ class Controller(NysaBaseController):
         self.gpio_actions.gpio_input_changed.emit(value)
 
     def interrupt_callback(self):
+        print "Received interrupt callback"
         self.gpio_actions.gpio_interrupt.emit()
- 
 
 def main(argv):
     #Parse out the commandline arguments
-    s = status.ClStatus()
+    s = status.Status()
     s.set_level(status.StatusLevel.INFO)
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
@@ -277,59 +286,53 @@ def main(argv):
     parser.add_argument("platform",
                         type = str,
                         nargs='?',
-                        default=["first"],
+                        default=["dionysus"],
                         help="Specify the platform to use")
-                        
+
 
     args = parser.parse_args()
     plat = None
 
     if args.debug:
         s.set_level(status.StatusLevel.VERBOSE)
-        s.Debug(None, "Debug Enabled")
+        s.Debug("Debug Enabled")
         debug = True
 
     if debug:
-        s.Debug(None, "Display a list of platforms found")
+        s.Debug("Display a list of platforms found")
     pscanner = PlatformScanner()
-    ps = pscanner.get_platforms()
+    platform_dict = pscanner.get_platforms()
     dev_index = None
-    for p in ps:
-        s.Verbose(None, p)
-        for psi in ps[p]:
-            if plat is None:
-                s.Verbose(None, "Found a platform: %s" % p)
-                n = ps[p][psi]
-                n.read_drt()
-                dev_index = n.find_device(1)
-                if dev_index is not None:
-                    print "Dev Index: %d" % dev_index
-                    plat = [p, psi, ps[p][psi]]
-                    break
-                continue
-            if p == args.platform and plat[0] != args.platform:
-                #Found a match for a platfom to use
-                plat = [p, psi, ps[p][psi]]
-                continue
-            if p == psi:
-                #Found a match for a name!
-                #See if we can find a GPIO device: 0
-                dev_index = n.find_device(1)
-                print "Dev Index: %d" % dev_index
-                if dev_index is not None:
-                    plat = [p, psi, ps[p][psi]]
-                    break
+    plat = None
 
-            s.Verbose(None, "\t%s" % psi)
+    for platform_name in platform_dict:
+        if args.platform[0] != platform_name.lower():
+            s.Verbose("Found %s but not using it" % platform_name)
+            continue
+
+        s.Verbose("Found Platform :%s" % platform_name)
+
+        platform_type = platform_dict[platform_name](s)
+        platform_type_dict = platform_type.scan()
+        for platform_uid in platform_type_dict:
+            s.Verbose("Scanning Platform Name %s UID: %s" % (platform_name, platform_uid))
+            n = platform_type_dict[platform_uid]
+            n.read_drt()
+            dev_index = n.find_device(1)
+            if dev_index is not None:
+                s.Important("GPIO Index: %d" % dev_index)
+                plat = [platform_name, platform_uid, n]
+                break
+            continue
 
     if args.list:
-        s.Verbose(None, "Listed all platforms, exiting")
+        s.Verbose("Listed all platforms, exiting")
         sys.exit(0)
 
     if plat is not None:
-        s.Important(None, "Using: %s" % plat)
+        s.Important("Using: %s" % plat)
     else:
-        s.Fatal(None, "Didn't find a platform to use!")
+        s.Fatal("Didn't find a platform to use!")
 
     c = Controller()
     if dev_index is None:

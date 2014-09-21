@@ -123,13 +123,13 @@ class Controller(NysaBaseController):
         else:
             self.status.set_level(status.StatusLevel.INFO)
         self.status.Verbose( "Starting Standalone Application")
-        self._initialize(platform, device_index, status)
+        self._initialize(platform, device_index)
         sys.exit(app.exec_())
 
     def start_tab_view(self, platform, device_index, status):
         self.status = status
         self.status.Verbose( "Starting I2C Application")
-        self._initialize(platform, device_index, status)
+        self._initialize(platform, device_index)
 
     def get_view(self):
         return self.v

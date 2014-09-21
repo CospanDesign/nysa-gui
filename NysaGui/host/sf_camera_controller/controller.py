@@ -40,8 +40,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
+
 from nysa_base_controller import NysaBaseController
-import status
+from nysa.common import status
 
 from sf_camera_actions import SFCameraActions
 from view.camera_widget import CameraWidget
@@ -99,7 +100,7 @@ class Controller(NysaBaseController):
 
     def start_standalone_app(self, platform, debug = False):
         app = QApplication (sys.argv)
-        self.status = status.ClStatus()
+        self.status = status.Status()
         if debug:
             self.status.set_level(status.StatusLevel.VERBOSE)
         else:
@@ -152,7 +153,7 @@ class Controller(NysaBaseController):
 
 def main(argv):
     #Parse out the commandline arguments
-    s = status.ClStatus()
+    s = status.Status()
     s.set_level(status.StatusLevel.INFO)
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
@@ -185,10 +186,10 @@ def main(argv):
     ps = pscanner.get_platforms()
     image_id = None
     for p in ps:
-        s.Verbose(None, p)
+        s.Verbose(p)
         for psi in ps[p]:
             if plat is None:
-                s.Verbose(None, "Found a platform: %s" % p)
+                s.Verbose("Found a platform: %s" % p)
                 n = ps[p][psi]
                 n.read_drt()
                 #n.drt_manager.pretty_print_drt()
@@ -199,16 +200,16 @@ def main(argv):
                     plat = [p, psi, ps[p][psi]]
                     break
 
-            s.Verbose(None, "\t%s" % psi)
+            s.Verbose("\t%s" % psi)
 
     if args.list:
-        s.Verbose(None, "Listed all platforms, exiting")
+        s.Verbose("Listed all platforms, exiting")
         sys.exit(0)
 
     if plat is not None:
-        s.Important(None, "Using: %s" % plat)
+        s.Important("Using: %s" % plat)
     else:
-        s.Fatal(None, "Didn't find a platform to use!")
+        s.Fatal("Didn't find a platform to use!")
 
     c = Controller()
     c.start_standalone_app(plat, debug)
