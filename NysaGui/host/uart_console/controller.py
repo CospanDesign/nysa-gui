@@ -26,6 +26,7 @@ import os
 import sys
 import argparse
 import time
+import string
 
 import importlib
 
@@ -55,7 +56,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
-from protocol_utils.uart.uart_engine import UARTEngine
+#from protocol_utils.uart.uart_engine import UARTEngine
 
 
 from view.uart_widget import UARTWidget
@@ -106,10 +107,14 @@ class Controller(NysaBaseController):
         self.v.append_text(data.tostring())
         self.uart.disable_interrupts()
 
-        self.engine = UARTEngine(self.uart, self.actions, self.status)
+        self.uart.unregister_interrupt_callback(None)
+        self.uart.register_interrupt_callback(self.interrupt_callback)
 
-        self.actions.uart_data_in.connect(self.uart_data_in)
         self.uart.enable_read_interrupt()
+
+    @QtCore.pyqtSlot()
+    def interrupt_callback(self):
+        self.actions.uart_read_data.emit()
 
     def start_standalone_app(self, platform, device_index, status, debug = False):
         app = QApplication (sys.argv)
@@ -120,7 +125,7 @@ class Controller(NysaBaseController):
             self.status.set_level(status.StatusLevel.INFO)
 
         self._initialize(platform, device_index)
-        self.status.Verbose( "Starting I2C Application")
+        self.status.Verbose( "Starting UART Application")
         sys.exit(app.exec_())
 
     def start_tab_view(self, platform, device_index, status):
@@ -154,19 +159,19 @@ class Controller(NysaBaseController):
         d.fromstring(data)
         #print "data: %s" % str(d)
         if len(data) > 0:
+            data = string.replace(data, "\n", "\r\n")
             self.uart.write_string(data)
-            if d[0] == 13:
-                self.uart.write_byte(10)
+            #if d[0] == 13:
+            #    self.uart.write_byte(10)
 
     def uart_read_data(self):
-        data = self.uart.read_all_data()
-        if len(data) > 0:
-            self.uart_data_in(data.tostring())
-
-    def uart_data_in(self, data):
-        #print "data in: %s" % data
-        self.v.append_text(data)
+        #self.uart.disable_read_interrupt()
+        #data = self.uart.read_all_data()
+        data = self.uart.read_string()
+        print "data: %s" % data
         self.uart.get_status()
+        self.v.append_text(data)
+        #self.uart.enable_read_interrupt()
 
     def baudrate_change(self, baudrate):
         self.uart.set_baudrate(baudrate)

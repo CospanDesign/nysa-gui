@@ -258,8 +258,8 @@ class Controller(NysaBaseController):
         print ".",
         #print "Current thread ID: %s" % QtCore.QThread.currentThread().objectName()
         value = self.gpio.get_port_raw()
-        #interrupts = self.gpio.get_interrupts()
-        #self.v.set_register(2, interrupts)
+        interrupts = self.gpio.get_interrupts()
+        self.v.set_register(2, interrupts)
         #time.sleep(0.020)
 
         #while interrupts != 0:
@@ -269,7 +269,7 @@ class Controller(NysaBaseController):
         #interrupts = self.gpio.get_interrupts()
         #self.v.set_register(2, interrupts)
 
-        #self.gpio_actions.gpio_input_changed.emit(value)
+        self.gpio_actions.gpio_input_changed.emit(value)
 
     def interrupt_callback(self):
         print "Received interrupt callback"
