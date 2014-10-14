@@ -155,8 +155,8 @@ class Controller(NysaBaseController):
     def uart_data_out(self, data):
         if self.uart is None:
             return
-        d = Array('B')
-        d.fromstring(data)
+        #d = Array('B')
+        #d.fromstring(data)
         #print "data: %s" % str(d)
         if len(data) > 0:
             data = string.replace(data, "\n", "\r\n")
@@ -168,7 +168,7 @@ class Controller(NysaBaseController):
         #self.uart.disable_read_interrupt()
         #data = self.uart.read_all_data()
         data = self.uart.read_string()
-        print "data: %s" % data
+        print "final data string: %s" % data
         self.uart.get_status()
         self.v.append_text(data)
         #self.uart.enable_read_interrupt()
