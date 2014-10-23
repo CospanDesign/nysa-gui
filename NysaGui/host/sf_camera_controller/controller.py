@@ -53,7 +53,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
-from protocol_utils.sf_camera.camera_utils import CameraUtils
+#from protocol_utils.sf_camera.camera_utils import CameraUtils
+
+import camera_engine
 
 
 #Module Defines
@@ -85,7 +87,8 @@ class Controller(NysaBaseController):
         self.actions.sf_camera_stop.connect(self.stop)
 
     def __del__(self):
-        self.camera_util.stop()
+        pass
+        #self.camera_util.stop()
 
     @staticmethod
     def get_name():
@@ -95,8 +98,9 @@ class Controller(NysaBaseController):
     def _initialize(self, platform):
         self.v = CameraWidget(self.status, self.actions)
         self.camera = SFCamera(platform[2], camera_id = 2, i2c_id = 1)
-        self.camera_util = CameraUtils(self.camera, self.actions, self.debug)
-        self.camera_util.setup_camera()
+        #self.camera_util = CameraUtils(self.camera, self.actions, self.status)
+        self.engine = camera_engine.CameraEngine(self.camera, self.actions, self.status)
+        #self.camera_util.setup_camera()
 
     def start_standalone_app(self, platform, debug = False):
         app = QApplication (sys.argv)
@@ -139,16 +143,22 @@ class Controller(NysaBaseController):
         return None
 
     def run(self):
-        self.status.Important( "Initiate new thread")
-        self.camera_util.run()
+        self.status.Important("Start")
+        #self.status.Important( "Initiate new thread")
+        #self.camera_util.run()
+        self.engine.start()
 
     def stop(self):
-        self.status.Important( "Stop Reading")
-        self.camera_util.stop()
+        self.status.Important("Stop")
+        #self.status.Important( "Stop Reading")
+        #self.camera_util.stop()
+        self.engine.stop()
 
     def reset(self):
-        self.status.Important( "Reset Camera")
-        self.camera_util.reset()
+        self.status.Important("Reset")
+        #self.status.Important( "Reset Camera")
+        #self.camera_util.reset()
+        self.engine.reset()
 
 
 def main(argv):
