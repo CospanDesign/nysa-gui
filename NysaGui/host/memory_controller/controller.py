@@ -30,8 +30,11 @@ import argparse
 import time
 from array import array as Array
 
+
 from PyQt4.Qt import QApplication
 from PyQt4 import QtCore
+
+from nysa.host.nysa import NysaCommError
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -81,8 +84,14 @@ class ReaderThread(QtCore.QThread):
         result = "Error"
         try:
             result = self.func()
+        except TypeError as ex:
+            print "Error while executing memory test: %s" % str(ex)
+        except NameError as ex:
+            print "Error while executing memory test: %s" % str(ex)
+        except NysaCommError as ex:
+            print "Error while executing memory test: %s" % str(ex)
         except:
-            print "Error while executing memory test"
+            print "Error while executing memory test: %s" % sys.exc_info()[0]
         finally:
             self.mutex.unlock()
         self.memory_actions.memory_read_finished.emit(result)
@@ -112,6 +121,7 @@ class Controller(NysaBaseController):
             self.reader_thread.join()
 
     def _initialize(self, platform, dev_index):
+        print "platform: %s" % str(platform)
         self.n = platform[2]
         print "Index: %d" % dev_index
         self.dev_index = dev_index
@@ -181,26 +191,35 @@ class Controller(NysaBaseController):
         except StopIteration:
             print "Done!"
 
-
     def test_single_rw_start(self):
         status = "Passed"
-        size = self.n.get_device_size(self.dev_index, status)
+        print "device index: %d" % self.dev_index
+        size = self.n.get_device_size(self.dev_index)
+        print "size: 0x%08X" % size
         if self.status.is_command_line():
             print "Command Line %s" % str(type(self.status))
             self.status.Verbose( "Clearing Memory")
             self.status.Verbose( "Memory Size: 0x%08X" % size)
         data_out = Array('B')
-        for i in range(0, ((size / 4) - 1)):
+        #size = 16
+        for i in range(0, (size - 1)):
             num = 0x00
             data_out.append(num)
 
+        print "length of clear buffer: 0x%08X" % len(data_out)
+
         self.n.write_memory(0, data_out)
+        print "Wrote first part!"
 
         if self.status.is_command_line():
             self.status.Verbose( "Test Single Read/Write at Beginning")
         data_out = Array('B', [0xAA, 0xBB, 0xCC, 0xDD, 0x55, 0x66, 0x77, 0x88])
         self.n.write_memory(0, data_out)
-        data_in = self.n.read_memory(0, 2)
+        print "Wrote second part!"
+        data_in = self.n.read_memory(0, len(data_out)/4)
+        print "length: data_out: %d, data_in: %d" % (len(data_out), len(data_in))
+        print "data out: %s" % str(data_out)
+        print "data_in: %s" % str(data_in)
         for i in range (len(data_out)):
             if data_in[i] != data_out[i]:
                 status = "Failed"
@@ -209,7 +228,7 @@ class Controller(NysaBaseController):
 
     def test_single_rw_end(self):
         status = "Passed"
-        size = self.n.get_device_size(self.dev_index, status)
+        size = self.n.get_device_size(self.dev_index)
         if self.status.is_command_line():
             self.status.Verbose( "Clearing Memory")
             self.status.Verbose( "Memory Size: 0x%08X" % size)
@@ -236,7 +255,7 @@ class Controller(NysaBaseController):
 
     def test_long_burst(self):
         status = "Passed"
-        size = self.n.get_device_size(self.dev_index, status)
+        size = self.n.get_device_size(self.dev_index)
         if self.status.is_command_line():
             self.status.Verbose( "Clearing Memory")
             self.status.Verbose( "Memory Size: 0x%08X" % size)
@@ -301,13 +320,11 @@ class Controller(NysaBaseController):
 
         return status
 
-
 def test_iterator(count):
     index = 0
     while index < count:
         yield index
         index += 1
-
 
 def main(argv):
     #Parse out the commandline arguments
