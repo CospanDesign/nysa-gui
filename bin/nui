@@ -33,7 +33,7 @@ from nysa.host.platform_scanner import PlatformScanner
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
-from NysaGui.host.nysa_gui.nysa_gui import NysaGui
+from NysaGui.nysa_gui.nysa_gui import NysaGui
 
 DESCRIPTION = "\n" \
 "\n"\

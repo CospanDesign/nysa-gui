@@ -41,7 +41,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
 from nysa.common import status as clstatus
-from nysa.host.driver.lcd_8080 import LCD
+from nysa.host.driver.lcd_SSD1963 import LCD
 
 
 class VideoEngineError(Exception):

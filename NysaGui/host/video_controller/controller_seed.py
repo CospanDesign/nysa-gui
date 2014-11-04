@@ -35,7 +35,7 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui
 
 from nysa.host.nysa import Nysa
-from nysa.host.driver.lcd_8080 import LCD_8080
+from nysa.host.driver.lcd_SSD1963 import LCD_SSD1963
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -85,7 +85,7 @@ class Controller(NysaBaseController):
 
     def _initialize(self, platform, device_index):
         self.v = View(self.status, self.actions)
-        self.lcd = LCD_8080(platform[2], device_index)
+        self.lcd = LCD_SSD1963(platform[2], device_index)
         self.lcd.enable_lcd(False)
         status = self.lcd.get_status()
         #self.lcd.enable_lcd(True)
