@@ -92,7 +92,7 @@ class MainPanel(QWidget):
         #Add Main Tabbed View
         layout.addWidget(self.main_splitter)
         #self.tab_view.add_tab(self.fpga_image, "main tab")
-        self.add_tab(None, self.fpga_image, "main tab", False)
+        self.add_tab(None, self.fpga_image, "Bus View", False)
         #self.tab_view.add_tab(self.fpga_image, "main tab")
 
         #Add Status View
@@ -134,7 +134,6 @@ class MainPanel(QWidget):
                 return
             color = self.platform_tree.get_node_color(index)
             self.tm.set_tab_color(self.fpga_image, color) 
-
 
     def remove_tab(self, index):
         self.tab_view.removeTab(index)

@@ -92,11 +92,11 @@ class NysaGui(QObject):
         ps = PlatformScanner(self.status)
         platforms_dict = ps.get_platforms()
         
-        #print "platform: %s" % str(platforms_dict)
+        print "platform: %s" % str(platforms_dict)
         for platform_name in platforms_dict:
             #platform_name: dionysus
             platform_instance = platforms_dict[platform_name](self.status)
-            print "PF: %s" % platform_instance
+            self.status.Verbose("PF: %s" % platform_instance)
             #platform_uid: platforms_dict[platform_name]: dionysus (nysa class)
             for platform_uid in platform_instance.scan():
                 self.status.Info( "Refresh The Platformsical Tree")
@@ -106,6 +106,7 @@ class NysaGui(QObject):
                 self.actions.add_device_signal.emit(platform_name, platform_uid, platform_instance)
          
             self.actions.platform_tree_get_first_dev.emit()
+
 
     def platform_changed(self, uid, platform_type, nysa_device):
         if self.uid == uid:
