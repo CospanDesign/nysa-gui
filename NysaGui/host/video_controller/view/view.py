@@ -58,6 +58,7 @@ class View(QWidget):
     """
     def __init__(self, actions = None, status = None):
         QWidget.__init__(self)
+        self.actions = actions
         self.createUI()
         self.isPaused = False
         #self.OpenFile("/home/cospan/Downloads/BigBuckBunny_320x180.mp4")
@@ -93,6 +94,12 @@ class View(QWidget):
         self.hbuttonbox.addWidget(self.stopbutton)
         self.connect(self.stopbutton, QtCore.SIGNAL("clicked()"),
                      self.Stop)
+
+        color_test_button = QtGui.QPushButton("Color Test")
+        self.connect(color_test_button, QtCore.SIGNAL("clicked()"), self.actions.color_test)
+        #self.actions.color_test.connect(color_test_button.connect)
+        self.hbuttonbox.addWidget(color_test_button)
+
 
         self.hbuttonbox.addStretch(1)
         self.volumeslider = QtGui.QSlider(QtCore.Qt.Horizontal, self)

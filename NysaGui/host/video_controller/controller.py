@@ -48,6 +48,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              "common"))
 
 from nysa_base_controller import NysaBaseController
+from video_actions import VideoActions
 from view.view import View
 
 
@@ -78,18 +79,27 @@ class Controller(NysaBaseController):
 
     def __init__(self):
         super (Controller, self).__init__()
+        self.actions = VideoActions()
+        self.actions.color_test.connect(self.color_test)
 
     @staticmethod
     def get_name():
         return "Video Viewer"
 
     def _initialize(self, platform, device_index):
-        self.v = View(self.status, self.actions)
-        #self.lcd = LCDSSD1963(platform[2], device_index, debug = True)
+        self.v = View(self.actions, self.status)
+        self.platform_name = platform[0]
+        self.status.Verbose("Platform Name: %s" % self.platform_name)
         self.lcd = LCDSSD1963(platform[2], device_index, debug = True)
 
         self.lcd.setup()
+        
 
+    def color_test(self):
+        if self.platform_name == "sim":
+            self.status.Important("Cannot test color test on sim platform")
+            return
+            
         width = self.lcd.get_image_width()
         height = self.lcd.get_image_height()
         size = width * height
@@ -97,7 +107,6 @@ class Controller(NysaBaseController):
         print "Image Height: %d" % height
         print "Total Size: %d" % size
         print "Total Size: 0x%08X" % size
-
         #Write a color to memory
         red = 0x00FF0000
         green = 0x0000FF00
@@ -171,6 +180,7 @@ class Controller(NysaBaseController):
 
         #print ""
 
+
     def start_standalone_app(self, platform, device_index, status, debug = False):
         app = QApplication (sys.argv)
         main = QtGui.QMainWindow()
@@ -204,7 +214,7 @@ class Controller(NysaBaseController):
 
     @staticmethod
     def get_device_sub_id():
-        return 1
+        return 3
 
     @staticmethod
     def get_device_unique_id():
