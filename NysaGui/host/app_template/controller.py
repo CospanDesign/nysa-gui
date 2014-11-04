@@ -28,19 +28,17 @@ import os
 import sys
 import argparse
 
+from array import array as Array
+
 from PyQt4.Qt import QApplication
 from PyQt4 import QtCore
+from PyQt4 import QtGui
+
+from nysa.host.nysa import Nysa
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
-
-#from driver import ???
-
-from apps.common.nysa_base_controller import NysaBaseController
-import apps
-
-from view.view import View
 
 #Platform Scanner
 sys.path.append(os.path.join(os.path.dirname(__file__),
@@ -48,8 +46,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
+from nysa_base_controller import NysaBaseController
+from view.view import View
 
-from platform_scanner import PlatformScanner
+
+from nysa.common import site_manager
+from nysa.common import status
+from nysa.host import platform_scanner
+from nysa.host.platform_scanner import PlatformScanner
 import status
 
 #Module Defines
@@ -73,7 +77,6 @@ class Controller(NysaBaseController):
 
     def __init__(self):
         super (Controller, self).__init__()
-        pass
 
     @staticmethod
     def get_name():
@@ -86,19 +89,23 @@ class Controller(NysaBaseController):
 
     def start_standalone_app(self, platform, device_index, status, debug = False):
         app = QApplication (sys.argv)
-        self.status = status.ClStatus()
+        main = QtGui.QMainWindow()
+
+        self.status = status.Status()
         if debug:
             self.status.set_level(status.StatusLevel.VERBOSE)
         else:
             self.status.set_level(status.StatusLevel.INFO)
-        self.status.Verbose( "Starting Standalone Application")
-        self._initialize(platform, device_index, status)
+        self.status.Verbose("Starting Standalone Application")
+        self._initialize(platform, device_index)
+        main.setCentralWidget(self.v)
+        main.show()
         sys.exit(app.exec_())
 
     def start_tab_view(self, platform, device_index, status):
         self.status = status
         self.status.Verbose( "Starting Template Application")
-        self._initialize(platform, device_index, status)
+        self._initialize(platform, device_index)
 
     def get_view(self):
         return self.v
@@ -139,7 +146,7 @@ class Controller(NysaBaseController):
 
 def main(argv):
     #Parse out the commandline arguments
-    s = status.ClStatus()
+    s = status.Status()
     s.set_level(status.StatusLevel.INFO)
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
@@ -161,60 +168,70 @@ def main(argv):
                         help="Specify the platform to use")
  
     args = parser.parse_args()
-    plat = None
+    plat = ["", None, None]
 
     if args.debug:
         s.set_level(status.StatusLevel.VERBOSE)
-        s.Debug(None, "Debug Enabled")
+        s.Debug("Debug Enabled")
         debug = True
 
     pscanner = PlatformScanner()
-    ps = pscanner.get_platforms()
+    platform_dict = pscanner.get_platforms()
+    platform_names = platform_dict.keys()
+    if "sim" in platform_names:
+        #If sim is in the platforms, move it to the end
+        platform_names.remove("sim")
+        platform_names.append("sim")
     dev_index = None
-    for p in ps:
-        s.Verbose(None, p)
-        for psi in ps[p]:
-            if plat is None:
-                s.Verbose(None, "Found a platform: %s" % p)
-                n = ps[p][psi]
+    for platform_name in platform_dict:
+        s.Verbose("Platform: %s" % str(platform_name))
+        s.Verbose("Type: %s" % str(platform_dict[platform_name]))
+
+        platform_instance = platform_dict[platform_name](s)
+        s.Verbose("Platform Instance: %s" % str(platform_instance))
+
+
+        instances_dict = platform_instance.scan()
+        if plat[1] is not None:
+            break
+        
+        for name in instances_dict:
+
+            #s.Verbose("Found Platform Item: %s" % str(platform_item))
+            n = instances_dict[name]
+            plat = ["", None, None]
+            
+            if n is not None:
+                s.Verbose("Found a nysa instance: %s" % name)
                 n.read_drt()
-                dev_index = None
-                #dev_index = n.find_device(I2C.get_core_id())
+                #XXX: Put your device name here!
+                dev_index = n.find_device(Nysa.get_id_from_name("???"))
                 if dev_index is not None:
-                    print "Dev Index: %d" % dev_index
-                    plat = [p, psi, ps[p][psi]]
+                    s.Important("Found a device at %d" % dev_index)
+                    plat = [platform_name, name, n]
                     break
                 continue
-            if p == args.platform and plat[0] != args.platform:
+
+            if platform_name == args.platform and plat[0] != args.platform:
                 #Found a match for a platfom to use
-                plat = [p, psi, ps[p][psi]]
+                plat = [platform_name, name, n]
                 continue
-            if p == psi:
-                #Found a match for a name!
-                #See if we can find a device
 
-                dev_index = None
-                #dev_index = n.find_device(I2C.get_core_id())
-                print "Dev Index: %d" % dev_index
-                if dev_index is not None:
-                    plat = [p, psi, ps[p][psi]]
-                    break
-
-            s.Verbose(None, "\t%s" % psi)
+            s.Verbose("\t%s" % psi)
 
     if args.list:
-        s.Verbose(None, "Listed all platforms, exiting")
+        s.Verbose("Listed all platforms, exiting")
         sys.exit(0)
 
     if plat is not None:
-        s.Important(None, "Using: %s" % plat)
+        s.Important("Using: %s" % plat)
     else:
-        s.Fatal(None, "Didn't find a platform to use!")
+        s.Fatal("Didn't find a platform to use!")
 
 
     c = Controller()
     if dev_index is None:
-        sys.exit("Failed to find an Device")
+        sys.exit("Failed to find an LCD Device")
 
     c.start_standalone_app(plat, dev_index, status, debug)
 
