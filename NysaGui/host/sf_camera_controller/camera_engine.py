@@ -126,8 +126,6 @@ class CameraEngine(QObject):
         print "Height: %d" % self.camera.get_height()
         print "Width : %d" % self.camera.get_width()
 
-
-
     def setup_camera(self):
         self.status.Debug("Initialize the camera")
         self.camera.set_control(0x00)

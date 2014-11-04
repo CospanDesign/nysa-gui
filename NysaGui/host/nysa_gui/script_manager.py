@@ -71,6 +71,7 @@ class ScriptManager(QObject):
         from NysaGui.host.sf_camera_controller.controller import Controller as sf_controller
         from NysaGui.host.uart_console.controller import Controller as uart_controller
         from NysaGui.host.stepper_controller.controller import Controller as stepper_controller
+        from NysaGui.host.video_controller.controller import Controller as video_controller
         #print "DIR: %s" % (str(dir(self)))
 
         script_list = NysaBaseController.plugins
