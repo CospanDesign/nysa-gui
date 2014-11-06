@@ -34,7 +34,7 @@ class MainBusProperties(PropertiesBase):
         self.config_dict = config_dict
         self.nysa = n
         self.clear_scripts_list()
-        print "scripts: %s" % str(scripts)
+        #print "scripts: %s" % str(scripts)
         self.set_scripts_list(scripts)
         #Setup the reset of the config dict
         self.name_label.setText("%s:%s" % (config_dict["board"], name))

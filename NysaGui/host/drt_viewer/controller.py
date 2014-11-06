@@ -59,7 +59,7 @@ DRT_DESC_LOC = os.path.join(os.path.dirname(__file__),
                             "docs",
                             "drt.txt")
 
-print "DLOC: %s" % os.path.abspath(DRT_DESC_LOC)
+#print "DLOC: %s" % os.path.abspath(DRT_DESC_LOC)
 
 
 class Controller(NysaBaseController):

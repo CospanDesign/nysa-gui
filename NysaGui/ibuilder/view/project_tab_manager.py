@@ -32,25 +32,19 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
                              "common"))
-from fpga_view.fpga_view import FPGAImage
-
-from actions import Actions
-from NysaGui.common.utils import get_color_from_id
-
-class TabManagerException(Exception):
+class ProjectTabManagerException(Exception):
     pass
 
-class TabManager(QObject):
+class ProjectTabManager(QObject):
 
-    def __init__(self, tab_view, status, actions):
-        super (TabManager, self).__init__()
+    def __init__(self, tab_view, actions, status):
+        super (ProjectTabManager, self).__init__()
         self.status = status
         self.actions = actions
         self.tab_view = tab_view
         self.tabs = []
         self.tab_view.setTabsClosable(True)
         self.tab_view.tabCloseRequested.connect(self.tab_remove_request)
-        #self.connect(self.tab_view, SIGNAL("tabRemoved"), self.tab_remove_request)
 
     def set_tab_color (self, widget, color):
         index = self.tab_view.indexOf(widget)
@@ -59,35 +53,24 @@ class TabManager(QObject):
         icon = QIcon(pm)
         self.tab_view.setTabIcon(index, icon)
 
-    def add_tab(self, name = None, nysa_id = None, widget = None, removeable = True):
+    def add_tab(self, name, widget, removeable = True):
         if name is None:
             name = widget.get_name()
 
         if widget is None:
-            raise TabManagerException("Error Widget is None!")
+            raise ProjectTabManagerException("Error Widget is None!")
 
-        if nysa_id is None:
-            pm = QPixmap(QSize(16, 16))
-            pm.fill()
-            icon = QIcon(pm)
-            self.tab_view.addTab(widget, icon, name)
-
-        else: 
-            color = get_color_from_id(nysa_id)
-            pm = QPixmap(QSize(16, 16))
-            pm.fill(color)
-            icon = QIcon(pm)
-            
-            self.tab_view.addTab(widget, icon, name)
-
-        self.tabs.append([nysa_id, widget])
-
+        pm = QPixmap(QSize(16, 16))
+        pm.fill()
+        icon = QIcon(pm)
+        self.tab_view.addTab(widget, icon, name)
+        self.tabs.append([name, widget])
 
     def tab_remove_request(self, index):
         widget = self.tab_view.widget(index)
-        if isinstance(widget, FPGAImage):
-            self.status.Important( "Cannot remove bus view")
-            return
+        #if isinstance(widget, FPGAImage):
+        #    self.status.Important( "Cannot remove bus view")
+        #    return
 
         for i in range(len(self.tabs)):
             item = self.tabs[i]
@@ -96,24 +79,4 @@ class TabManager(QObject):
                 self.tab_view.removeTab(index)
                 self.actions.remove_tab.emit(widget)
                 return
-        #    #widget = self.tabs[i][1]
-
-        #    if self.tab_view.indexOf(widget) == -1:
-        #        print "Found: %s" % str(widget)
-        #        del (self.tabs[i])
-        #        return
-
         return
-            
-    
-    def remove_all_nysa_id_tabs(self, nysa_id = None):
-        widget_list = []
-        #Traverse the list in the reverse direction so we don't shoot ourselves
-        #in the foot while removing all the items
-        for i in range(len(self.tabs), 0, -1):
-            nid = self.tabs[i][0]
-            if nid == nysa_id:
-                index = self.tab_view.indexOf(self.tabs[i][1])
-                self.tab_view.removeTab(index)
-                del(self.tabs[i])
-

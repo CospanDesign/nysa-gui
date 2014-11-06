@@ -16,29 +16,21 @@
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
 
-""" Main Tab View
-"""
-
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
-import time
 
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-os.path.join(os.path.dirname(__file__), os.pardir)
-
-class MainTabView(QTabWidget):
-    def __init__(self):
-        super (MainTabView, self).__init__()
-        #Create a view
-
-    def add_tab(self, tab, name):
-        assert tab is not None
-        self.addTab(tab, name)
-
-
+class Constraints(QWidget):
+    def __init__(self, actions, status, project):
+        super (Constraints, self).__init__()
+        self.status = status
+        self.actions = actions
+        self.project = project
+        layout = QVBoxLayout()
+        self.setLayout(layout)
 

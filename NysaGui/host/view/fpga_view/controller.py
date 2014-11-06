@@ -41,7 +41,7 @@ p = os.path.join(os.path.dirname(__file__),
                              "common",
                              "pvg")
 p = os.path.abspath(p)
-print "Path: %s" % str(p)
+#print "Path: %s" % str(p)
 sys.path.append(p)
 
 

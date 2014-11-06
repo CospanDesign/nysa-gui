@@ -13,8 +13,6 @@ from PyQt4.QtGui import *
 
 os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 
-import actions
-
 from graphics_scene import GraphicsScene
 from graphics_view import GraphicsView
 

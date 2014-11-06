@@ -33,7 +33,8 @@ class _Actions(QtCore.QObject):
     script_item_selected = QtCore.pyqtSignal(str, object, name = "script_item_selected")
     remove_tab = QtCore.pyqtSignal(object, name = "remove_tab")
 
+    show_host_view = QtCore.pyqtSignal(name = "show_host_view")
+    show_ibuilder_view = QtCore.pyqtSignal(name = "show_ibuilder_view")
+    show_cbuilder_view = QtCore.pyqtSignal(name = "show_cbuilder_view")
 
-    def __init__(self, parent = None):
-        super (_Actions, self).__init__(parent)
-
+    #Ibuilder

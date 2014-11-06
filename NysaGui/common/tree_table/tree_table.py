@@ -25,7 +25,7 @@ from PyQt4.QtGui import *
 KEY, NODE = range(2)
 
 
-class BranchNode(object):
+class BranchNode(QObject):
 
     def __init__(self, name, parent=None):
         super(BranchNode, self).__init__()

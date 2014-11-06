@@ -28,125 +28,73 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-#p = os.path.join(os.path.dirname(__file__),
-#                             os.pardir,
-#                             os.pardir,
-#                             os.pardir,
-#                             "common")
-#p = os.path.abspath(p)
-#print "Path: %s" % str(p)
-
-from utils import get_color_from_id
-from platform_tree.platform_tree import PlatformTree
-
-from main_tab_view import MainTabView
-from tab_manager import TabManager
-
-from fpga_view.fpga_view import FPGAImage
-
-p = os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             "gui",
-                             "pvg",
-                             "visual_graph")
-p = os.path.abspath(p)
-#print ("Dir: %s" % p)
-
-sys.path.append(p)
-
 class MainPanel(QWidget):
-    def __init__(self, status, actions):
-        super (MainPanel, self).__init__()
+    def __init__(self, actions, status, host_view, ibuilder_view, cbuilder_view):
+        super(MainPanel, self).__init__()
         layout = QVBoxLayout()
-        self.status = status
         self.actions = actions
+        self.status = status
+        self.host_view = host_view
+        self.host_view.hide()
+        self.ibuilder_view = ibuilder_view
+        self.ibuilder_view.hide()
+        self.cbuilder_view = cbuilder_view
+        self.cbuilder_view.hide()
 
-        self.platform_tree = PlatformTree(self, self.status, self.actions)
-        self.platform_tree.setSizePolicy(QSizePolicy.Preferred,
-                                    QSizePolicy.Preferred)
-        self.main_splitter = QSplitter(Qt.Horizontal)
+        self.host_widget  = QDockWidget("Host View")
+        #self.dock_widget.setAllowedAreas(Qt.TopDockWidgetArea)
+        self.host_widget.setWidget(self.host_view)
+        self.addDockWidget(self.host_widget)
 
-        #Add Nysa FPGAImage Tree View
-        self.tab_view = MainTabView()
-        self.tab_view.setSizePolicy(QSizePolicy.Preferred,
-                                    QSizePolicy.Preferred)
-        self.fpga_image = FPGAImage(self.status, self.actions)
-        self.fpga_image.setSizePolicy(QSizePolicy.MinimumExpanding,
-                               QSizePolicy.Preferred)
+        self.ibuilder_widget = QDockWidget("IBuilder View")
+        self.ibuilder_widget.setWidget(self.ibuilder_view)
 
-        self.main_splitter.addWidget(self.platform_tree)
-        self.main_splitter.addWidget(self.tab_view)
-
-        self.main_splitter.setStretchFactor(1, 0)
-        self.main_splitter.setSizePolicy(QSizePolicy.Preferred,
-                                         QSizePolicy.MinimumExpanding)
-
-        self.tm = TabManager(self.tab_view, self.status, self.actions)
-
-        #Create the main window
-        #Add Main Tabbed View
-        layout.addWidget(self.main_splitter)
-        #self.tab_view.add_tab(self.fpga_image, "main tab")
-        self.add_tab(None, self.fpga_image, "Bus View", False)
-        #self.tab_view.add_tab(self.fpga_image, "main tab")
-
-        #Add Status View
+        self.cbuilder_widget = QDockWidget("CBuilder View")
+        self.cbuilder_widget.setWidget(self.cbuilder_view)
+        
+        layout.addWidget(self.host_widget)
+        #layout.addWidget(self.host_view)
+        #layout.addWidget(self.ibuilder_view)
+        #layout.addWidget(self.cbuilder_view)
         layout.addWidget(self.status)
 
-        #Set the layout
         self.setLayout(layout)
-        self.actions.platform_tree_changed_signal.connect(self.platform_tree_changed)
-
-    def platform_tree_changed(self, uid, nysa_type, nysa_dev):
-        l = self.platform_tree.selectedIndexes()
-        if len(l) == 0:
-            return
-        index = l[0]
-        if index is None:
-            return
-        color = self.platform_tree.get_node_color(index)
-        self.tm.set_tab_color(self.fpga_image, color) 
-
-    def toggle_status_view(self):
-        if self.status.isVisible():
-
-            self.status.setVisible(False)
-        else:
-            self.status.setVisible(True)
-
-    def get_fpga_view(self):
-        return self.fpga_image
-
-    def add_tab(self, nysa_id, widget, name, removable = True):
-        self.tm.add_tab(name, nysa_id, widget, False)
-
-        if widget is not self.fpga_image:
-            l = self.platform_tree.selectedIndexes()
-            if len(l) == 0:
-                return
-            index = l[0]
-            if index is None:
-                return
-            color = self.platform_tree.get_node_color(index)
-            self.tm.set_tab_color(self.fpga_image, color) 
-
-    def remove_tab(self, index):
-        self.tab_view.removeTab(index)
-
 
 class MainForm(QMainWindow):
-    def __init__(self, status, actions):
+    def __init__(self, actions, status, host_view, ibuilder_view, cbuilder_view):
         super (MainForm, self).__init__()
         self.status = status
         self.actions = actions
-        self.setWindowTitle("Nysa Host")
-        self.main_panel = MainPanel(status, actions)
-        self.setCentralWidget(self.main_panel)
+        self.host_view = host_view
+        self.ibuilder_view = ibuilder_view
+        self.cbuilder_view = cbuilder_view
+
+
+        self.host_widget  = QDockWidget("Host View")
+        #self.dock_widget.setAllowedAreas(Qt.TopDockWidgetArea)
+        self.host_widget.setWidget(self.host_view)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.host_widget)
+
+        self.ibuilder_widget = QDockWidget("IBuilder View")
+        self.ibuilder_widget.setWidget(self.ibuilder_view)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.ibuilder_widget)
+
+        self.cbuilder_widget = QDockWidget("CBuilder View")
+        self.cbuilder_widget.setWidget(self.cbuilder_view)
+        self.addDockWidget(Qt.TopDockWidgetArea, self.cbuilder_widget)
+ 
+        self.status_widget = QDockWidget("Status")
+        self.status_widget.setWidget(self.status)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.status_widget)
+
+
+
+        self.setWindowTitle("Nysa")
+        #self.host_view = MainPanel(status, actions)
+        #self.main_panel = MainPanel(actions, status, host_view, ibuilder_view, cbuilder_view)
+
+        #self.setCentralWidget(self.main_panel)
+
 
         #### Actions
 
@@ -155,10 +103,23 @@ class MainForm(QMainWindow):
         exit_action.setShortcut('Ctrl+Q')
         exit_action.triggered.connect(quit)
 
+        host_action = QAction('&Host View', self)
+        host_action.setShortcut('Ctrl+H')
+
+        ibuilder_action = QAction('&IBuilder View', self)
+        ibuilder_action.setShortcut('Ctrl+I')
+
+        cbuilder_action = QAction('&CBuilder View', self)
+        cbuilder_action.setShortcut('Ctrl+B')
+
+        host_action.triggered.connect(self.actions.show_host_view)
+        ibuilder_action.triggered.connect(self.actions.show_ibuilder_view)
+        cbuilder_action.triggered.connect(self.actions.show_cbuilder_view)
+
         #Show the status window
         status_window_action = QAction("View Status Window", self)
         status_window_action.setShortcut('F4')
-        status_window_action.triggered.connect(self.main_panel.toggle_status_view)
+        status_window_action.triggered.connect(self.toggle_status_view)
 
         #Refresh Platform Tree
         refresh_platform = QAction("Refresh &Platform Tree", self)
@@ -168,6 +129,9 @@ class MainForm(QMainWindow):
         #Toolbar
         self.toolbar = self.addToolBar("main")
         self.toolbar.addAction(exit_action)
+        self.toolbar.addAction(host_action)
+        self.toolbar.addAction(ibuilder_action)
+        self.toolbar.addAction(cbuilder_action)
 
         #Menubar
         menubar = self.menuBar()
@@ -176,26 +140,60 @@ class MainForm(QMainWindow):
 
         nysa_menu = menubar.addMenu('&Nysa')
         nysa_menu.addAction(refresh_platform)
+        nysa_menu.addAction(host_action)
+        nysa_menu.addAction(ibuilder_action)
+        nysa_menu.addAction(cbuilder_action)
 
         view_menu = menubar.addMenu('&View')
         view_menu.addAction(status_window_action)
 
+        self.actions.show_host_view.connect(self.set_host_view)
+        self.actions.show_ibuilder_view.connect(self.set_ibuilder_view)
+        self.actions.show_cbuilder_view.connect(self.set_cbuilder_view)
+
+        self.set_host_view()
         self.show()
 
-    def get_fpga_view(self):
-        return self.main_panel.get_fpga_view()
+
+    def set_host_view(self):
+        self.status.Info("Show Host View") 
+
+        if not self.ibuilder_widget.isFloating():
+            self.ibuilder_widget.hide()
+            
+        if not self.cbuilder_widget.isFloating():
+            self.cbuilder_widget.hide()
+        self.host_widget.show()
+        self.repaint()
+
+    def set_ibuilder_view(self):
+        self.status.Info("Show IBuilder View") 
+        if not self.host_widget.isFloating():
+            self.host_widget.hide()
+        if not self.cbuilder_widget.isFloating():
+            self.cbuilder_widget.hide()
+        self.ibuilder_widget.show()
+        self.repaint()
+
+    def set_cbuilder_view(self):
+        self.status.Info("Show CBuilder View") 
+        if not self.host_widget.isFloating():
+            self.host_widget.hide()
+        if not self.ibuilder_widget.isFloating():
+            self.ibuilder_widget.hide()
+        self.cbuilder_widget.show()
+        self.repaint()
+
+
 
     def closeEvent(self, event):
         super (MainForm, self).closeEvent(event)
         quit()
 
-    def add_tab(self, uid, widget, name):
-        """
-        Returns an index of the tab
-        """
-        return self.main_panel.add_tab(uid, widget, name)
-
-    def remove_tab(self, index):
-        self.main_panel.remove_tab(index)
+    def toggle_status_view(self):
+        if self.status.isVisible():
+            self.status.setVisible(False)
+        else:
+            self.status.setVisible(True)
 
 

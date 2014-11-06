@@ -39,6 +39,10 @@ p = os.path.abspath(p)
 #print ("Path: %s" % p)
 sys.path.append(p)
 
+p = os.path.join(os.path.dirname(__file__),
+                 os.pardir,
+                 os.pardir)
+
 from nysa_base_controller import NysaBaseController
 
 NAME_POS          = 0
@@ -72,11 +76,14 @@ class ScriptManager(QObject):
         from NysaGui.host.stepper_controller.controller import Controller as stepper_controller
         from NysaGui.host.video_controller.controller import Controller as video_controller
         #print "DIR: %s" % (str(dir(self)))
+        #self.status.Debug("Directory: %s" % str(dir(self)))
 
         script_list = NysaBaseController.plugins
-        print "\tNBC CLASSES: %s" % str(NysaBaseController.plugins)
+        #print "\tNBC CLASSES: %s" % str(NysaBaseController.plugins)
+        #self.status.Debug("NBC Class: %s" % str(NysaBaseController.plugins))
         for script in script_list:
-            print "Adding: %s" % str(script)
+            #print "Adding: %s" % str(script)
+            self.status.Important("Adding: %s" % str(script))
             self.insert_script(script)
 
 

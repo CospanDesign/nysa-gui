@@ -51,9 +51,6 @@ p = os.path.abspath(p)
 sys.path.append(p)
 from visual_graph.graphics_view import GraphicsView as gv
 os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-import actions
-
-
 
 class GraphicsView(gv):
     def __init__(self, parent):

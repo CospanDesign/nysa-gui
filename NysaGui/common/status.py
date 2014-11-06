@@ -84,7 +84,7 @@ class _ClStatus(object):
 
     def Debug (self, text):
         if self.CheckLevel(StatusLevel.DEBUG):
-            self.status_output("Debug", text, color = green)
+            self.status_output("Debug", text, color = purple)
 
     def Info (self, text):
         if self.CheckLevel(StatusLevel.INFO):
