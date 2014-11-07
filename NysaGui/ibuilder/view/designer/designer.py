@@ -25,6 +25,17 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "common",
+                              "pvg"))
+
+#from visual_graph.box import Box
+#from box_list import BoxList
+
+
 class Designer(QWidget):
     def __init__(self, actions, status, project):
         super (Designer, self).__init__()

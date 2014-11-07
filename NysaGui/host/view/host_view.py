@@ -33,7 +33,7 @@ from platform_tree.platform_tree import PlatformTree
 
 from tab_manager import TabManager
 
-from fpga_view.fpga_view import FPGAImage
+from nysa_bus_view.nysa_bus_view import NysaBusView
 
 class HostView(QWidget):
     def __init__(self, actions, status):
@@ -47,11 +47,11 @@ class HostView(QWidget):
         self.platform_tree.setSizePolicy(QSizePolicy.Preferred,
                                     QSizePolicy.Preferred)
 
-        #Add Nysa FPGAImage Tree View
+        #Add Nysa NysaBusView Tree View
         self.tab_view = QTabWidget()
         self.tab_view.setSizePolicy(QSizePolicy.Preferred,
                                     QSizePolicy.Preferred)
-        self.fpga_image = FPGAImage(self.status, self.actions)
+        self.fpga_image = NysaBusView(self.status, self.actions)
         self.fpga_image.setSizePolicy(QSizePolicy.MinimumExpanding,
                                QSizePolicy.Preferred)
 
@@ -84,7 +84,7 @@ class HostView(QWidget):
         color = self.platform_tree.get_node_color(index)
         self.tm.set_tab_color(self.fpga_image, color) 
 
-    def get_fpga_view(self):
+    def get_nysa_bus_view(self):
         return self.fpga_image
 
     def add_tab(self, nysa_id, widget, name, removable = True):

@@ -29,22 +29,28 @@ import sys
 import json
 import copy
 
-from nysa.ibuilder.lib import ibuilder
-from nysa.ibuilder.lib import utils
-from nysa.ibuilder.lib import verilog_utils as vutils
-from nysa.ibuilder.lib import constraint_utils as cu
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, "lib"))
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
-from nysa.ibuilder.lib.ibuilder_error import SlaveError
-from nysa.ibuilder.lib.ibuilder_error import ModuleNotFound
+#Inner package modules
+from lib import ibuilder
+from lib import constraint_utils as cu
 
-from NysaGui.common.ibuilder.gui_error import WishboneModelError
-from NysaGui.common.ibuilder import graph_manager as gm
+from ibuilder_error import ModuleNotFound
+from ibuilder_error import SlaveError
 
-from NysaGui.common.ibuilder.graph_manager import GraphManager
-from NysaGui.common.ibuilder.graph_manager import SlaveType
-from NysaGui.common.ibuilder.graph_manager import NodeType
-from NysaGui.common.ibuilder.graph_manager import get_unique_name
+from gui_error import WishboneModelError
 
+import graph_manager as gm
+
+from graph_manager import GraphManager
+from graph_manager import SlaveType
+from graph_manager import NodeType
+from graph_manager import get_unique_name
+
+import utils
+import verilog_utils as vutils
 
 
 class WishboneModel():

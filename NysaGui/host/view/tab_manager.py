@@ -32,7 +32,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
                              "common"))
-from fpga_view.fpga_view import FPGAImage
+from nysa_bus_view.nysa_bus_view import NysaBusView
 
 
 from NysaGui.common.utils import get_color_from_id
@@ -84,7 +84,7 @@ class TabManager(QObject):
 
     def tab_remove_request(self, index):
         widget = self.tab_view.widget(index)
-        if isinstance(widget, FPGAImage):
+        if isinstance(widget, NysaBusView):
             self.status.Important( "Cannot remove bus view")
             return
 

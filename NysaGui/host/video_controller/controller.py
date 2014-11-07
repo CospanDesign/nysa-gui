@@ -35,7 +35,8 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui
 
 from nysa.host.nysa import Nysa
-from nysa.host.driver.lcd_SSD1963 import LCDSSD1963
+#from nysa.host.driver.lcd_SSD1963 import LCDSD1963
+from nysa.host.driver.lcd_ST7781R import LCDST7781R
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -90,9 +91,10 @@ class Controller(NysaBaseController):
         self.v = View(self.actions, self.status)
         self.platform_name = platform[0]
         self.status.Verbose("Platform Name: %s" % self.platform_name)
-        self.lcd = LCDSSD1963(platform[2], device_index, debug = True)
+        self.lcd = LCDST7781R(platform[2], device_index, debug = True)
 
-        self.lcd.setup()
+        if self.platform_name != "sim":
+            self.lcd.setup()
         
 
     def color_test(self):
@@ -102,7 +104,9 @@ class Controller(NysaBaseController):
             
         width = self.lcd.get_image_width()
         height = self.lcd.get_image_height()
-        size = width * height
+        width = 320
+        height = 240
+        size = width * height * 4
         print "Image Width: %d" % width
         print "Image Height: %d" % height
         print "Total Size: %d" % size
@@ -116,15 +120,34 @@ class Controller(NysaBaseController):
         orange = 0x00FFF000
         pink = 0x00FF7070
 
-        color = cyan
+        color = purple
         image0 = Array('B')
-        for i in range(size):
+        for i in range(size / 2):
             image0.append((color >> 24) & 0xFF)
             image0.append((color >> 16) & 0xFF)
             image0.append((color >> 8) & 0xFF)
             image0.append(color & 0xFF)
 
 
+        pos = 0x020
+        data = self.lcd.read_command(pos, 2)
+        print "PRE: Data: %s" % data
+        self.lcd.write_command(pos, Array('B', [0x00, 120]))
+        data = self.lcd.read_command(pos, 2)
+        print "Set position: Data: %s" % data
+        image0 = Array('B')
+        for i in range(size / 2):
+            image0.append((color >> 24) & 0xFF)
+            image0.append((color >> 16) & 0xFF)
+            image0.append((color >> 8) & 0xFF)
+            image0.append(color & 0xFF)
+
+        print "After Write"
+        data = self.lcd.read_command(pos, 2)
+        print "Data: %s" % data
+
+
+        return
 
         color = purple
         image1 = Array('B')

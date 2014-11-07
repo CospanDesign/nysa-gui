@@ -51,7 +51,7 @@ class HostController(QObject):
         self.uid = None
         self.config_dict = {}
         self.device_index = None
-        self.fv = self.view.get_fpga_view()
+        self.fv = self.view.get_nysa_bus_view()
         self.scripts = []
         self.sm = ScriptManager(self.status, self.actions)
 
@@ -76,8 +76,8 @@ class HostController(QObject):
     def get_view(self):
         return self.view
 
-    def get_fpga_view(self):
-        self.view.get_fpga_view()
+    def get_nysa_bus_view(self):
+        self.view.get_nysa_bus_view()
 
     def refresh_platform_tree(self):
         self.status.Important("Refresh Platforms")

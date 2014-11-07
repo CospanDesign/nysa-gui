@@ -27,7 +27,7 @@ Log
 '''
 
 
-import sys
+
 import os
 import sys
 import json
@@ -39,6 +39,7 @@ from PyQt4.QtGui import *
 
 import controller
 
+
 from defines import PS_COLOR
 from defines import MS_COLOR
 
@@ -49,23 +50,42 @@ from memory_bus import MemoryBus
 from peripheral_slave import PeripheralSlave
 from memory_slave import MemorySlave
 
-from nysa.ibuilder.lib import utils
-from nysa.ibuilder.lib import wishbone_utils
-from nysa.ibuilder.lib import ibuilder_error
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "ibuilder",
+                              "lib"))
+import utils
+import wishbone_utils
+import ibuilder_error
 
-from NysaGui.common.ibuilder.graph_manager import NodeType
-from NysaGui.common.ibuilder.graph_manager import SlaveType
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "ibuilder",
+                              "gui"))
+
+
+from graph_manager import NodeType
+from graph_manager import SlaveType
 from .wishbone_model import WishboneModel
 
 class WishboneController (controller.Controller):
 
-    def __init__(self, config_dict, scene, status):
-        self.s = status
+    def __init__(self, config_dict, scene, debug = False):
+        self.status = Status()
+        self.dbg = debug
         self.model = WishboneModel(config_dict)
         self.scene = scene
 
-        super(WishboneController, self).__init__(self.model, status)
-        self.s.Debug( "Wishbone controller started")
+        super(WishboneController, self).__init__(self.model)
+        self.status.Debug( "Wishbone controller started")
         self.bus = "wishbone"
         if "INTERFACE" not in config_dict.keys():
             self.model.set_default_board_project(config_dict["board"])
@@ -76,24 +96,24 @@ class WishboneController (controller.Controller):
         #self.initialize_view()
 
     def initialize_view(self):
-        self.s.Debug( "Add Master")
+        self.status.Debug( "Add Master")
         m = Master(scene = self.scene)
         self.boxes["master"] = m
 
-        self.s.Debug( "Add Host Interface")
+        self.status.Debug( "Add Host Interface")
         hi_name = self.model.get_host_interface_name()
         hi = HostInterface(self.scene,
                            hi_name)
         hi.link_master(m)
         self.boxes["host_interface"] = hi
 
-        self.s.Debug( "Add Peripheral Bus")
+        self.status.Debug( "Add Peripheral Bus")
         pb = PeripheralBus(self.scene,
                            m)
         m.link_peripheral_bus(pb)
         self.boxes["peripheral_bus"] = pb
 
-        self.s.Debug( "Add Memory Bus")
+        self.status.Debug( "Add Memory Bus")
         mb = MemoryBus(self.scene,
                        m)
         self.boxes["memory_bus"] = mb
@@ -104,7 +124,7 @@ class WishboneController (controller.Controller):
         self.add_link(arb_master, slave, lt.arbitor, st.right)
 
     def refresh_slaves(self):
-        self.s.Debug("WBC: refresh_slaves")
+        if self.dbg: print "WBC: refresh_slaves"
         #Create a list of slaves to send to the bus
         slave_type = SlaveType.PERIPHERAL
         nslaves = self.model.get_number_of_slaves(slave_type)
@@ -116,7 +136,7 @@ class WishboneController (controller.Controller):
 
         pb = self.boxes["peripheral_bus"]
         #update the bus
-        self.s.Debug("updating slave view")
+        if self.dbg: print "\tupdating slave view"
         pb.update_slaves(slave_list)
 
         slave_type = SlaveType.MEMORY
@@ -129,7 +149,7 @@ class WishboneController (controller.Controller):
 
         mb = self.boxes["memory_bus"]
         #update the bus
-        self.s.Debug("WBC: updating slave view")
+        if self.dbg: print "WBC: updating slave view"
         mb.update_slaves(slave_list)
 
     def connect_arbitor_master(self, from_type, from_index, arbitor_name, to_type, to_index):
