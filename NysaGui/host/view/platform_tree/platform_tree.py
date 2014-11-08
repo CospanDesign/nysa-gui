@@ -383,7 +383,7 @@ class PlatformTree(QTreeView):
         self.status = status
         self.actions = actions
         self.actions.add_device_signal.connect(self.add_device)
-        self.actions.clear_platform_tree_signal.connect(self.clear)
+        self.actions.platform_tree_clear_signal.connect(self.clear)
         self.actions.platform_tree_get_first_dev.connect(self.select_first_item)
         self.status.Debug( "Platform Tree View Started!")
         self.setMaximumWidth(300)

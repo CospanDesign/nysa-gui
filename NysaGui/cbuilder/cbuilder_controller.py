@@ -1,3 +1,5 @@
+#! /usr/bin/python
+
 # Copyright (c) 2014 Dave McCoy (dave.mccoy@cospandesign.com)
 
 # This file is part of Nysa (wiki.cospandesign.com/index.php?title=Nysa).
@@ -16,35 +18,35 @@
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
 
+""" nysa interface
+"""
+
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
+
 
 import sys
 import os
+import collections
 
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
-from PyQt4.QtGui import *
 
-sys.path.append(os.path.join( os.path.dirname(__file__),
-                              os.pardir,
-                              os.pardir,
-                              os.pardir,
-                              "common",
-                              "pvg"))
 
-#from visual_graph.box import Box
-#from box_list import BoxList
-from nysa_bus_view import NysaBusView
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)))
 
-class Designer(QWidget):
-    def __init__(self, actions, status, project):
-        super (Designer, self).__init__()
-        self.status = status
+from NysaGui.common.utils import create_hash
+from view.cbuilder_view import CBuilderView
+
+class CBuilderController(QObject):
+    def __init__(self, actions, status):
+        super(CBuilderController, self).__init__()
+        self.nysa_gui_actions = actions
         self.actions = actions
-        self.project = project
-        self.nbv = NysaBusView(self, actions, status)
+        #self.actions = Actions()
+        self.status = status
+        self.view = CBuilderView(self.actions, self.status)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.nbv)
-        self.setLayout(layout)
+    def get_view(self):
+        return self.view
+
 

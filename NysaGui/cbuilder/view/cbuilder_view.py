@@ -16,6 +16,9 @@
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
 
+""" nysa interface
+"""
+
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
@@ -25,26 +28,20 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-sys.path.append(os.path.join( os.path.dirname(__file__),
-                              os.pardir,
-                              os.pardir,
-                              os.pardir,
-                              "common",
-                              "pvg"))
-
-#from visual_graph.box import Box
-#from box_list import BoxList
-from nysa_bus_view import NysaBusView
-
-class Designer(QWidget):
-    def __init__(self, actions, status, project):
-        super (Designer, self).__init__()
+class CBuilderView(QWidget):
+    def __init__(self, actions, status):
+        super (CBuilderView, self).__init__()
+        layout = QVBoxLayout()
         self.status = status
         self.actions = actions
-        self.project = project
-        self.nbv = NysaBusView(self, actions, status)
+        self.menu_actions = []
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.nbv)
+        #Place Holder
+        layout.addWidget(QLabel("CBuilder"))
+        #Set the layout of the widget
         self.setLayout(layout)
+
+    def get_menu_actions(self):
+        return self.menu_actions
+
 

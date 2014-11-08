@@ -80,3 +80,9 @@ class ProjectTabManager(QObject):
                 self.actions.remove_tab.emit(widget)
                 return
         return
+
+    def clear(self):
+        count = len(self.tabs)
+        for i in range(count):
+            self.tab_view.removeTab(0)
+

@@ -35,6 +35,7 @@ class IBuilderView(QWidget):
         layout = QVBoxLayout()
         self.status = status
         self.actions = actions
+        self.menu_actions = []
 
         #Setup Project Side View
         self.project_tree = ProjectTree(self.actions, self.status)
@@ -49,6 +50,11 @@ class IBuilderView(QWidget):
         #self.main_view = IBuilderMainView(actions, status)
         #self.main_view.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
 
+        #Menu Actions
+        self.new_project_action = QAction("New Project", self)
+        self.new_project_action.triggered.connect(self.actions.ibuilder_new_project)
+        self.menu_actions.append(self.new_project_action)
+
         self.main_splitter = QSplitter(Qt.Horizontal)
         self.main_splitter.addWidget(self.project_tree)
         self.main_splitter.addWidget(self.tab_view)
@@ -61,10 +67,14 @@ class IBuilderView(QWidget):
         self.setLayout(layout)
         self.show()
 
+    def get_menu_actions(self):
+        return self.menu_actions
+
     def add_project(self, project):
         project_node = self.project_tree.add_project(project)
         project_view = ProjectView(self.actions, self.status, project_node)
         self.tm.add_tab(project_node.get_name(), project_view)
+        self.project_tree.reset()
         return project_view
 
     def remove_project(self, name, path):
@@ -72,4 +82,8 @@ class IBuilderView(QWidget):
 
     def get_project_tree(self):
         return self.project_tree
+
+    def clear_projects(self):
+        self.tm.clear()
+        self.project_tree.clear()
 

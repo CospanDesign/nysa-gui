@@ -25,16 +25,16 @@ sys.path.append(p)
 
 from NysaGui.common.pvg.visual_graph.graphics_widget import GraphicsWidget
 
-class FPGABusView(GraphicsWidget):
+class NysaBusView(GraphicsWidget):
 
-    def __init__(self, parent, status, actions):
+    def __init__(self, parent, actions, status):
         self.status = status
         self.actions = actions
         #Create a view
         self.view = GraphicsView(parent)
         #Create a scene
         self.scene = GraphicsScene(self.view, status, actions)
-        super (FPGABusView, self).__init__(self.view, self.scene)
+        super (NysaBusView, self).__init__(self.view, self.scene)
         self.boxes = {}
         self.show()
         self.fi = parent
@@ -47,7 +47,7 @@ class FPGABusView(GraphicsWidget):
         self.scene.clear_links()
 
     def update(self):
-        super (FPGABusView, self).update()
+        super (NysaBusView, self).update()
         self.view._scale_fit()
         #self.scene.update(self.scene.sceneRect())
         #self.scene.invalidate(self.scene.sceneRect())

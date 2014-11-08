@@ -39,13 +39,15 @@ from script_manager import ScriptManager
 from NysaGui.common.utils import create_hash
 
 from view.host_view import HostView
+from host_actions import Actions
 
 debug = False
 
 class HostController(QObject):
     def __init__(self, actions, status):
         super(HostController, self).__init__()
-        self.actions = actions
+        self.nysa_gui_actions = actions
+        self.actions = Actions()
         self.status = status
         self.init_ui()
         self.uid = None
@@ -55,11 +57,11 @@ class HostController(QObject):
         self.scripts = []
         self.sm = ScriptManager(self.status, self.actions)
 
-        self.actions.refresh_signal.connect(self.refresh_platform_tree)
+        self.actions.platform_tree_refresh.connect(self.refresh_platform_tree)
         self.actions.platform_tree_changed_signal.connect(self.platform_changed)
 
-        self.actions.module_selected.connect(self.module_selected)
-        self.actions.module_deselected.connect(self.module_deselected)
+        self.actions.host_module_selected.connect(self.host_module_selected)
+        self.actions.host_module_deselected.connect(self.host_module_deselected)
 
         self.actions.slave_selected.connect(self.slave_selected)
         self.actions.slave_deselected.connect(self.slave_deselected)
@@ -68,7 +70,6 @@ class HostController(QObject):
         self.actions.remove_tab.connect(self.remove_script)
 
         self.sm.scan()
-
 
     def init_ui(self):
         self.view = HostView(self.actions, self.status)
@@ -81,7 +82,7 @@ class HostController(QObject):
 
     def refresh_platform_tree(self):
         self.status.Important("Refresh Platforms")
-        self.actions.clear_platform_tree_signal.emit()
+        self.actions.platform_tree_clear_signal.emit()
         ps = PlatformScanner(self.status)
         platforms_dict = ps.get_platforms()
         
@@ -126,13 +127,13 @@ class HostController(QObject):
         self.setup_bus_properties(self.config_dict, self.n)
         self.device_index = None
 
-    def module_selected(self, name):
+    def host_module_selected(self, name):
         self.status.Verbose( "Module %s Selected" % name)
         self.device_index = None
-        self.fv.module_selected(name)
+        self.fv.host_module_selected(name)
         self.device_index = None
 
-    def module_deselected(self, name):
+    def host_module_deselected(self, name):
         self.setup_bus_properties(self.config_dict, self.n)
         self.device_index = None
 

@@ -37,20 +37,41 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 from NysaGui.common.utils import create_hash
 from ibuilder_project import IBuilderProject
 from view.ibuilder_view import IBuilderView
+from ibuilder_actions import Actions
 
 class IBuilderController(QObject):
     def __init__(self, actions, status):
         super(IBuilderController, self).__init__()
-        self.actions = actions
+        self.nysa_gui_actions = actions
         self.status = status
+        self.actions = Actions()
         self.view = IBuilderView(self.actions, self.status)
         self.project_tree = self.view.get_project_tree()
         self.projects = {}
 
-        self.add_project(name = "test", path = None)
-        self.add_project(name = "test 2", path = None)
+        #XXX: Demo Stuff!
+        self.new_project()
+        #XXX: End Demo Stuff!
+        self.actions.ibuilder_new_project.connect(self.new_project)
+
+    def new_project(self):
+        self.status.Debug("New Project Clicked!")
+        new_project_name_base = "project_%d"
+        index = 1
+        new_project_name = new_project_name_base % index
+        conflict = True
+        while conflict:
+            conflict = False
+            for project_name in self.projects:
+                if project_name == new_project_name:
+                    conflict = True
+                    new_project_name = new_project_name_base % index
+            index += 1
+        #Create a populated new project
+        self.add_project(new_project_name)
 
     def add_project(self, name, path = None):
+        self.status.Debug("Add Project: %s" % name)
         ibp = IBuilderProject(self.actions, self.status, self.project_tree, name, path)
         self.projects[name] = ibp
         self.view.add_project(ibp)

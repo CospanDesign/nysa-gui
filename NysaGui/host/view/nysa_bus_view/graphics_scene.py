@@ -66,11 +66,11 @@ class GraphicsScene(gs):
     #Overriden Methods
     def box_selected(self, data):
         if data is not None:
-            self.actions.module_selected.emit(data)
+            self.actions.host_module_selected.emit(data)
 
     def box_deselected(self, data):
         if data is not None:
-            self.actions.module_deselected.emit(data)
+            self.actions.host_module_deselected.emit(data)
 
     def remove_selected(self, reference):
         if self.dbg: print "GS: remove_selected()"

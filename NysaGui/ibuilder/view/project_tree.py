@@ -167,6 +167,8 @@ class RootBranch(BranchNode):
 class ProjectTreeTableModel(QAbstractItemModel):
     def __init__(self, actions, status):
         super (ProjectTreeTableModel, self).__init__()
+        self.actions = actions
+        self.status = status
         self.root = RootBranch(actions, status)
         self.headers = ["Project Name", "Configuration", "Status"]
         self.nested = 1
@@ -275,7 +277,7 @@ class ProjectTreeTableModel(QAbstractItemModel):
         return self.createIndex(row, 0, parent)
 
     def clear(self):
-        self.root = RootBranch("")
+        self.root = RootBranch(self.actions, self.status)
         self.reset()
 
     def data(self, index, role):
@@ -338,12 +340,17 @@ class ProjectTree(QTreeView):
         self.setMaximumWidth(300)
         hdr = self.header()
         hdr.setDefaultSectionSize(90)
-        
+
         #XXX: Connect up activated and pressed
         #XXX: Add signals to add or remove projects
 
         self.setSelectionModel(QItemSelectionModel(self.m))
-                    
+
+    def contextMenuEvent(self, event):
+        menu = QMenu(self.parentWidget())
+        menu.addAction("New Project", self.actions.ibuilder_new_project)
+        menu.exec_(self.mapToGlobal(event.pos()))
+
     def sizeHint (self):
         size = QSize()
         size.setWidth(300)

@@ -99,11 +99,11 @@ class NysaBusView(QWidget):
             r = QRectF(0, 0, height, 100)
             self.fbv.view.fitInView(r, Qt.KeepAspectRatio)
 
-    def module_selected(self, name):
-        self.bpv.module_selected(name)
+    def host_module_selected(self, name):
+        self.bpv.host_module_selected(name)
 
-    def module_deselected(self, name):
-        self.bpv.module_deselected(name)
+    def host_module_deselected(self, name):
+        self.bpv.host_module_deselected(name)
 
     def slave_selected(self, name, bus, config_dict, n, scripts):
         self.bpv.slave_selected(name, bus, config_dict, n, scripts)

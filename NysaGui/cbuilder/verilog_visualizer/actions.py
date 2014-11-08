@@ -14,11 +14,11 @@ def Actions(*args, **kw):
 class _Actions(QtCore.QObject):
 
     #Control Signals
-    refresh_signal = QtCore.pyqtSignal(name = "refresh_platform")
+    platform_tree_refresh = QtCore.pyqtSignal(name = "refresh_platform")
 
     #View Signals
     add_device_signal = QtCore.pyqtSignal(object, name = "add_device")
-    clear_platform_tree_signal = QtCore.pyqtSignal(object, name = "clear_platform_tree_signal")
+    platform_tree_clear_signal = QtCore.pyqtSignal(object, name = "platform_tree_clear_signal")
     platform_tree_get_first_dev = QtCore.pyqtSignal(object, name = "platform_tree_get_first_dev")
     platform_tree_changed_signal = QtCore.pyqtSignal(str, object, object, name = "platfrom_tree_changed_signal")
 

@@ -387,7 +387,7 @@ class PlatformTree(QTreeView):
         self.actions = actions
         #self.actions.add_device_signal.connect(self.add_device)
 
-        self.actions.clear_platform_tree_signal.connect(self.clear)
+        self.actions.platform_tree_clear_signal.connect(self.clear)
 
         self.actions.add_verilog_core.connect(self.add_verilog_core)
         self.actions.add_image_config.connect(self.add_image_config)

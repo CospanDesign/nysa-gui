@@ -69,7 +69,6 @@ class MainForm(QMainWindow):
         self.ibuilder_view = ibuilder_view
         self.cbuilder_view = cbuilder_view
 
-
         self.host_widget  = QDockWidget("Host View")
         #self.dock_widget.setAllowedAreas(Qt.TopDockWidgetArea)
         self.host_widget.setWidget(self.host_view)
@@ -122,9 +121,9 @@ class MainForm(QMainWindow):
         status_window_action.triggered.connect(self.toggle_status_view)
 
         #Refresh Platform Tree
-        refresh_platform = QAction("Refresh &Platform Tree", self)
-        refresh_platform.setShortcut('F2')
-        refresh_platform.triggered.connect(self.actions.refresh_signal)
+        #refresh_platform = QAction("Refresh &Platform Tree", self)
+        #refresh_platform.setShortcut('F2')
+        #refresh_platform.triggered.connect(self.actions.platform_tree_refresh)
 
         #Toolbar
         self.toolbar = self.addToolBar("main")
@@ -139,13 +138,32 @@ class MainForm(QMainWindow):
         file_menu.addAction(exit_action)
 
         nysa_menu = menubar.addMenu('&Nysa')
-        nysa_menu.addAction(refresh_platform)
+        #nysa_menu.addAction(refresh_platform)
         nysa_menu.addAction(host_action)
         nysa_menu.addAction(ibuilder_action)
         nysa_menu.addAction(cbuilder_action)
 
         view_menu = menubar.addMenu('&View')
         view_menu.addAction(status_window_action)
+
+        ma = host_view.get_menu_actions()
+        if len(ma) > 0:
+            host_menu = menubar.addMenu("&Host")
+            for a in ma:
+                host_menu.addAction(a)
+
+        ma = ibuilder_view.get_menu_actions()
+        if len(ma) > 0:
+            ibuilder_menu = menubar.addMenu("&IBuilder")
+            for a in ma:
+                ibuilder_menu.addAction(a)
+
+        ma = cbuilder_view.get_menu_actions()
+        if len(ma) > 0:
+            cbuilder_menu = menubar.addMenu("&CBuilder")
+            for a in ma:
+                cbuilder_menu.addAction(a)
+
 
         self.actions.show_host_view.connect(self.set_host_view)
         self.actions.show_ibuilder_view.connect(self.set_ibuilder_view)

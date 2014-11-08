@@ -41,6 +41,15 @@ class HostView(QWidget):
         layout = QVBoxLayout()
         self.status = status
         self.actions = actions
+        self.menu_actions = []
+
+
+        #Refresh Platform Tree
+        refresh_platform = QAction("Refresh &Platform Tree", self)
+        refresh_platform.setShortcut('F2')
+        refresh_platform.triggered.connect(self.actions.platform_tree_refresh)
+
+        self.menu_actions.append(refresh_platform)
 
         #Setup Platform Tree
         self.platform_tree = PlatformTree(self, self.status, self.actions)
@@ -74,6 +83,9 @@ class HostView(QWidget):
         self.setLayout(layout)
         self.actions.platform_tree_changed_signal.connect(self.platform_tree_changed)
 
+    def get_menu_actions(self):
+        return self.menu_actions
+
     def platform_tree_changed(self, uid, nysa_type, nysa_dev):
         l = self.platform_tree.selectedIndexes()
         if len(l) == 0:
@@ -82,7 +94,7 @@ class HostView(QWidget):
         if index is None:
             return
         color = self.platform_tree.get_node_color(index)
-        self.tm.set_tab_color(self.fpga_image, color) 
+        self.tm.set_tab_color(self.fpga_image, color)
 
     def get_nysa_bus_view(self):
         return self.fpga_image
@@ -98,7 +110,7 @@ class HostView(QWidget):
             if index is None:
                 return
             color = self.platform_tree.get_node_color(index)
-            self.tm.set_tab_color(self.fpga_image, color) 
+            self.tm.set_tab_color(self.fpga_image, color)
 
     def remove_tab(self, index):
         self.tab_view.removeTab(index)

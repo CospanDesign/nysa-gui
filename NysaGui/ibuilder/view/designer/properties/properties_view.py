@@ -57,8 +57,8 @@ class PropertiesView(QWidget):
             self.layout.addWidget(p)
 
         #Connect the Signals
-        #self.actions.host_module_selected.connect(self.host_module_selected)
-        #self.actions.host_module_deselected.connect(self.host_module_deselected)
+        #self.actions.module_selected.connect(self.module_selected)
+        #self.actions.module_deselected.connect(self.module_deselected)
 
         #self.actions.slave_selected.connect(self.slave_selected)
         #self.actions.slave_deselected.connect(self.slave_deselected)
@@ -102,7 +102,7 @@ class PropertiesView(QWidget):
         self.memory_slave_params.set_slave(name, config_dict, n, scripts)
         self.memory_slave_params.show()
 
-    def host_module_selected(self, name):
+    def module_selected(self, name):
         if name == "master":
             self.setup_master()
 
@@ -115,7 +115,7 @@ class PropertiesView(QWidget):
         if name == "memory_bus":
             self.setup_memory_bus()
 
-    def host_module_deselected(self, name):
+    def module_deselected(self, name):
         pass
         #self.setup_bus(self.config_dict, self.nysa, [])
 

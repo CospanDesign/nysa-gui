@@ -41,6 +41,7 @@ from NysaGui.common.status import StatusLevel
 
 from NysaGui.host.host_controller import HostController
 from NysaGui.ibuilder.ibuilder_controller import IBuilderController
+from NysaGui.cbuilder.cbuilder_controller import CBuilderController
 
 from view.main_view import MainForm
 from actions import Actions
@@ -68,7 +69,8 @@ class NysaGui(QObject):
         iv = self.ic.get_view()
         #Get CBuilder Controller
         #self.cc = CBuilderController(self.actions, self.status)
-        cv = QWidget()
+        self.cc = CBuilderController(self.actions, self.status)
+        cv = self.cc.get_view()
             
         self.mf = MainForm(self.actions, self.status, hv, iv, cv)
 
