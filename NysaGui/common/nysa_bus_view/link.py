@@ -31,12 +31,19 @@ Log
 
 __author__ = "Dave McCoy dave.mccoy@cospandesign.com"
 
+import os
+import sys
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from visual_graph.link import Link as VLink
-from visual_graph.link import BoxLinkError
+p = os.path.join(os.path.dirname(__file__),
+                             os.pardir)
+
+sys.path.append(p)
+
+from pvg.visual_graph.link import Link as VLink
+from pvg.visual_graph.link import BoxLinkError
 
 def enum(*sequential, **named):
   enums = dict(zip(sequential, range(len(sequential))), **named)

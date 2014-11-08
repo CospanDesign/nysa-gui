@@ -31,7 +31,13 @@ from PyQt4.QtCore import *
 from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
-from visual_graph.box import Box
+p = os.path.join(os.path.dirname(__file__),
+                             os.pardir)
+
+sys.path.append(p)
+
+
+from pvg.visual_graph.box import Box
 from slave import Slave
 
 from defines import SLAVE_RECT

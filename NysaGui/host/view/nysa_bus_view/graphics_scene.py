@@ -29,23 +29,16 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
-
-p = os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             "gui",
-                             "pvg")
+p = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                            os.pardir,
+                                            os.pardir,
+                                            os.pardir,
+                                            os.pardir))
 
 p = os.path.abspath(p)
 #print "Visual Graph Path: %s" % p
 sys.path.append(p)
-from visual_graph.graphics_scene import GraphicsScene as gs
+from NysaGui.common.pvg.visual_graph.graphics_scene import GraphicsScene as gs
 
 
 

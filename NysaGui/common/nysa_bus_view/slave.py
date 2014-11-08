@@ -32,8 +32,13 @@ import inspect
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from visual_graph.box import Box
-import visual_graph.graphics_utils as gu
+p = os.path.join(os.path.dirname(__file__),
+                             os.pardir)
+
+sys.path.append(p)
+
+from pvg.visual_graph.box import Box
+import pvg.visual_graph.graphics_utils as gu
 
 class Slave(Box):
     """Slave Box"""

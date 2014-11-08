@@ -29,12 +29,21 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+p = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                            os.pardir,
+                                            os.pardir,
+                                            os.pardir,
+                                            os.pardir))
 
-from defines import *
+#print "%s: Path Append: %s" % (__file__, p)
+sys.path.append(p)
 
-from wishbone_controller import WishboneController
+
+from NysaGui.common.nysa_bus_view.defines import *
+from NysaGui.common.nysa_bus_view.wishbone_controller import WishboneController
 
 from fpga_bus_view import FPGABusView
+
 from properties.properties_view import PropertiesView
 
 class NysaBusView(QWidget):

@@ -48,8 +48,6 @@ from defines import ARB_MASTER_EXPAND_OFFSET
 from link import link_type as lt
 from link import side_type as st
 
-from graphics_scene import view_state
-
 class PeripheralBus(Bus):
     """Host Interface Box"""
 

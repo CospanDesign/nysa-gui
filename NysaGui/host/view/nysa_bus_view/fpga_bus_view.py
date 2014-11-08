@@ -17,21 +17,17 @@ from graphics_scene import GraphicsScene
 from graphics_view import GraphicsView
 
 
-p = os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             "gui",
-                             "pvg")
+p = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                            os.pardir,
+                                            os.pardir,
+                                            os.pardir,
+                                            os.pardir))
+
+
 p = os.path.abspath(p)
 sys.path.append(p)
 
-#from default_graphics_scene import GraphicsScene
-from visual_graph.graphics_widget import GraphicsWidget
+from NysaGui.common.pvg.visual_graph.graphics_widget import GraphicsWidget
 
 class FPGABusView(GraphicsWidget):
 

@@ -35,15 +35,13 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 p = os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             "common",
-                             "pvg")
+                             os.pardir)
 p = os.path.abspath(p)
-#print "Path: %s" % str(p)
+print "%s: Path Append: %s" % (__file__, p)
 sys.path.append(p)
 
 
-from visual_graph.box import Box
+from pvg.visual_graph.box import Box
 
 def enum(*sequential, **named):
   enums = dict(zip(sequential, range(len(sequential))), **named)

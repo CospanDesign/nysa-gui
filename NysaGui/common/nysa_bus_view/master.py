@@ -32,14 +32,12 @@ from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
 p = os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             "gui",
-                             "pvg")
+                             os.pardir)
 
 #print "Path: %s" % os.path.abspath(p)
 sys.path.append(p)
 
-from visual_graph.box import Box
+from pvg.visual_graph.box import Box
 
 from defines import MASTER_RECT
 from defines import MASTER_POS
