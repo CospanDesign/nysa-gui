@@ -39,6 +39,7 @@ from ibuilder_project import IBuilderProject
 from view.ibuilder_view import IBuilderView
 from ibuilder_actions import Actions
 
+
 class IBuilderController(QObject):
     def __init__(self, actions, status):
         super(IBuilderController, self).__init__()
@@ -72,8 +73,7 @@ class IBuilderController(QObject):
 
     def add_project(self, name, path = None):
         self.status.Debug("Add Project: %s" % name)
-        ibp = IBuilderProject(self.actions, self.status, self.project_tree, name, path)
-        self.projects[name] = ibp
+        ibp = IBuilderProject(self.actions, self.status, name, path)
         self.view.add_project(ibp)
 
     def get_view(self):

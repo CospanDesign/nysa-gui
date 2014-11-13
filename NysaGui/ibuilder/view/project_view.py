@@ -25,17 +25,26 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from designer.designer import Designer
 from configuration.configuration import Configuration
 from constraints.constraints import Constraints
-from designer.designer import Designer
 from builder.builder import Builder
+
+CONFIG_DICT = {
+    "designer":QColor(0xD7, 0xFF, 0xD7),
+    "configuration":QColor(0xFF, 0xFF, 0xD7),
+    "constraints":QColor(0xD7, 0xFF, 0xFF),
+    "builder":QColor(0xFF, 0xD7, 0xFF),
+}
+
+
+VIEWS = ("designer", "constraints", "configuration", "builder")
 
 class ProjectView(QWidget):
 
     def __init__(self,
                  actions,
-                 status,
-                 project_node):
+                 status):
         super (ProjectView, self).__init__()
         self.actions = actions
         self.status = status
@@ -47,19 +56,41 @@ class ProjectView(QWidget):
         layout.addWidget(self.tab_view)
         self.setLayout(layout)
 
-        self.designer = Designer(actions, status, project_node.get_project())
-        self.builder = Builder(actions, status, project_node.get_project())
-        self.constraints = Constraints(actions, status, project_node.get_project())
-        self.configuration = Configuration(actions, status, project_node.get_project())
+        self.designer = Designer(actions, status)
+        self.builder = Builder(actions, status)
+        self.configuration = Configuration(actions, status)
+        self.constraints = Constraints(actions, status)
 
-        self.setup_tabs(project_node)
+        self.add_tab("designer", self.designer)
+        self.add_tab("configuration", self.configuration)
+        self.add_tab("constraints", self.constraints)
+        self.add_tab("builder", self.builder)
 
-    def setup_tabs(self, project_node):
-        
-        designer_node = project_node.childWithKey("designer")
-        builder_node = project_node.childWithKey("builder")
-        constraint_node = project_node.childWithKey("constraints")
-        configuration_node = project_node.childWithKey("configuration")
+    def get_desigenr_scene(self):
+        return self.designer.get_scene()
+
+    def get_view_names(self):
+        return VIEWS
+
+    def add_tab(self, name, view):
+        color = CONFIG_DICT[name]
+        pm = QPixmap(QSize(16, 16))
+        pm.fill(color)
+        icon = QIcon(pm)
+        self.tab_view.addTab(view, icon, name)
+
+    def get_designer_scene(self):
+        return self.designer.get_scene()
+
+    def get_color(self, name):
+        return CONFIG_DICT[name]
+
+    '''
+    def setup_tabs( self,
+                    designer_color,
+                    builder_color,
+                    constraints_color,
+                    configuration_color):
 
         color = designer_node.get_color(1)
         pm = QPixmap(QSize(16, 16))
@@ -84,4 +115,4 @@ class ProjectView(QWidget):
         pm.fill(color)
         icon = QIcon(pm)
         self.tab_view.addTab(self.configuration, icon, "configuration")
-
+    '''

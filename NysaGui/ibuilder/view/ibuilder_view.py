@@ -25,7 +25,6 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from project_view import ProjectView
 from project_tree import ProjectTree
 from project_tab_manager import ProjectTabManager
 
@@ -72,10 +71,8 @@ class IBuilderView(QWidget):
 
     def add_project(self, project):
         project_node = self.project_tree.add_project(project)
-        project_view = ProjectView(self.actions, self.status, project_node)
-        self.tm.add_tab(project_node.get_name(), project_view)
+        self.tm.add_tab(project_node.get_name(), project.get_view())
         self.project_tree.reset()
-        return project_view
 
     def remove_project(self, name, path):
         return self.project_tree.remove_project(name, path)

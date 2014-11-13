@@ -57,3 +57,5 @@ class NysaBusView(GraphicsWidget):
         size.setWidth(600)
         return size
 
+    def get_scene(self):
+        return self.scene

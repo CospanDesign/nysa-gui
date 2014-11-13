@@ -37,14 +37,16 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 from nysa_bus_view import NysaBusView
 
 class Designer(QWidget):
-    def __init__(self, actions, status, project):
+    def __init__(self, actions, status):
         super (Designer, self).__init__()
         self.status = status
         self.actions = actions
-        self.project = project
         self.nbv = NysaBusView(self, actions, status)
 
         layout = QVBoxLayout()
         layout.addWidget(self.nbv)
         self.setLayout(layout)
 
+
+    def get_scene(self):
+        return self.nbv.get_scene()

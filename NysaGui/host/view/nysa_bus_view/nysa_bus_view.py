@@ -41,9 +41,7 @@ sys.path.append(p)
 
 from NysaGui.common.nysa_bus_view.defines import *
 from NysaGui.common.nysa_bus_view.wishbone_controller import WishboneController
-
 from fpga_bus_view import FPGABusView
-
 from properties.properties_view import PropertiesView
 
 class NysaBusView(QWidget):

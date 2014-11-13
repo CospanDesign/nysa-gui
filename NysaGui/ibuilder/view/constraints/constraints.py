@@ -26,11 +26,10 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 class Constraints(QWidget):
-    def __init__(self, actions, status, project):
+    def __init__(self, actions, status):
         super (Constraints, self).__init__()
         self.status = status
         self.actions = actions
-        self.project = project
         layout = QVBoxLayout()
         self.setLayout(layout)
 

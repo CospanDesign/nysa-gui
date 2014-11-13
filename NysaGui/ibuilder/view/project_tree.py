@@ -45,13 +45,6 @@ from builder.builder import Builder
 from constraints.constraints import Constraints
 from configuration.configuration import Configuration
 
-CONFIG_DICT = {
-    "designer":QColor(0xD7, 0xFF, 0xD7),
-    "configuration":QColor(0xFF, 0xFF, 0xD7),
-    "constraints":QColor(0xD7, 0xFF, 0xFF),
-    "builder":QColor(0xFF, 0xD7, 0xFF),
-}
-
 CONFIG_STATUS_DICT = {
     "ready":QColor(0xFF, 0xFF, 0xFF),
     "edit me": QColor(0xFF, 0x99, 0x00),
@@ -94,7 +87,7 @@ class ConfigNode(LeafNode):
     def get_color(self, column):
         if column == 1:
             s = str(self.fields[self.index])
-            return CONFIG_DICT[s]
+            return self.parent.project.get_view().get_color(self.fields[self.index])
         if column == 2:
             try:
                 return CONFIG_STATUS_DICT[self.status]
@@ -119,10 +112,8 @@ class ProjectNode(BranchNode):
     def __init__(self, parent, actions, status, project):
         super(ProjectNode, self).__init__(project.get_name(), parent)
         self.project = project
-        self.insertChild(ConfigNode(actions, status, project, "designer"))
-        self.insertChild(ConfigNode(actions, status, project, "configuration"))
-        self.insertChild(ConfigNode(actions, status, project, "constraints"))
-        self.insertChild(ConfigNode(actions, status, project, "builder"))
+        for name in self.project.get_view_names():
+            self.insertChild(ConfigNode(actions, status, project, name))
 
     def get_color(self, column):
         if column == 2:
@@ -368,4 +359,7 @@ class ProjectTree(QTreeView):
 
     def remove_project(self, name, path = None):
         return self.m.remove_project(name, path)
+
+    def get_project_color(self):
+        pass
 
