@@ -61,7 +61,6 @@ class GraphicsScene(gs):
         self.state = view_state.normal
         self.dbg = False
         if self.dbg: print "GS: Set state for normal"
-        #self.setAcceptDrops(True)
 
     #Overriden Methods
     def box_selected(self, data):
@@ -77,20 +76,22 @@ class GraphicsScene(gs):
 
     #Overriden PyQT4 Methods
     def mouseMoveEvent(self, event):
+        #print "mouse move event"
         super (GraphicsScene, self).mouseMoveEvent(event)
         self.auto_update_all_links()
 
     def mousePressEvent(self, event):
+        #print "mouse press event"
         super (GraphicsScene, self).mousePressEvent(event)
         self.auto_update_all_links()
 
     def dropEvent(self, event):
-        if self.dbg: print "GS: Drag Event"
+        print "GS: Drop Event"
         super (GraphicsScene, self).dropEvent(event)
 
     def startDrag(self, event):
+        print "start drag"
         if self.dbg: print "GS: Drag start event"
-
 
     def auto_update_all_links(self):
         #for l in self.links:

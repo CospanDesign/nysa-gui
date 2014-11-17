@@ -80,6 +80,7 @@ class NysaGui(QObject):
         self.hc.refresh_platform_tree()
         sys.exit(app.exec_())
 
+
 def main(argv):
     #Parse out the commandline arguments
     parser = argparse.ArgumentParser(

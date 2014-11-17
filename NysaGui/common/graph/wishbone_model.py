@@ -29,7 +29,6 @@ import sys
 import json
 import copy
 
-#Inner package modules
 from nysa.ibuilder.lib import ibuilder
 from nysa.ibuilder.lib import constraint_utils as cu
 
@@ -1026,7 +1025,6 @@ class WishboneModel():
 
         raise SlaveError("Module with name %s not found" % module_name)
 
-
     def _update_module_ports(self, uname, module_name, user_paths = [], fn = None):
         d = self.gm.get_parameters(uname)
         if fn is None:
@@ -1142,7 +1140,6 @@ class WishboneModel():
                                       port_name = b,
                                       loc = td[indexes[i]],
                                       index = new_indexes[i])
-
 
     def update_module_ports(self, module_name, user_paths = [], fn = None):
         #Go through the host interface first

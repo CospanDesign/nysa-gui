@@ -99,6 +99,12 @@ class Box (QGraphicsItem):
     def movable(self, enable):
         self.setFlag(QGraphicsItem.ItemIsMovable, enable)
 
+    def is_movable(self):
+        #print "Type: %s, Self.flags(): %s" % (int(self.flags()), str(dir(self.flags())))
+        #print "\tTest: %s" % str(self.flags() and QGraphicsItem.ItemIsMovable)
+        #print "\tTest: %s" % str((int(self.flags()) & QGraphicsItem.ItemIsMovable) > 0)
+        return (int(self.flags()) & QGraphicsItem.ItemIsMovable) > 0
+
     def selectable(self, enable):
         if self.dbg: print "BOX: %s selectable %s" % (self.box_name, str(enable))
         self.setFlag(QGraphicsItem.ItemIsSelectable, enable)
@@ -140,7 +146,6 @@ class Box (QGraphicsItem):
 
     def update(self):
         self.update_links()
-
 
     def set_pen_border(self, option, pen):
         highlight_width = 8

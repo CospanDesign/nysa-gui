@@ -32,9 +32,20 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               "common",
                               "pvg"))
 
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "common",
+                              "nysa_bus_view"))
+
 #from visual_graph.box import Box
 #from box_list import BoxList
 from nysa_bus_view import NysaBusView
+from box_list import BoxList
+
+from defines import PERIPHERAL_BUS_COLOR
+from defines import MEMORY_BUS_COLOR
 
 class Designer(QWidget):
     def __init__(self, actions, status):
@@ -43,10 +54,30 @@ class Designer(QWidget):
         self.actions = actions
         self.nbv = NysaBusView(self, actions, status)
 
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
+        box_layout = QVBoxLayout()
         layout.addWidget(self.nbv)
+        #self.peripheral_slave_box = BoxList(color = PERIPHERAL_BUS_COLOR)
+        self.peripheral_slave_box = BoxList(color = "blue")
+        #self.memory_slave_box = BoxList(color = MEMORY_BUS_COLOR)
+        self.memory_slave_box = BoxList(color = "purple")
+        box_layout.addWidget(self.peripheral_slave_box)
+        box_layout.addWidget(self.memory_slave_box)
+        layout.addLayout(box_layout)
         self.setLayout(layout)
+        self.actions.setup_peripheral_bus_list.connect(self.setup_peripheral_slave_list)
+        self.actions.setup_memory_bus_list.connect(self.setup_memory_slave_list)
 
+    def set_controller(self, controller):
+        self.nbv.set_controller(controller)
 
     def get_scene(self):
         return self.nbv.get_scene()
+
+    def setup_peripheral_slave_list(self, peripheral_dict):
+        #print "peripheral_dict: %s" % str(peripheral_dict.keys())
+        self.peripheral_slave_box.add_items(peripheral_dict, "peripheral_slave")
+
+    def setup_memory_slave_list(self, memory_dict):
+        self.memory_slave_box.add_items(memory_dict, "memory_slave")
+

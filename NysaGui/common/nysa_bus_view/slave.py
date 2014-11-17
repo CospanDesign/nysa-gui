@@ -66,6 +66,8 @@ class Slave(Box):
         md["color"] = "color"
         md["data"] = parameters
         md["move_type"] = "move"
+        #self.is_movable = False
+        self.movable(False)
 
         #This will raise an error if there is an illegal bus type
         bus_type = bus.get_bus_type()
@@ -76,7 +78,7 @@ class Slave(Box):
 
         js = json.dumps(md)
         self.slave_data = js
-        self.setAcceptDrops(True)
+        self.setAcceptDrops(False)
         self.sdbg = False
 
     def contextMenuEvent(self, event):
@@ -87,7 +89,6 @@ class Slave(Box):
         for text, func in menu_items:
             menu.addAction(text, func)
         menu.exec_(event.screenPos())
-
 
     def remove_slave(self):
         self.s.remove_slave(self)
@@ -100,25 +101,93 @@ class Slave(Box):
                 self.s.slave_deselected(self.box_name, self.bus)
         return super(Slave, self).itemChange(a, b)
 
+    '''
+    def dropEvent(self, event):
+        print "Slave drop event"
+        super(Slave, self).dropEvent(event)
+
     def dragMoveEvent(self, event):
-        if self.dbg: print "Drag Move Event"
+        print "Drag Move Event"
         super(Slave, self).dragMoveEvent(event)
+    '''
 
     def mouseMoveEvent(self, event):
-        if self.sdbg: print "SLAVE: mouseMoveEvent: %s" % self.box_name
+        if not self.is_movable():
+            #print "Not Movable"
+            return super(Slave, self).mouseMoveEvent(event)
         if (Qt.LeftButton & event.buttons()) > 0:
             pos = event.pos()
             epos = event.buttonDownPos(Qt.LeftButton)
             l = QLineF(pos, epos)
             if (l.length() < QApplication.startDragDistance()):
-            #if (l.length() < 10):
-                if self.dbg: print "\tLength: %f" % l.length()
+
+                #print "\tLength: %f" % l.length()
                 event.accept
                 return
+            elif not self.dragging:
+                self.dragging = True
+                self.hide()
+                mime_data = QMimeData()
+                mime_data.setData("application/flowchart-data", self.slave_data)
+                 #Create and dispatch a move event
+                drag = QDrag(event.widget())
+                drag.start(Qt.MoveAction)
+                drag.setMimeData(mime_data)
+                #drag.start(Qt.MoveAction)
+                
+                #create an image for the drag
+                size = QSize(self.start_rect.width(), self.start_rect.height())
+                pixmap = QPixmap(size)
+                pixmap.fill(QColor(self.color))
+                painter = QPainter(pixmap)
+                pen = QPen(self.style)
+                pen.setColor(Qt.black)
+                painter.setPen(pen)
+                painter.setFont(self.text_font)
+                #painter.drawText(0, 0, 100, 100, 0x24, self.box_name)
+
+                gu.add_label_to_rect(painter, self.rect, self.box_name)
+                painter.end()
+                drag.setPixmap(pixmap)
+                #p = QPointF(event.buttonDownScreenPos(Qt.LeftButton))
+                #p = p.toPoint()
+                prev_pos = self.pos()
+                #print "Position: %f, %f" % (pos.x(), pos.y())
+                #print "Previous Pos: %f, %f" % (prev_pos.x(), prev_pos.y())
+                drag.setHotSpot(epos.toPoint())
+                
+                prev_index = self.bus.get_slave_index(self.box_name)
+                #print "\tdrag started"
+                #value = drag.exec_()
+                value = drag.exec_(Qt.MoveAction)
+                self.show()
+                if value == 0:
+                    #XXX: There is a bug where if you drop an item out of the
+                    #   application the item can end up at location 0... 
+                    #print "illegal drop... refresh"
+                    #print "Position: %f, %f" % (self.pos().x(), self.pos().y())
+                    #self.bus.update()
+                    #self.setPos(prev_pos.x(), prev_pos.y())
+                    event.accept
+                    #self.s.get_view().update()
+                else:
+                    event.accept
+                #print "Drag finished executing: %s" % str(value)
+                self.dragging = False
+                #print "rect: %f, %f" % (self.rect.x(), self.rect.y())
+                #self.bus.update()
+
         super(Slave, self).mouseMoveEvent(event)
 
+    def mouseReleaseEvent(self, event):
+        #print "Slave: Mouse Release Event"
+        super (Slave, self).mouseReleaseEvent(event)
 
     def paint(self, painter, option, widget):
-        if self.dbg: print "Position: %f %f" % (self.pos().x(), self.pos().y())
+        #if self.dbg: print "Position: %f %f" % (self.pos().x(), self.pos().y())
+        #print "Position: %f %f" % (self.pos().x(), self.pos().y())
+        #if self.pos().x() < self.bus.pos().x():
+        #    self.bus.recalculate_size_pos()
+
         super(Slave, self).paint(painter, option, widget)
         

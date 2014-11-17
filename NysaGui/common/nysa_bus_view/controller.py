@@ -269,7 +269,6 @@ class Controller (QObject):
     def add_bus_link(self, m, bus):
         self.add_link(m, bus, lt.bus, st.right)
 
-
     def get_project_name(self):
         raise NotImplementedError("This function should be subclassed")
 
@@ -292,5 +291,6 @@ class Controller (QObject):
 
     def get_project_location(self):
         return self.model.get_project_location()
+
 
 

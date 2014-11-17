@@ -388,6 +388,32 @@ class WishboneModel():
         slave = self.gm.get_node(uname)
         return uname
 
+    def move_slave(self,
+                   slave_name=None,
+                   from_slave_type=SlaveType.PERIPHERAL,
+                   from_slave_index=0,
+                   to_slave_type=SlaveType.PERIPHERAL,
+                   to_slave_index=0):
+        """Move slave from one place to another, the slave can be moved from one
+        bus to another and the index position can be moved."""
+        #print "from slave index: %d" % from_slave_index
+        #print "to slave index: %d" % to_slave_index
+        if from_slave_type == SlaveType.PERIPHERAL and from_slave_index == 0:
+            return
+
+        if to_slave_type == SlaveType.PERIPHERAL and to_slave_index == 0:
+            to_slave_index = 1
+
+        if slave_name is None:
+            gm.SlaveError("a slave name must be specified")
+
+        if from_slave_type == to_slave_type:
+            # Simple move call.
+            self.gm.move_slave(from_slave_index,
+                               to_slave_index,
+                               from_slave_type)
+            return
+
     def get_graph_manager(self):
         '''Returns the graph manager.'''
         return self.gm

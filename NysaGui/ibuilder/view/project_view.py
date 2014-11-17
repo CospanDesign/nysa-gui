@@ -66,6 +66,9 @@ class ProjectView(QWidget):
         self.add_tab("constraints", self.constraints)
         self.add_tab("builder", self.builder)
 
+    def set_controller(self, controller):
+        self.designer.set_controller(controller)
+
     def get_desigenr_scene(self):
         return self.designer.get_scene()
 

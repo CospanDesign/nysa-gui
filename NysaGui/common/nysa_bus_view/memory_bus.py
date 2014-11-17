@@ -66,6 +66,10 @@ class MemoryBus(Bus):
         self.scene().set_memory_bus(self)
         self.movable(False)
 
+    def update_slaves(self, slave_list, editable = False):
+        super(MemoryBus, self).update_slaves(slave_list, editable)
+        for slave in self.slaves:
+            slave.movable(editable)
 
     def recalculate_size_pos(self):
         num_slaves = len(self.slaves)

@@ -53,6 +53,7 @@ class GraphicsView(QGraphicsView):
         self.scale_min = .01
         self.scale_max = 1000
         self.dbg = False
+        #self.dbg = True
 
     def set_controller(self, controller):
         self.controller = controller
@@ -64,6 +65,9 @@ class GraphicsView(QGraphicsView):
     def dragEnterEvent(self, event):
         self.controller.drag_enter(event)
 
+    def dragLeaveEvent(self, event):
+        self.controller.drag_leave(event)
+
     def dragMoveEvent(self, event):
         if self.dbg: print "GV: dragMoveEvent"
         self.controller.drag_move(event)
@@ -71,6 +75,10 @@ class GraphicsView(QGraphicsView):
     def mousePressEvent(self, event):
         if self.dbg: print "GV: mousePressEvent"
         super(GraphicsView, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self.dbg: print "GV: mouseReleaseEvent"
+        super(GraphicsView, self).mouseReleaseEvent(event)
 
     #def mouseMoveEvent(self, event):
     #    super(QGraphicsView, self).mouseMoveEvent(event)

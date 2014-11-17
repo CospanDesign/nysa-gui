@@ -80,6 +80,7 @@ class Bus(Box):
         self.expand_slaves = False
         self.s = scene
         self.dbg = False
+        #self.dbg = True
 
     def recalculate_size_pos(self):
         raise NotImplementedError("Subclass must implement this function")
@@ -114,7 +115,7 @@ class Bus(Box):
         if self.dbg: print "BUS: slave_selection_changed()"
         return
 
-    def update_slaves(self, slave_list):
+    def update_slaves(self, slave_list, editable = False):
         #print "BUS: update_slaves()"
         self.expand_slaves = False
            
@@ -161,7 +162,6 @@ class Bus(Box):
             #print "\t\tlink start: %f,%f" % (right.x(), right.y())
             #print "\t\tlink end: %f,%f" % (left.x(), left.y())
             link.update()
-
 
     def add_slave(self, module_name, instance_name, index=-1):
         if self.dbg: print "BUS: add_slave()"
@@ -236,3 +236,5 @@ class Bus(Box):
     def get_bus_type(self):
         raise NotImplementedError("Subclass must implement this function")
 
+    def get_slave_count(self):
+        return len(self.slaves)

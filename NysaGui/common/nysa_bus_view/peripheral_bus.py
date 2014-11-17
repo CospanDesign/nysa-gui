@@ -116,7 +116,7 @@ class PeripheralBus(Bus):
             return
         self.prev_selected_slave = slave
 
-    def update_slaves(self, slave_list):
+    def update_slaves(self, slave_list, editable = False):
 
         if self.scene().is_arbitor_master_selected():
             am = self.scene().get_arbitor_master_selected()
@@ -128,7 +128,12 @@ class PeripheralBus(Bus):
 
            #self.scene().arbitor_master_deselected(am) 
  
-        super(PeripheralBus, self).update_slaves(slave_list)
+        super(PeripheralBus, self).update_slaves(slave_list, editable)
+        for slave in self.slaves:
+            if slave.box_name == "DRT":
+                slave.movable(False)
+            else:
+                slave.movable(editable)
 
     def enable_expand_slaves(self, arbitor_master, enable):
         super(PeripheralBus, self).enable_expand_slaves(arbitor_master, enable)

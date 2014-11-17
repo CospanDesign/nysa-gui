@@ -90,7 +90,7 @@ class ConfigNode(LeafNode):
             return self.parent.project.get_view().get_color(self.fields[self.index])
         if column == 2:
             try:
-                return CONFIG_STATUS_DICT[self.status]
+                return self.parent.project.get_view().get_status()
             except:
                 print "Error when getting project status!"
                 pass

@@ -98,12 +98,18 @@ class WishboneController (controller.Controller):
                        m)
         self.boxes["memory_bus"] = mb
         m.link_memory_bus(mb)
+        self.editable = False
         self.refresh_slaves()
 
     def add_arbitor_link(self, arb_master, slave):
         self.add_link(arb_master, slave, lt.arbitor, st.right)
 
-    def refresh_slaves(self):
+    def refresh_slaves(self, editable = None):
+        if editable is None:
+            editable = self.editable
+        else:
+            self.editable = editable
+            
         self.s.Debug("WBC: refresh_slaves")
         #Create a list of slaves to send to the bus
         slave_type = SlaveType.PERIPHERAL
@@ -117,7 +123,7 @@ class WishboneController (controller.Controller):
         pb = self.boxes["peripheral_bus"]
         #update the bus
         self.s.Debug("updating slave view")
-        pb.update_slaves(slave_list)
+        pb.update_slaves(slave_list, editable)
 
         slave_type = SlaveType.MEMORY
         nslaves = self.model.get_number_of_slaves(slave_type)
@@ -130,7 +136,7 @@ class WishboneController (controller.Controller):
         mb = self.boxes["memory_bus"]
         #update the bus
         self.s.Debug("WBC: updating slave view")
-        mb.update_slaves(slave_list)
+        mb.update_slaves(slave_list, editable)
 
     def connect_arbitor_master(self, from_type, from_index, arbitor_name, to_type, to_index):
         if from_type == SlaveType.PERIPHERAL and from_index == 0:
@@ -157,4 +163,184 @@ class WishboneController (controller.Controller):
 
     def get_project_name(self):
         return self.model.get_project_name()
+
+    def enable_editing(self):
+        self.editable = True
+        self.refresh_slaves()
+
+    def disable_editing(self):
+        self.editable = False
+        self.refresh_slaves()
+
+    def drag_move(self, event):
+        #print "Drag movvve"
+        if event.mimeData().hasFormat("application/flowchart-data"):
+            event.accept()
+        else:
+            event.ignore()
+
+    def find_slave_position(self, drop_position):
+        self.s.Debug("Looking for slave position")
+        return drop_position
+
+    def drag_enter(self, event):
+        '''
+        An item has entered the canvas
+        '''
+        if event.mimeData().hasFormat("application/flowchart-data"):
+            self.s.Debug("Detect box")
+            event.accept()
+        else:
+            event.ignore()
+
+    def drag_leave(self, event):
+        #print "leave :("
+        event.ignore()
+        '''
+        if event.mimeData().hasFormat("application/flowchart-data"):
+            self.s.Debug("Detect box")
+            event.accept()
+        else:
+            event.ignore()
+        '''
+
+    def drag_move(self, event):
+        self.s.Debug("Drag Move Event")
+        if event.mimeData().hasFormat("application/flowchart-data"):
+            event.accept()
+        else:
+            event.ignore()
+
+    def drop_event(self, event):
+        #print "Drop Event: %s" % str(event)
+        #position = self.fd.position()
+        view = self.scene.get_view()
+        position = view.mapToScene(event.pos())
+        #position = QPoint(0, 0)
+        self.s.Debug("VC: drop_event()")
+        if event.mimeData().hasFormat("application/flowchart-data"):
+            data = event.mimeData().data("application/flowchart-data")
+            #position = self.fd.position()
+
+            #print "Data: %s" % str(data)
+            d = json.loads(str(data))
+            if event.dropAction() == Qt.MoveAction:
+                self.s.Debug("Moving Slave")
+                if "type" in d.keys():
+                    self.s.Debug("\tSlave type: %s" % d["type"])
+                    if d["type"] == "peripheral_slave":
+                        pb = self.boxes["peripheral_bus"]
+                        self.s.Debug("\tMoving within peripheral bus")
+                        index = pb.find_index_from_position(position)
+                        self.move_slave(bus=pb, slave_name = d["name"], to_index = index)
+                    else:
+                        self.s.Debug("\tMoving within memory bus")
+                        mb = self.boxes["memory_bus"]
+                        index = mb.find_index_from_position(position)
+                        self.move_slave(bus=mb, slave_name = d["name"], to_index = index)
+            else:
+                if "type" in d.keys():
+                    self.s.Debug("\ttype: %s" % d["type"])
+                    if d["type"] == "memory_slave" or d["type"] == "peripheral_slave":
+
+                        if d["type"] == "peripheral_slave":
+                            self.s.Debug("\tSearching peripheral bus")
+                            pb = self.boxes["peripheral_bus"]
+                            index = pb.find_index_from_position(position)
+                            self.add_slave(d, index)
+
+                        else:
+                            mb = self.boxes["memory_bus"]
+                            index = mb.find_index_from_position(position)
+                            self.add_slave(d, index)
+            event.accept()
+        else:
+            event.ignore()
+
+
+    def move_slave(self, bus, slave_name, to_index):
+        self.s.Debug("VC: Moving Slave")
+        from_index = bus.get_slave_index(slave_name)
+        if bus.get_slave_count() == 1:
+            self.refresh_slaves()
+            return
+        if from_index == to_index:
+            self.refresh_slaves()
+            return
+
+        slave_type = None
+
+        if bus.get_bus_type() == "peripheral_bus":
+            slave_type = SlaveType.PERIPHERAL
+        else:
+            slave_type = SlaveType.MEMORY
+
+        try:
+            self.model.move_slave(slave_name = slave_name,
+                                  from_slave_type = slave_type,
+                                  from_slave_index = from_index,
+                                  to_slave_type = slave_type,
+                                  to_slave_index = to_index)
+
+        except ibuilder_error.SlaveError, err:
+            pass
+
+        self.refresh_slaves()
+
+    def add_slave(self, slave_dict, index):
+        self.s.Debug("WBC: Adding slave")
+        module_name = slave_dict["name"]
+        slave_type = None
+        if slave_dict["type"] == "peripheral_slave":
+            slave_type = SlaveType.PERIPHERAL
+        elif slave_dict["type"] == "memory_slave":
+            slave_type = SlaveType.MEMORY
+
+        if slave_type is None:
+            raise fpga_deisgner.FPGADesignerError("Unrecognized slave type: %s" % slave_type)
+
+        fn = utils.find_module_filename(module_name, self.get_user_dirs())
+        fn = utils.find_rtl_file_location(fn, self.get_user_dirs())
+
+        #Need to create a new name for the slave
+
+        #start with the module name
+        name = module_name
+
+        self.s.Debug("WBC: Getting number of slaves")
+        nslaves = self.model.get_number_of_slaves(slave_type)
+        snames = []
+        #Get all the slave names
+        for i in range(nslaves):
+            snames.append(self.model.get_slave_name(slave_type, i))
+
+        unique = False
+        append_num = 0
+        temp_name = "%s_%d" % (name, append_num)
+
+        while (temp_name in snames):
+            append_num += append_num + 1
+            temp_name = "%s_%d" % (name, append_num)
+
+        name = temp_name
+        try:
+            self.model.add_slave(name, fn, slave_type, index)
+        except ibuilder_error.SlaveError, err:
+            #Can't a non DRT device to address 0 of the peripheral bus
+            self.model.add_slave(name, fn, slave_type, 1)
+
+        self.refresh_slaves()
+        self.refresh_constraint_editor()
+
+    def remove_slave(self, bus, index):
+        self.s.Debug("VC: Remove slave")
+        slave_type = None
+        if bus == "peripheral_bus":
+            slave_type = SlaveType.PERIPHERAL
+        else:
+            slave_type = SlaveType.MEMORY
+        self.model.remove_slave(slave_type, index)
+        self.refresh_slaves()
+        self.refresh_constraint_editor()
+
 

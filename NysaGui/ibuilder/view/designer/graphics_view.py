@@ -43,14 +43,17 @@ p = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                             os.pardir))
 
 p = os.path.abspath(p)
-print "Visual Graph Path: %s" % p
+#print "Visual Graph Path: %s" % p
 sys.path.append(p)
 from NysaGui.common.pvg.visual_graph.graphics_view import GraphicsView as gv
 
 class GraphicsView(gv):
-    def __init__(self, parent):
+    def __init__(self, parent, actions, status):
         super(GraphicsView, self).__init__(parent)
         self.initialize = True
+        self.actions = actions
+        self.status = status
+        self.setAcceptDrops(True)
 
     def fit_in_view(self):
         self._scale_fit()
@@ -67,4 +70,8 @@ class GraphicsView(gv):
 
     def showEvent(self, sevent):
         super (GraphicsView, self).showEvent(sevent)
+
+    def dropEvent(self, event):
+        #print "My GV: Drop Event"
+        super(GraphicsView, self).dropEvent(event)
 
