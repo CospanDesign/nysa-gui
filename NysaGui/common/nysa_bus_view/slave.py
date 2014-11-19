@@ -81,6 +81,9 @@ class Slave(Box):
         self.setAcceptDrops(False)
         self.sdbg = False
 
+    def get_slave_tags(self):
+        return json.loads(self.slave_data)
+
     def contextMenuEvent(self, event):
 
         menu_items = (("&Remove", self.remove_slave),)
@@ -91,7 +94,10 @@ class Slave(Box):
         menu.exec_(event.screenPos())
 
     def remove_slave(self):
-        self.s.remove_slave(self)
+        
+
+        self.s.actions.remove_slave.emit(self.bus.get_bus_type(), self.bus.get_slave_index(self.box_name))
+        #self.s.remove_slave(self)
 
     def itemChange(self, a, b):
         if QGraphicsItem.ItemSelectedHasChanged == a:

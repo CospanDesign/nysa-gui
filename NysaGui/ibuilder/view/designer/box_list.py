@@ -59,7 +59,7 @@ class BoxList(QListWidget):
       self.add_item(key, items_dict[key], box_type)
 
   def add_item(self, name, item_data, box_type):
-    print "Name: %s" % name
+    #print "Name: %s" % name
     lwi = QListWidgetItem(name)
     lwi.setIcon(self.create_icon(name, self._color))
     mime_data = {}

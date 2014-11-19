@@ -45,61 +45,7 @@ PROJECT_STATUS_DICT = {
 from NysaGui.common.nysa_bus_view.wishbone_controller import WishboneController
 #Default Project
 
-DEFAULT_CONFIG = {
-    "board":"none",
-    "IMAGE_ID":0x00,
-    "bus_type":"wishbone",
-    "TEMPLATE":"wishbone_template.json",
-    "INTERFACE":{
-    },
-    "SLAVES":{
-        "gpio1":{
-            "filename":"wb_gpio.v",
-            "unique_id":1,
-            "bind":{
-                "gpio_out[1:0]":{
-                    "loc":"led[1:0]",
-                    "direction":"output"
-                 },
-                "gpio_in[3:2]":{
-                    "loc":"button[1:0]",
-                    "direction":"input"
-                }
-            }
-        },
-        "stpr0":{
-            "filename":"wb_stepper.v",
-            "bind":{
-                "o_hbridge0_l":{
-                    "loc":"pmoda7",
-                    "direction":"output"
-                },
-                "o_hbridge0_r":{
-                    "loc":"pmoda8",
-                    "direction":"output"
-                },
-                "o_hbridge1_l":{
-                    "loc":"pmoda9",
-                    "direction":"output"
-                },
-                "o_hbridge1_r":{
-                    "loc":"pmoda10",
-                    "direction":"output"
-                }
-            }
-        }
-    },
-    "MEMORY":{
-        "mem1":{
-            "id":0x05,
-            "sub_id":0x00,
-            "unique_id":0x00,
-            "address":0x00,
-            "size":0x00000100,
-            "device_index, status":0
-        }
-    }
-}
+
 
 
 class IBuilderProject(QObject):
@@ -130,6 +76,8 @@ class IBuilderProject(QObject):
         self.controller.initialize_view()
         self.controller.enable_editing()
         self.initialize_slave_lists()
+        self.project_actions.remove_slave.connect(self.controller.remove_slave)
+        self.controller.initialize_constraint_editor(self.project_view.get_constraint_editor())
 
     def initialize_slave_lists(self):
         bus_type = self.controller.get_bus()
@@ -186,3 +134,138 @@ class IBuilderProject(QObject):
     def get_view(self):
         return self.project_view
 
+
+
+
+
+
+
+
+DEFAULT_CONFIG = {
+    "BASE_DIR":"~/projects/ibuilder_project",
+    "board":"dionysus",
+    "IMAGE_ID":256,
+    "PROJECT_NAME":"example_project",
+    "TEMPLATE":"wishbone_template.json",
+    "INTERFACE":{
+        "filename":"ft_master_interface.v",
+        "bind":{
+            "i_ftdi_clk":{
+                "loc":"ftdi_clk",
+                "direction":"input"
+            },
+            "io_ftdi_data[7:0]":{
+                "loc":"d[7:0]",
+                "direction":"inout"
+            },
+            "i_ftdi_txe_n":{
+                "loc":"txe_n",
+                "direction":"input"
+            },
+            "o_ftdi_wr_n":{
+                "loc":"wr_n",
+                "direction":"output"
+            },
+            "i_ftdi_rde_n":{
+                "loc":"rxe_n",
+                "direction":"input"
+            },
+            "o_ftdi_rd_n":{
+                "loc":"rd_n",
+                "direction":"output"
+            },
+            "o_ftdi_oe_n":{
+                "loc":"oe_n",
+                "direction":"output"
+            },
+            "o_ftdi_siwu":{
+                "loc":"siwua",
+                "direction":"output"
+            },
+            "i_ftdi_suspend_n":{
+                "loc":"suspend_n",
+                "direction":"input"
+            }
+        }
+    },
+    "SLAVES":{
+        "gpio1":{
+            "filename":"wb_gpio.v",
+            "unique_id":1,
+            "bind":{
+                "gpio_out[1:0]":{
+                    "loc":"led[1:0]",
+                    "direction":"output"
+                },
+                "gpio_in[3:2]":{
+                    "loc":"button[1:0]",
+                    "direction":"input"
+                }
+            }
+        }
+    },
+    "MEMORY":{
+        "mem1":{
+            "filename":"wb_sdram.v",
+            "bind":{
+                "o_sdram_clk":{
+                    "loc":"sdram_clk",
+                    "direction":"output"
+                },
+                "o_sdram_cke":{
+                    "loc":"cke",
+                    "direction":"output"
+                },
+                "o_sdram_cs_n":{
+                    "loc":"cs_n",
+                    "direction":"output"
+                },
+                "o_sdram_ras":{
+                    "loc":"ras",
+                    "direction":"output"
+                },
+                "o_sdram_cas":{
+                    "loc":"cas",
+                    "direction":"output"
+                },
+                "o_sdram_we":{
+                    "loc":"we",
+                    "direction":"output"
+                },
+                "o_sdram_bank[1:0]":{
+                    "loc":"ba[1:0]",
+                    "direction":"output"
+                },
+                "o_sdram_addr[11:0]":{
+                    "loc":"a[11:0]",
+                    "direction":"output"
+                },
+                "io_sdram_data[15:0]":{
+                    "loc":"dq[15:0]",
+                    "direction":"inout"
+                },
+                "o_sdram_data_mask[1]":{
+                    "loc":"dqmh",
+                    "direction":"output"
+                },
+                "o_sdram_data_mask[0]":{
+                    "loc":"dqml",
+                    "direction":"output"
+                }
+
+            }
+        }
+    },
+    "bind":{
+        "clk":{
+            "direction":"input",
+            "loc":"clk"
+        },
+        "rst":{
+            "direction":"input",
+            "loc":"rst"
+        }
+    },
+    "constraint_files":[
+        ]
+}

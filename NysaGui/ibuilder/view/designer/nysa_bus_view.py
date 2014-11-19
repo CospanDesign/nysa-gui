@@ -35,6 +35,7 @@ class NysaBusView(GraphicsWidget):
         #Create a scene
         self.scene = GraphicsScene(self.view, status, actions)
         super (NysaBusView, self).__init__(self.view, self.scene)
+        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
         self.boxes = {}
         self.show()
         self.fi = parent

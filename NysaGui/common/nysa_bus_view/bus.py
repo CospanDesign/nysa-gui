@@ -194,32 +194,6 @@ class Bus(Box):
         if self.dbg: print "BUS: get_slave_from_index()"
         return self.slaves[index]
 
-    def remove_slave(self, instance_name = None, index = None):
-        if self.dbg: print "BUS: remove_slave()"
-        found_index = -1
-        if instance_name is not None:
-            for i in range(len(self.slaves)):
-                if self.slaves[i].user_data == instance_name:
-                    found_index = i
-                    break
-
-        elif index is None:
-            raise FPGADesignerError("index and instance name are not declared in remove_slave is not in peripheral bus")
-        else:
-            found_index = index
-
-        slave = self.slaves[found_index]
-        self.slaves.remove(found_index)
-        self.scene().removeItem(slave)
-        self.recalculate_size_pos()
-
-    def move_slave(self, name = None, from_index = None, to_index = None):
-        if self.dbg: print "BUS: move_slave()"
-        slave = self.slaves[from_index]
-        self.slaves.insert(to_index, slave)
-        self.slaves.remove(from_index)
-        self.recalculate_size_pos()
-
     def update(self):
         if self.dbg: print "BUS: move()"
         self.master.update()
@@ -236,5 +210,40 @@ class Bus(Box):
     def get_bus_type(self):
         raise NotImplementedError("Subclass must implement this function")
 
+    '''
     def get_slave_count(self):
         return len(self.slaves)
+    '''
+    '''
+    def remove_slave(self, instance_name = None, index = None):
+        if self.dbg: print "BUS: remove_slave()"
+        found_index = -1
+        if instance_name is not None:
+            for i in range(len(self.slaves)):
+                if self.slaves[i].user_data == instance_name:
+                    found_index = i
+                    break
+
+        elif index is None:
+            raise FPGADesignerError("index and instance name are not declared in remove_slave is not in peripheral bus")
+        else:
+            found_index = index
+
+        slave = self.slaves[found_index]
+        #self.slaves.remove(found_index)
+        self.slaves.remove(slave)
+        self.scene().removeItem(slave)
+        self.recalculate_size_pos()
+        self.update()
+    '''
+
+    '''
+    def move_slave(self, name = None, from_index = None, to_index = None):
+        if self.dbg: print "BUS: move_slave()"
+        slave = self.slaves[from_index]
+        self.slaves.insert(to_index, slave)
+        self.slaves.remove(from_index)
+        self.recalculate_size_pos()
+    '''
+
+

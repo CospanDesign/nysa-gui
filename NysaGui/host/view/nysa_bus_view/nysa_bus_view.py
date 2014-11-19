@@ -74,6 +74,7 @@ class NysaBusView(QWidget):
         if n is None:
             return
         if config_dict["bus_type"] == "wishbone":
+            #print "config dict: %s" % str(config_dict)
             self.controller = WishboneController(config_dict, self.fbv.scene, self.status)
         else:
             raise NotImplemented("Implement AXI Interface!")

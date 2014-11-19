@@ -1,25 +1,37 @@
-# Copyright (c) 2014 Dave McCoy (dave.mccoy@cospandesign.com)
+# -*- coding: utf-8 *-*
 
-# This file is part of Nysa (wiki.cospandesign.com/index.php?title=Nysa).
+# Distributed under the MIT licesnse.
+# Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy of
+#this software and associated documentation files (the "Software"), to deal in
+#the Software without restriction, including without limitation the rights to
+#use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#of the Software, and to permit persons to whom the Software is furnished to do
+#so, subject to the following conditions:
 #
-# Nysa is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# any later version.
+#The above copyright notice and this permission notice shall be included in all
+#copies or substantial portions of the Software.
 #
-# Nysa is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Nysa; If not, see <http://www.gnu.org/licenses/>.
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#SOFTWARE.
 
+'''
+Log
+  6/24/2013:
+    -Initial commit
+  6/30/2013:
+    -Added Icons
+    -Changed view from table to tree view
+'''
 
-__author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
-
-import sys
 import os
+import sys
 import json
 
 from PyQt4.Qt import *
@@ -29,20 +41,58 @@ from PyQt4.QtGui import *
 from signal_tree_table import SignalTreeTableModel
 from constraint_tree_table import ConstraintTreeTableModel
 
-class Constraints(QWidget):
+class ConstraintEditor (QWidget, itab_item.ITabItem):
 
-    def __init__(self, actions, status, controller = None):
-        super (Constraints, self).__init__()
-        self.status = status
-        self.actions = actions
-        layout = QVBoxLayout()
+    output = None
+
+    def __init__(self, parent, nactions, output, controller, filename, project_name):
+        QWidget.__init__(self, parent)
+        itab_item.ITabItem.__init__(self)
+
+        #self.actions = actions.Actions()
+        #self.nactions = nactions
+        self.ID = filename
+        self.lang = "Constraint Editor"
+        self.output = output
+        self.project_name = project_name
         self.controller = controller
+        self.connect_callback = None
+        self.disconnect_callback = None
+
         self.signal_table = None
         self.pin_table = None
         self.connection_table = None
-        self.connect_callback = None
-        self.disconnect_callback = None
-        #self.initialize_view()
+
+        #mc = self.actions.ide.mainContainer
+        #self.connect(mc,
+        #             SIGNAL("currentTabChanged(QString)"),
+        #             self.tab_changed)
+
+    def tab_changed(self, tab_name):
+        print "Tab Changed to %s" % tab_name
+        if tab_name == self.ID:
+            self.refresh_tables()
+
+    def get_project(self):
+        return project
+
+    def clear_all(self):
+        self.signal_table.clear()
+
+        row_count = self.pin_model.rowCount()
+        for i in range(row_count):
+            self.pin_model.removeRow(0)
+        self.connection_table.clear()
+
+    def refresh_tables(self):
+        #Refresh all the tables
+        self.controller.refresh_constraint_editor()
+
+    def set_connect_callback(self, connect):
+        self.connect_callback = connect
+
+    def set_disconnect_callback(self, disconnect):
+        self.disconnect_callback = disconnect
 
     def initialize_view(self):
         layout = QVBoxLayout()
@@ -58,9 +108,9 @@ class Constraints(QWidget):
         pin_panel = QWidget(self)
 
         #Add the signal table to the unconnected layout
-        self.signal_table = SignalTable(self.controller)
-        self.connection_table = ConnectionTable(self.controller)
+        self.create_signal_table()
         self.create_pin_table()
+        self.create_connection_table()
 
         unconnected_layout.addWidget(self.signal_table)
         unconnected_panel.setLayout(unconnected_layout)
@@ -72,30 +122,15 @@ class Constraints(QWidget):
         splitter.addWidget(connect)
         splitter.addWidget(pin_panel)
 
+
         layout.addWidget(splitter)
         layout.addWidget(self.connection_table)
         self.setLayout(layout)
-        #self.show()
+        self.show()
 
-    def set_connect_callback(self, connect):
-        self.connect_callback = connect
-
-    def set_disconnect_callback(self, disconnect):
-        self.disconnect_callback = disconnect
-
-    def set_controller(self, controller):
-        self.controller = controller
-
-    def clear_all(self):
-        self.signal_table.clear()
-
-        row_count = self.pin_model.rowCount()
-        for i in range(row_count):
-            self.pin_model.removeRow(0)
-        self.connection_table.clear()
-
-    def refresh_tables(self):
-        self.controller.refresh_constraint_editor()
+    def create_signal_table(self):
+        #Setup the Signal Table
+        self.signal_table = SignalTable(self.controller)
 
     def create_pin_table(self):
         self.pin_table = QTableView()
@@ -118,32 +153,38 @@ class Constraints(QWidget):
         hh = self.pin_table.horizontalHeader()
         hh.setStretchLastSection(True)
 
-    def add_signal(self, color, module_name, name, signal_range, direction, used_list = []):
-        self.signal_table.add_signal(color, module_name, name, signal_range, direction, used_list)
+    def create_connection_table(self):
+        self.connection_table = ConnectionTable(self.controller)
+
+    def add_signal(self, color, module_name, name, signal_range, direction):
+        self.signal_table.add_signal(color, module_name, name, signal_range, direction)
 
     def remove_signal(self, module_name, port):
         self.signal_table.remove_signal(module_name, port)
- 
+        
     def add_pin(self, pin_name):
         pos = self.pin_model.rowCount()
-        self.status.Debug("Adding Pin")
+        self.output.Debug(self, "Adding Pin")
         self.pin_model.insertRows(pos, 1)
         self.pin_model.set_line_data([pin_name])
 
     def remove_pin(self, pin_name):
         pos = self.pin_model.find_pos([pin_name])
         if pos != -1:
-            self.status.Debug("Pin Table: Remove Position: %d" % pos)
+            self.output.Debug(self, "Pin Table: Remove Position: %d" % pos)
             success = self.pin_model.removeRow(pos)
             if success:
-                self.status.Debug("Removed Signal")
- 
+                self.output.Debug(self, "Removed Signal")
+            
     def add_connection(self, color, module_name, port, direction, pin_name, index = None):
         #print "Adding Connection: %s.%s" % (module_name, port)
         self.connection_table.add_connection(color, module_name, port, index, direction, pin_name)
 
     def remove_connection(self, module_name, port, index=None):
         self.connection_table.remove_connection(module_name, port, index)
+
+    def set_controller(self, controller):
+        self.controller = controller
 
     def notify_connection_delete(self, row_data):
         print "Disconnect Row Data: %s" % str(row_data)
@@ -158,11 +199,11 @@ class Constraints(QWidget):
         signal_index_list = self.signal_table.selectedIndexes()
         pin_index_list = self.pin_table.selectedIndexes()
         if len(signal_index_list) == 0:
-            self.status.Info("No signal is selected")
+            self.output.Info(self, "No signal is selected")
             return
 
         if len(pin_index_list) == 0:
-            self.status.Info("No pin is selected")
+            self.output.Info(self, "No pin is selected")
             return
 
         #XXX: Only grab the first row
@@ -188,8 +229,9 @@ class Constraints(QWidget):
         self.controller.connect_signal(module_name, signal_name, direction, index, loc)
 
         #print "Connection: %s" % str(connection)
-        #self.status.Info("Connect: %s" % str(connection))
- 
+        #self.output.Info(self, "Connect: %s" % str(connection))
+               
+
 class ConstraintModel(QAbstractTableModel):
     def __init__(self, data_in = [[]], header_data=[], parent=None, *args):
         QAbstractTableModel.__init__(self, parent, *args)
@@ -262,12 +304,9 @@ class SignalTable(QTreeView):
 
         self.expand(self.rootIndex())
 
-    def add_signal(self, color, module_name, name, signal_range, direction, used_list = []):
-        print "add signal: %s" % str(used_list)
-        if len(used_list) > 0:
-            print "used list: %s" % str(used_list)
+    def add_signal(self, color, module_name, name, signal_range, direction):
         #fields = [module_name, name, signal_range, direction]
-        self.m.addRecord(color, module_name, name, signal_range, direction, used_list = used_list)
+        self.m.addRecord(color, module_name, name, signal_range, direction)
 
     def remove_signal(self, module_name, name, index=-1):
         self.m.removeRecord(module_name, name)

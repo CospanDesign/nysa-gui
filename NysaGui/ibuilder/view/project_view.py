@@ -68,15 +68,20 @@ class ProjectView(QWidget):
 
     def set_controller(self, controller):
         self.designer.set_controller(controller)
+        self.constraints.set_controller(controller)
+        #controller.initialize_constraint_editor(self.constraints)
 
     def get_desigenr_scene(self):
         return self.designer.get_scene()
+
+    def get_constraint_editor(self):
+        return self.constraints
 
     def get_view_names(self):
         return VIEWS
 
     def add_tab(self, name, view):
-        color = CONFIG_DICT[name]
+        color = CONFIG_DICT[str(name)]
         pm = QPixmap(QSize(16, 16))
         pm.fill(color)
         icon = QIcon(pm)
@@ -86,7 +91,8 @@ class ProjectView(QWidget):
         return self.designer.get_scene()
 
     def get_color(self, name):
-        return CONFIG_DICT[name]
+        return CONFIG_DICT[str(name)]
+
 
     '''
     def setup_tabs( self,

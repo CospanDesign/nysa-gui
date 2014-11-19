@@ -201,11 +201,14 @@ class GraphicsScene(gs):
         if self.dbg: print "\tGetting Arbitor Master connected for %s which is: %s" % (arbitor_name, slave.box_name)
         return slave
 
+    '''
     def remove_slave(self, slave):
         if self.dbg: print "GS: Remove slave"
         index = slave.bus.get_slave_index(slave.box_name)
         bus_type = slave.bus.get_bus_type()
-        self.fd.remove_slave(bus_type, index)
+        #self.fd.remove_slave(bus_type, index)
+        slave.bus.remove_slave(index = index)
+    '''
 
     def clear_links(self):
         self.links = []

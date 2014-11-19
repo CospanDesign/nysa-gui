@@ -64,8 +64,8 @@ from defines import HI_COLOR
 from defines import PS_COLOR
 from defines import MS_COLOR
 
-import utils
 from nysa.ibuilder.lib import constraint_utils as cu
+from nysa.ibuilder.lib import utils
 
 no_detect_ports = [
     "rst",
@@ -133,12 +133,6 @@ class Controller (QObject):
         self.canvas = canvas
         self.canvas.set_controller(self)
 
-    def set_fpga_designer(self, fd):
-        self.fd = fd
-
-    def add_user_dir(self, user_dir):
-        self.model.add_user_path(user_dir)
-
     def remove_user_dir(self, user_dir):
         self.model.remove_user_path(user_dir)
 
@@ -174,8 +168,8 @@ class Controller (QObject):
         """Add a box to the canvas"""
         scene = self.canvas.scene()
         if box_type == BoxType.SLAVE:
-            fn = utils.find_module_filename(name, self.get_user_dirs())
-            fn = utils.find_rtl_file_location(fn, self.get_user_dirs())
+            fn = utils.find_module_filename(name, utils.get_local_verilog_paths())
+            fn = utils.find_rtl_file_location(fn, utils.get_local_verilog_paths())
 
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
@@ -282,15 +276,181 @@ class Controller (QObject):
 
     def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
         #Remove signal from model
-        print "Controller: Disconnect"
+        #print "Controller: Disconnect"
         uname = self.model.get_unique_from_module_name(module_name)
         self.model.unbind_port(uname, signal_name, index)
 
     def get_model(self):
         return self.model
 
+    def initialize_constraint_editor(self, constraint_editor):
+        #print "Initialize constraint editor"
+        self.constraint_editor = constraint_editor
+        self.constraint_editor.set_connect_callback(self.connect_signal)
+        self.constraint_editor.set_disconnect_callback(self.disconnect_signal)
+        self.constraint_editor.initialize_view()
+        self.refresh_constraint_editor()
+
     def get_project_location(self):
         return self.model.get_project_location()
+
+    def refresh_constraint_editor(self, name = None):
+        #If a name is present just populate connections for that one item
+        #   e.g. the host interface, master, etc...
+        if self.constraint_editor is None:
+            print "constraint editor is none"
+            return
+
+        mbd = self.model.get_consolodated_master_bind_dict()
+        self.constraint_editor.clear_all()
+
+        if name is None or name == "Host Interface":
+            #for key in mbd:
+            #    print "%s: %s" % (key, mbd[key])
+
+            #print "Get bindings for host_interface"
+            hib = self.model.get_host_interface_bindings()
+            #print "Get ports for host interface"
+            hip = copy.deepcopy(self.model.get_host_interface_ports())
+            for direction in hip:
+                #print "direction: %s" % direction
+                #Go through all the signals in this particular direction
+                signals = hip[direction].keys()
+                for signal in signals:
+                    #Remove any of the standard 'reset', 'clock' or wishbone signals
+                    if signal in no_detect_ports:
+                        #print "Remove: %s" % signal
+                        del(hip[direction][signal])
+                        continue
+
+                #print "\tsignals: %s" % str(hip[direction].keys())
+
+                #print "hib: %s" % str(hib)
+
+            bound_count = 0
+            for key in hib:
+                if not hib[key]["range"]:
+                    self.constraint_editor.add_connection(color = HI_COLOR,
+                                                          module_name = "Host Interface",
+                                                          port = key,
+                                                          direction = hib[key]["direction"],
+                                                          pin_name = hib[key]["loc"])
+                else:
+                    indexes = copy.deepcopy(hib[key].keys())
+                    indexes.remove("range")
+                    bound_count = 0
+                    for i in indexes:
+                        bound_count += 1
+                        #n = "%s[%d]" % (key, i)
+                        self.constraint_editor.add_connection(color = HI_COLOR,
+                                                              module_name = "Host Interface",
+                                                              port = key,
+                                                              direction = hib[key][i]["direction"],
+                                                              pin_name = hib[key][i]["loc"],
+                                                              index = i)
+
+                for direction in hip:
+                    signals = hip[direction].keys()
+                    #Remove signals from ports list
+                    if key in signals:
+                        if not hib[key]["range"]:
+                            #print "remove an item that has only no range: %s" % key
+                            del(hip[direction][key])
+                        else:
+                            print "Signal: %s" % key
+                            print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
+                            if bound_count == ports[key]["size"]:
+                                #print "All of the items in the bus are constrained"
+                                #signals.remove[key]
+                                del(hip[direction][key])
+                    else:
+                        #print "%s is not a port of %s" % (key, name)
+                        pass
+
+
+            #print "Hports keys: %s" % str(signals)
+            for direction in hip:
+                for signal in hip[direction].keys():
+                    #print "signal: %s: %s" % (signal, str(hip[direction][signal]))
+                    if hip[direction][signal]["size"] > 1:
+                        rng = (hip[direction][signal]["max_val"], hip[direction][signal]["min_val"])
+                        self.constraint_editor.add_signal(HI_COLOR,
+                                                          "Host Interface",
+                                                          signal,
+                                                          rng,
+                                                          direction)
+                    else:
+                        self.constraint_editor.add_signal(HI_COLOR,
+                                                          "Host Interface",
+                                                          signal,
+                                                          None,
+                                                          direction)
+
+
+        if name is None or name != "Host Interface":
+            #Call the bus specific interface
+            self.bus_refresh_constraint_editor(name)
+
+        #populate the constraint view
+        cfiles = self.model.get_constraint_filenames()
+        constraints = []
+        for f in cfiles:
+            constraints.extend(utils.get_net_names(f))
+
+        #print "constraints: %s" % str(constraints)
+
+        #Don't let the user select where the clk and rst are, let the board file do this
+        if "clk" in constraints:
+            constraints.remove("clk")
+        if "rst" in constraints:
+            constraints.remove("rst")
+        if "rst_n" in constraints:
+            constraints.remove("rst_n")
+
+        #Go through all the connected signals and create a list of constraint that are not used
+        mbd = self.model.get_expanded_master_bind_dict()
+        #print "mbd: %s" % str(mbd)
+        #print "constraints: %s" % str(constraints)
+        for module in mbd:
+            module_dict = mbd[module]
+            for signal in module_dict:
+                signal_dict = module_dict[signal]
+
+                #print "signal: %s" % str(signal)
+                if signal_dict["range"]:
+                    #print "check range"
+                    ikeys = copy.deepcopy(signal_dict.keys())
+                    ikeys.remove("range")
+                    for i in ikeys:
+                        if signal_dict[i]["loc"] in constraints:
+                            #print "Checking: %s" % signal_dict[i]["loc"]
+                            constraints.remove(signal_dict[i]["loc"])
+                else:
+                    if signal_dict["loc"] in constraints:
+                        constraints.remove(signal_dict["loc"])
+
+        for c in constraints:
+            self.constraint_editor.add_pin(c)
+
+    def bus_refresh_constraint_editor(self, name = None):
+        raise NotImplementedError("This function should be subclassed")
+
+    def get_constraint_editor(self):
+        return self.constraint_editor
+
+    def connect_signal(self, module_name, signal_name, direction, index, pin_name):
+        #print "Connect"
+        self.model.bind_port(module_name, signal_name, pin_name, index)
+        self.refresh_constraint_editor()
+
+    def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
+        #Remove signal from model
+        #print "Controller: Disconnect"
+        uname = self.model.get_unique_from_module_name(module_name)
+        self.model.unbind_port(uname, signal_name, index)
+        self.constraint_editor.remove_connection(module_name, signal_name, index)
+        self.refresh_constraint_editor()
+
 
 
 

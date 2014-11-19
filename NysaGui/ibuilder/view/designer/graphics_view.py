@@ -72,6 +72,5 @@ class GraphicsView(gv):
         super (GraphicsView, self).showEvent(sevent)
 
     def dropEvent(self, event):
-        #print "My GV: Drop Event"
         super(GraphicsView, self).dropEvent(event)
 

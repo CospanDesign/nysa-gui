@@ -32,13 +32,16 @@ def get_unique_name(name,
     return unique_name
 
 
-class Node:
+class Node (object):
+
     name = ""
     unique_name = ""
     node_type = NodeType.SLAVE
     slave_type = SlaveType.PERIPHERAL
     slave_index = 0
-    parameters = {}
+    project_tags = {}
+    module_tags = {}
+    ports = {}
     bindings = {}
 
     def __init__(self):
@@ -47,8 +50,10 @@ class Node:
         self.node_type = NodeType.SLAVE
         self.slave_type = SlaveType.PERIPHERAL
         self.slave_index = 0
-        self.parameters = {}
+        self.project_tags = {}
+        self.module_tags = {}
         self.bindings = {}
+        self.ports = {}
 
     def copy(self):
         nn = Node()
@@ -57,28 +62,40 @@ class Node:
         nn.node_type = self.node_type
         nn.slave_type = self.slave_type
         nn.slave_index = self.slave_index
-        nn.parameters = self.parameters
+        nn.project_tags = self.project_tags.copy()
+        nn.module_tags = self.module_tags.copy()
         nn.bindings = self.bindings.copy()
+        nn.ports = self.ports.copy()
         return nn
-
 
 class GraphManager:
     def __init__(self):
         """Initialize the controller."""
         self.graph = nx.Graph()
 
+    #Low Level Node Control
     def clear_graph(self):
         """Resets the graph."""
         self.graph = nx.Graph()
 
-    def add_node(self, name, node_type, slave_type=SlaveType.PERIPHERAL,
-          debug=False):
+    def add_node(self,
+                    name,
+                    node_type,
+                    slave_type = SlaveType.PERIPHERAL,
+                    project_tags = {},
+                    module_tags = {},
+                    bindings = {},
+                    ports = {}):
         '''Adds a node to this graph.'''
         node = Node()
         node.name = name
         node.node_type = node_type
         node.slave_type = slave_type
-#       print "add node bind id: " + str(id(node))
+        node.module_tags = module_tags
+        node.project_tags = project_tags
+        node.bindings = bindings
+        node.ports = ports
+        #print "add node bind id: " + str(id(node))
 
         if slave_type == SlaveType.PERIPHERAL:
             s_count = self.get_number_of_peripheral_slaves()
@@ -89,13 +106,130 @@ class GraphManager:
         node.unique_name = get_unique_name(name, node_type,
                                             slave_type, node.slave_index)
 
-        if debug:
-            print (("unique_name: %s" % node.unique_name))
-
+        if node.unique_name in self.graph.node:
+            print "%s is already in graph: %s" % node.unique_name
         self.graph.add_node(str(node.unique_name))
         self.graph.node[node.unique_name] = node
 
         return node.unique_name
+
+    def get_node_names(self):
+        """Get all names usually for the purpose of iterating through the
+        graph."""
+        return self.graph.nodes(False)
+
+    def get_nodes_dict(self):
+        graph_dict = {}
+        graph_list = self.graph.nodes(True)
+        for name, item in graph_list:
+            graph_dict[name] = item
+        return graph_dict
+
+    def get_node(self, name, debug=False):
+        """Gets a node by the unique name."""
+        g = self.get_nodes_dict()
+        if debug:
+            print (("%s: node dict: %s" %
+              (__file__, str(self.get_nodes_dict()))))
+        if g is None:
+            raise  IBuilderError("Node with unique name: %s does not exists" %
+                  (name))
+        #print "G: %s" % str(g)
+        #print "Name: %s" % str(name)
+        return g[name]
+
+    def connect_nodes(self, node1, node2):
+        """Connects two nodes together."""
+        #print "Connecting: %s - %s" % (node1, node2)
+        self.graph.add_edge(node1, node2)
+        self.graph[node1][node2]["name"] = ""
+
+    def set_edge_name(self, node1_name, node2_name, edge_name):
+        """Find the edge connected to the two given nodes."""
+        self.graph[node1_name][node2_name]["name"] = edge_name
+
+    def get_edge_name(self, node1_name, node2_name):
+        return self.graph[node1_name][node2_name]["name"]
+
+    def remove_node(self, name):
+        """Removes a node using the unique name to find it."""
+
+        # Since the master and slave are always constant, the only nodes that
+        # can be removed are the slaves.
+
+        # Procedure:
+        # - Search for the connections between the interconnect and the slave.
+        # - Sever the connection.
+        # - If the slave has a master for arbitration purposes, sever that
+        #   connection.
+
+        self.graph.remove_node(name)
+
+    def get_size(self):
+        return len(self.graph)
+
+    def disconnect_nodes(self, node1_name, node2_name):
+        """If the two nodes are connected disconnect them."""
+        self.graph.remove_edge(node1_name, node2_name)
+
+    def get_number_of_connections(self):
+        return self.graph.number_of_edges()
+
+    #Host Interface Control
+    def get_host_interface_node(self):
+        graph_dict = self.get_nodes_dict()
+        for name in graph_dict:
+            node = self.get_node(name)
+            if node.node_type == NodeType.HOST_INTERFACE:
+                return node
+
+    #SLave Control
+    def is_slave_connected_to_slave(self, slave):
+        for nb_name in self.graph.neighbors(slave):
+            nb = self.get_node(nb_name)
+            if nb.node_type == NodeType.SLAVE:
+                return True
+        return False
+
+    def get_connected_slaves(self, slave_master_name):
+        slaves = {}
+        for nb_name in self.graph.neighbors(slave_master_name):
+            nb = self.get_node(nb_name)
+            if nb.node_type == NodeType.SLAVE:
+                edge_name = self.get_edge_name(slave_master_name, nb_name)
+                slaves[edge_name] = nb.unique_name
+        return slaves
+
+    def get_number_of_slaves(self, slave_type):
+        '''Gets the number of slaves.  Raises a SaveError if there is no
+        slave type or the slave type is SlaveType.PERIPHERAl.'''
+        if slave_type is None:
+            raise SlaveError("Slave type must be specified")
+
+        if slave_type == SlaveType.PERIPHERAL:
+            return self.get_number_of_peripheral_slaves()
+
+        return self.get_number_of_memory_slaves()
+
+    def get_number_of_peripheral_slaves(self):
+        '''Counts and returns the number of peripheral slaves.'''
+        count = 0
+        gd = self.get_nodes_dict()
+        for name in gd:
+            if gd[name].node_type == NodeType.SLAVE and \
+              gd[name].slave_type == SlaveType.PERIPHERAL:
+                count += 1
+        return count
+
+    def get_number_of_memory_slaves(self):
+        '''Counts and returns the number of memory slaves.'''
+        count = 0
+        gd = self.get_nodes_dict()
+        for name in gd:
+            if gd[name].node_type == NodeType.SLAVE and \
+                gd[name].slave_type == SlaveType.MEMORY:
+                count += 1
+        return count
 
     def remove_slave(self, slave_type, slave_index, debug = False):
         # Can't remove the DRT so if the index is 0 then don't try.
@@ -134,13 +268,6 @@ class GraphManager:
         node.name = new_name
         node.unique_name = unique_name
         self.graph = nx.relabel_nodes(self.graph, {current_name: unique_name})
-
-    def get_host_interface_node(self):
-        graph_dict = self.get_nodes_dict()
-        for name in graph_dict:
-            node = self.get_node(name)
-            if node.node_type == NodeType.HOST_INTERFACE:
-                return node
 
     def fix_slave_indexes(self):
         pcount = self.get_number_of_slaves(SlaveType.PERIPHERAL)
@@ -401,164 +528,11 @@ class GraphManager:
             for name in graph_dict:
                 print (("key: %s" % name))
 
-    def remove_node(self, name):
-        """Removes a node using the unique name to find it."""
-
-        # Since the master and slave are always constant, the only nodes that
-        # can be removed are the slaves.
-
-        # Procedure:
-        # - Search for the connections between the interconnect and the slave.
-        # - Sever the connection.
-        # - If the slave has a master for arbitration purposes, sever that
-        #   connection.
-
-        self.graph.remove_node(name)
-
-    def get_size(self):
-        return len(self.graph)
-
-    def get_node_names(self):
-        """Get all names usually for the purpose of iterating through the
-        graph."""
-        return self.graph.nodes(False)
-
-    def get_nodes_dict(self):
-        graph_dict = {}
-        graph_list = self.graph.nodes(True)
-        for name, item in graph_list:
-            graph_dict[name] = item
-        return graph_dict
-
-    def get_node(self, name, debug=False):
-        """Gets a node by the unique name."""
-        g = self.get_nodes_dict()
-        if debug:
-            print (("%s: node dict: %s" %
-              (__file__, str(self.get_nodes_dict()))))
-        if g is None:
-            raise  IBuilderError("Node with unique name: %s does not exists" %
-                  (name))
-        #print "G: %s" % str(g)
-        #print "Name: %s" % str(name)
-        return g[name]
-
-    def connect_nodes(self, node1, node2):
-        """Connects two nodes together."""
-        #print "Connecting: %s - %s" % (node1, node2)
-        self.graph.add_edge(node1, node2)
-        self.graph[node1][node2]["name"] = ""
-
-    def set_edge_name(self, node1_name, node2_name, edge_name):
-        """Find the edge connected to the two given nodes."""
-        self.graph[node1_name][node2_name]["name"] = edge_name
-
-    def get_edge_name(self, node1_name, node2_name):
-        return self.graph[node1_name][node2_name]["name"]
-
-    def is_slave_connected_to_slave(self, slave):
-        for nb_name in self.graph.neighbors(slave):
-            nb = self.get_node(nb_name)
-            if nb.node_type == NodeType.SLAVE:
-                return True
-        return False
-
-    def get_connected_slaves(self, slave_master_name):
-        slaves = {}
-        for nb_name in self.graph.neighbors(slave_master_name):
-            nb = self.get_node(nb_name)
-            if nb.node_type == NodeType.SLAVE:
-                edge_name = self.get_edge_name(slave_master_name, nb_name)
-                slaves[edge_name] = nb.unique_name
-        return slaves
-
-    def disconnect_nodes(self, node1_name, node2_name):
-        """If the two nodes are connected disconnect them."""
-        self.graph.remove_edge(node1_name, node2_name)
-
-    def get_number_of_connections(self):
-        return self.graph.number_of_edges()
-
-    def get_number_of_slaves(self, slave_type):
-        '''Gets the number of slaves.  Raises a SaveError if there is no
-        slave type or the slave type is SlaveType.PERIPHERAl.'''
-        if slave_type is None:
-            raise SlaveError("Slave type must be specified")
-
-        if slave_type == SlaveType.PERIPHERAL:
-            return self.get_number_of_peripheral_slaves()
-
-        return self.get_number_of_memory_slaves()
-
-    def get_number_of_peripheral_slaves(self):
-        '''Counts and returns the number of peripheral slaves.'''
-        count = 0
-        gd = self.get_nodes_dict()
-        for name in gd:
-            if gd[name].node_type == NodeType.SLAVE and \
-              gd[name].slave_type == SlaveType.PERIPHERAL:
-                count += 1
-        return count
-
-    def get_number_of_memory_slaves(self):
-        '''Counts and returns the number of memory slaves.'''
-        count = 0
-        gd = self.get_nodes_dict()
-        for name in gd:
-            if gd[name].node_type == NodeType.SLAVE and \
-                gd[name].slave_type == SlaveType.MEMORY:
-                count += 1
-        return count
-  ##############################################################################
-  #                              Control Stuff                                 #
-  ##############################################################################
-
-    def set_parameters(self, name, parameters, debug=False):
-        """Sets all the parameters from the core."""
-        if debug:
-            print (("\t\tMODUE NAME (START): %s" % parameters["module"]))
-        g = self.get_nodes_dict()
-        g[name].parameters = parameters
-
-        # TODO Re-organize the way that ports are put into the parameters.
-        pdict = parameters["ports"]
-        pdict_out = dict()
-        direction_names = ["input", "output", "inout"]
-
-        if debug:
-            print (("%s node dict: %s\n" % (__file__, str(g[name].parameters))))
-            print (("\t%s parameters: %s" % (__file__, str(pdict))))
-        for d in direction_names:
-            for n in pdict[d]:
-                pdict_out[n] = {}
-                pdict_out[n]["direction"] = d
-                if "size" in pdict[d][n]:
-                    pdict_out[n]["size"] = pdict[d][n]["size"]
-                if "max_val" in pdict[d][n]:
-                    pdict_out[n]["max_val"] = pdict[d][n]["max_val"]
-                if "min_val" in pdict[d][n]:
-                    pdict_out[n]["min_val"] = pdict[d][n]["min_val"]
-
-        g[name].parameters["ports"] = {}
-        g[name].parameters["ports"] = pdict_out
-        if debug:
-            print (("\t\tMODULE NAME: %s" % parameters["module"]))
-
-    def get_parameters(self, name):
-        g = self.get_nodes_dict()
-        return g[name].parameters
-
-    def set_config_bindings(self, name, bindings):
-        node = self.get_node(name)
-        node.bindings = bindings
-        #for p in bindings:
-        #    node.bindings[p] = {}
-        #    node.bindings[p]["loc"] = bindings[p]["loc"]
-        #    node.bindings[p]["direction"] = bindings[p]["direction"]
-
+    #Bindings
     def bind_port(self, name, port_name, loc, index = None, debug=False):
         node = self.get_node(name)
-        ports = copy.deepcopy(node.parameters["ports"])
+        ports = self.get_node_ports(name)
+        #ports = copy.deepcopy(node.ports)
         bindings = self.get_node_bindings(name)
 
         #print "ports: %s" % str(ports)
@@ -612,8 +586,55 @@ class GraphManager:
 
         del(node.bindings[port_name])
 
+    def set_config_bindings(self, name, bindings):
+        node = self.get_node(name)
+        node.bindings = bindings
+        #for p in bindings:
+        #    node.bindings[p] = {}
+        #    node.bindings[p]["loc"] = bindings[p]["loc"]
+        #    node.bindings[p]["direction"] = bindings[p]["direction"]
+
+    #Graph Node Properties
+    def set_node_bindings(self, name, bindings):
+        self.get_node(name).bindings = bindings
+
     def get_node_bindings(self, name):
         return self.get_node(name).bindings
+
+    def set_node_project_tags(self, name, project_tags, debug=False):
+        self.get_node(name).project_tags = project_tags
+
+    def get_node_project_tags(self, name):
+        return self.get_node(name).project_tags
+
+    def set_node_module_tags(self, name, module_tags):
+        self.get_node(name).module_tags = module_tags
+
+    def get_node_module_tags(self, name):
+        return self.get_node(name).module_tags
+
+    def update_node_ports(self, name):
+        node = self.get_node(name)
+        module_tags = node.module_tags
+        #for n in self.graph.nodes():
+        #    print "Node: %s" % n
+        #print "update_node_ports: name: %s" % str(name)
+        #print "hi node object: %s" % str(node)
+        #print "tags: %s" % str(module_tags)
+
+        if len(module_tags) == 0:
+            self.get_node(name)
+            node.ports = {}
+            return
+
+        #ports = cu.expand_ports(module_tags["ports"])
+        ports = module_tags["ports"]
+        #print "ports: %s" % str(ports)
+        self.get_node(name).ports = ports
+        #print "hi ports: %s" % str(self.get_node(name).ports)
+
+    def get_node_ports(self, name):
+        return self.get_node(name).ports
 
 #  def bind_pin_to_port(self, name, port, loc, debug = False):
 #    """
@@ -621,6 +642,8 @@ class GraphManager:
 #    """
 #    g = self.get_nodes_dict()
 #    if debug:
-#      print "Dictionary: " + str(g[name].parameters["ports"][port])
+#      print "Dictionary: " + str(g[name].project_tags["ports"][port])
 #    node = self.get_node(name)
-#    g[name].parameters["ports"][port]["port"] = loc
+#    g[name].project_tags["ports"][port]["port"] = loc
+
+

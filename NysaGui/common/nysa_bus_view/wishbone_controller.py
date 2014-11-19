@@ -50,6 +50,7 @@ from peripheral_slave import PeripheralSlave
 from memory_slave import MemorySlave
 
 from nysa.ibuilder.lib import utils
+from nysa.ibuilder.lib import verilog_utils as vutils
 from nysa.ibuilder.lib import wishbone_utils
 from nysa.ibuilder.lib import ibuilder_error
 
@@ -100,6 +101,10 @@ class WishboneController (controller.Controller):
         m.link_memory_bus(mb)
         self.editable = False
         self.refresh_slaves()
+        #self.initialize_bindings()
+
+    #def initialize_bindings(self):
+    #    pass
 
     def add_arbitor_link(self, arb_master, slave):
         self.add_link(arb_master, slave, lt.arbitor, st.right)
@@ -115,9 +120,12 @@ class WishboneController (controller.Controller):
         slave_type = SlaveType.PERIPHERAL
         nslaves = self.model.get_number_of_slaves(slave_type)
         slave_list = []
+        paths = utils.get_local_verilog_paths()
         for i in range(nslaves):
             sitem = {}
             sitem["instance_name"] = self.model.get_slave_name(slave_type, i)
+            #print "peripheral instance name: %s" % self.model.get_slave_name(slave_type, i)
+            #sitem["parameters"] = self.model.get_slave_parameters(slave_type, i)
             slave_list.append(sitem)
 
         pb = self.boxes["peripheral_bus"]
@@ -131,6 +139,8 @@ class WishboneController (controller.Controller):
         for i in range(nslaves):
             sitem = {}
             sitem["instance_name"] = self.model.get_slave_name(slave_type, i)
+            #print "memory instance name: %s" % self.model.get_slave_name(slave_type, i)
+            #sitem["parameters"] = self.model.get_slave_parameters(slave_type, i)
             slave_list.append(sitem)
 
         mb = self.boxes["memory_bus"]
@@ -222,7 +232,7 @@ class WishboneController (controller.Controller):
             data = event.mimeData().data("application/flowchart-data")
             #position = self.fd.position()
 
-            #print "Data: %s" % str(data)
+            print "Data: %s" % str(data)
             d = json.loads(str(data))
             if event.dropAction() == Qt.MoveAction:
                 self.s.Debug("Moving Slave")
@@ -247,33 +257,43 @@ class WishboneController (controller.Controller):
                             self.s.Debug("\tSearching peripheral bus")
                             pb = self.boxes["peripheral_bus"]
                             index = pb.find_index_from_position(position)
-                            self.add_slave(d, index)
+                            name = self.model.get_unique_slave_name(d["data"], "peripheral_bus")
+                            self.model.add_peripheral_slave(name, module_tags = d["data"], index = index)
+                            #self.add_slave(d, index)
 
                         else:
                             mb = self.boxes["memory_bus"]
                             index = mb.find_index_from_position(position)
-                            self.add_slave(d, index)
+                            name = self.model.get_unique_slave_name(d["data"], "memory_bus")
+                            #self.add_slave(d, index)
+                            self.model.add_memory_slave(name, module_tags = d["data"], index = index)
             event.accept()
         else:
             event.ignore()
-
+        self.refresh_slaves()
+        self.refresh_constraint_editor()
 
     def move_slave(self, bus, slave_name, to_index):
         self.s.Debug("VC: Moving Slave")
         from_index = bus.get_slave_index(slave_name)
-        if bus.get_slave_count() == 1:
+        #print "bus type: %s" % bus.get_bus_type()
+        nslaves = 0
+        slave_type = None
+        if bus.get_bus_type() == "peripheral_bus":
+            slave_type = SlaveType.PERIPHERAL
+        else:
+            slave_type = SlaveType.MEMORY
+
+        nslaves = self.model.get_number_of_slaves(slave_type)
+        #print "nslaves: %d" % nslaves
+
+        if nslaves == 1:
             self.refresh_slaves()
             return
         if from_index == to_index:
             self.refresh_slaves()
             return
 
-        slave_type = None
-
-        if bus.get_bus_type() == "peripheral_bus":
-            slave_type = SlaveType.PERIPHERAL
-        else:
-            slave_type = SlaveType.MEMORY
 
         try:
             self.model.move_slave(slave_name = slave_name,
@@ -284,50 +304,6 @@ class WishboneController (controller.Controller):
 
         except ibuilder_error.SlaveError, err:
             pass
-
-        self.refresh_slaves()
-
-    def add_slave(self, slave_dict, index):
-        self.s.Debug("WBC: Adding slave")
-        module_name = slave_dict["name"]
-        slave_type = None
-        if slave_dict["type"] == "peripheral_slave":
-            slave_type = SlaveType.PERIPHERAL
-        elif slave_dict["type"] == "memory_slave":
-            slave_type = SlaveType.MEMORY
-
-        if slave_type is None:
-            raise fpga_deisgner.FPGADesignerError("Unrecognized slave type: %s" % slave_type)
-
-        fn = utils.find_module_filename(module_name, self.get_user_dirs())
-        fn = utils.find_rtl_file_location(fn, self.get_user_dirs())
-
-        #Need to create a new name for the slave
-
-        #start with the module name
-        name = module_name
-
-        self.s.Debug("WBC: Getting number of slaves")
-        nslaves = self.model.get_number_of_slaves(slave_type)
-        snames = []
-        #Get all the slave names
-        for i in range(nslaves):
-            snames.append(self.model.get_slave_name(slave_type, i))
-
-        unique = False
-        append_num = 0
-        temp_name = "%s_%d" % (name, append_num)
-
-        while (temp_name in snames):
-            append_num += append_num + 1
-            temp_name = "%s_%d" % (name, append_num)
-
-        name = temp_name
-        try:
-            self.model.add_slave(name, fn, slave_type, index)
-        except ibuilder_error.SlaveError, err:
-            #Can't a non DRT device to address 0 of the peripheral bus
-            self.model.add_slave(name, fn, slave_type, 1)
 
         self.refresh_slaves()
         self.refresh_constraint_editor()
@@ -342,5 +318,214 @@ class WishboneController (controller.Controller):
         self.model.remove_slave(slave_type, index)
         self.refresh_slaves()
         self.refresh_constraint_editor()
+
+    def get_slave_tags(self, bus_name, slave_name):
+        slave_type = None
+        bus = None
+        index = None
+
+        if bus_name == "Peripherals":
+            slave_type = SlaveType.PERIPHERAL
+            bus = self.boxes["peripheral_bus"]
+        else:
+            slave_type = SlaveType.MEMORY
+            bus = self.boxes["memory_bus"]
+
+        uname = self.model.get_unique_from_module_name(slave_name)
+        tags = self.model.get_node_module_tags(uname)
+        print "tags: %s" % str(tags)
+
+        #index = bus.get_slave_index(slave_name)
+        #slave = bus.get_slave(slave_name)
+        #module_name = self.model.get_slave_name(slave_type, index)
+        #print "module name: %s" % module_name
+        #slave = bus.get_slave_from_index(index)
+        #print "slave: %s" % slave
+        return tags
+
+    def bus_refresh_constraint_editor(self, name = None):
+        self.dbg = False
+        if self.dbg: print "Wishbone Specific Constraint editor refresh"
+        if name is not None:
+            return
+
+        #Not View Only Mode
+        if self.dbg: print "Display all modules"
+        pcount = self.model.get_number_of_peripheral_slaves()
+        mcount = self.model.get_number_of_memory_slaves()
+
+        for i in range(pcount):
+            name = self.model.get_slave_name(SlaveType.PERIPHERAL, i)
+            ports = copy.deepcopy(self.model.get_slave_ports(SlaveType.PERIPHERAL, i))
+            #self.dbg = True
+            if self.dbg: print "%s ports: %s" % (name, str(ports))
+            bindings = self.model.get_slave_bindings(SlaveType.PERIPHERAL, i)
+            #signals = ports.keys()
+            #signals = bindings.keys()
+            #Add Peripheral Signals
+            #for key in bindings:
+            bound_count = 0
+            used_indexes = []
+            for key in bindings:
+                #print "binding: %s" % str(key)
+                if not bindings[key]["range"]:
+                    self.constraint_editor.add_connection(color = PS_COLOR,
+                                                          module_name = name,
+                                                          port = key,
+                                                          direction = bindings[key]["direction"],
+                                                          pin_name = bindings[key]["loc"])
+                else:
+                    used_indexes = []
+                    indexes = copy.deepcopy(bindings[key].keys())
+                    used_indexes = copy.deepcopy(bindings[key].keys())
+                    if self.dbg: print "Indexes: %s" % str(indexes)
+                    indexes.remove("range")
+                    used_indexes.remove("range")
+                    bound_count = 0
+                    for i in indexes:
+                        bound_count += 1
+                        #XXX: This should change to accomodate the tree constraints view
+                        #n = "%s[%d]" % (key, i)
+                        self.constraint_editor.add_connection(color = PS_COLOR,
+                                                              module_name = name,
+                                                              port = key,
+                                                              direction = bindings[key][i]["direction"],
+                                                              pin_name = bindings[key][i]["loc"],
+                                                              index = i)
+
+
+                #Subtract out the ports were used so we don't display them to the user
+                for direction in ports:
+                    signals = ports[direction].keys()
+                    for signal in signals:
+                        if signal != key:
+                            continue
+                        print "Found %s == %s" % (signal, key)
+                        if not bindings[key]["range"]:
+                            del(ports[direction][signal])
+                        else:
+                            if bound_count == ports[direction][signal]["size"]:
+                                if self.dbg: print "All of the items in the bus are constrained"
+                                del(ports[direction][signal])
+                            else:
+                                if self.dbg: print "%s is not a port of %s" % (key, signal)
+                                print "indexes used for %s: %s" % (signal, str(used_indexes))
+                                ports[direction][signal]["used"] = copy.deepcopy(used_indexes)
+
+                                #XXX: Need a way to detect partial vectors, sometimes a user will only use part of a vector
+
+
+            #Show the available peripheral ports in the top left
+            for direction in ports:
+                for signal in ports[direction]:
+                    if signal == "clk":
+                        continue
+                    if signal == "rst":
+                        continue
+                    if wishbone_utils.is_wishbone_bus_signal(signal):
+                        continue
+
+                    #print "key: %s" % signal
+                    s = ports[direction][signal]
+                    if "used" not in s:
+                        s["used"] = []
+
+                    if s["size"] > 1:
+                        print "used: %s" % str(s["used"])
+                        rng = (s["max_val"], s["min_val"])
+                        self.constraint_editor.add_signal(PS_COLOR,
+                                                          name,
+                                                          signal,
+                                                          rng,
+                                                          direction,
+                                                          s["used"])
+                    
+                    else:
+                        self.constraint_editor.add_signal(PS_COLOR,
+                                                          name,
+                                                          signal,
+                                                          None,
+                                                          direction)
+
+
+        for i in range(mcount):
+            name = self.model.get_slave_name(SlaveType.MEMORY, i)
+            ports = copy.deepcopy(self.model.get_slave_ports(SlaveType.MEMORY, i))
+            bindings = self.model.get_slave_bindings(SlaveType.MEMORY, i)
+            signals = ports.keys()
+            #signals = bindings.keys()
+
+            #Add connected memory signals to the bottom view
+            for key in bindings:
+                if not bindings[key]["range"]:
+                    self.constraint_editor.add_connection(color = MS_COLOR,
+                                                          module_name = name,
+                                                          port = key,
+                                                          direction = bindings[key]["direction"],
+                                                          pin_name = bindings[key]["loc"])
+                else:
+                    indexes = copy.deepcopy(bindings[key].keys())
+                    if self.dbg: print "Indexes: %s" % str(indexes)
+                    indexes.remove("range")
+                    bound_count = 0
+                    for i in indexes:
+                        bound_count += 1
+                        #XXX: This should change to accomodate the tree constraints view
+                        n = "%s[%d]" % (key, i)
+                        self.constraint_editor.add_connection(color = MS_COLOR,
+                                                              module_name = name,
+                                                              port = key,
+                                                              direction = bindings[key][i]["direction"],
+                                                              pin_name = bindings[key][i]["loc"],
+                                                              index = i)
+
+
+                for direction in ports:
+                    #Subtract out any of the ports that I used above
+                    signals = ports[direction].keys()
+                    for signal in signals:
+                        if not bindings[key]["range"]:
+                            del(ports[direction][signal])
+                        else:
+                            if bound_count == ports[direction][signal]["size"]:
+                                if self.dbg: print "All of the items in the bus are constrained"
+                                del(ports[direction][signal])
+                            else:
+                                if self.dbg: print "%s is not a port of %s" % (key, signal)
+                                #XXX: Need a way to detect vectors, sometimes a user will only use part of a vector
+
+
+            #Add the Memory Ports to the available signals
+            for direction in ports:
+                for signal in ports[direction]:
+
+                    if signal == "clk":
+                        continue
+                    if signal == "rst":
+                        continue
+                    if wishbone_utils.is_wishbone_bus_signal(signal):
+                        continue
+
+                    print "signal: %s" % signal
+
+                    s = ports[direction][signal]
+
+                    if s["size"] > 1:
+                        rng = (s["max_val"], s["min_val"])
+                        self.constraint_editor.add_signal(MS_COLOR,
+                                                          name,
+                                                          signal,
+                                                          rng,
+                                                          direction)
+                    
+                    else:
+                        self.constraint_editor.add_signal(MS_COLOR,
+                                                          name,
+                                                          signal,
+                                                          None,
+                                                          direction)
+
+
+        self.dbg = True
 
 

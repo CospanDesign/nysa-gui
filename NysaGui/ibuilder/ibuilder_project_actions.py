@@ -19,3 +19,5 @@ class IBuilderProjectActions(QtCore.QObject):
 
     setup_peripheral_bus_list= QtCore.pyqtSignal(object, name = "ibuilder_designer_setup_plist")
     setup_memory_bus_list= QtCore.pyqtSignal(object, name = "ibuilder_designer_setup_mlist")
+
+    remove_slave = QtCore.pyqtSignal(str, int, name = "ibuilder_designer_remove_slave")

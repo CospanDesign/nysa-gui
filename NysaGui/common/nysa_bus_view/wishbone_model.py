@@ -46,15 +46,29 @@ from NysaGui.common.graph.graph_manager import NodeType
 from NysaGui.common.graph.graph_manager import get_unique_name
 
 
+HOST_INTERFACE     = get_unique_name("Host Interface",
+                                            NodeType.HOST_INTERFACE)
+MASTER             = get_unique_name("Master", NodeType.MASTER)
+MEMORY_BUS         = get_unique_name("Memory", NodeType.MEMORY_INTERCONNECT)
+PERIPHERAL_BUS     = get_unique_name("Peripherals",
+                                            NodeType.PERIPHERAL_INTERCONNECT)
+DRT                = get_unique_name("DRT",
+                                            NodeType.SLAVE,
+                                            SlaveType.PERIPHERAL,
+                                            slave_index=0)
+
+
 
 class WishboneModel():
+#Good
     def __init__(self, config_dict):
+        self.paths = utils.get_local_verilog_paths()
         self.gm = GraphManager()
         self.bus_type = "wishbone"
         self.tags = {}
         self.config_dict = {}
         self.config_dict["PROJECT_NAME"] = "project"
-        self.config_dict["TEMPLATE"] = config_dict["bus_type"]
+        self.config_dict["TEMPLATE"] = config_dict["TEMPLATE"]
         self.config_dict["INTERFACE"] = {}
         self.config_dict["SLAVES"] = {}
         self.config_dict["MEMORY"] = {}
@@ -66,13 +80,10 @@ class WishboneModel():
     def load_config_dict(self, config_dict):
         self.config_dict = config_dict
         self.build_tool = {}
-        self.board_dict = config_dict["board"]
+        #self.board_dict = config_dict["board"]
 
     def initialize_graph(self, debug=False):
         """Initializes the graph and project tags."""
-
-        if debug:
-            print ("Initialize graph")
         # Clear any previous data.
         self.gm.clear_graph()
 
@@ -91,54 +102,59 @@ class WishboneModel():
         self.gm.add_node("Peripherals", NodeType.PERIPHERAL_INTERCONNECT)
         self.add_slave("DRT", SlaveType.PERIPHERAL, slave_index=0)
 
-        # Get all the unique names for accessing nodes.
-        hi_name = get_unique_name("Host Interface",
-                                    NodeType.HOST_INTERFACE)
-        m_name = get_unique_name("Master", NodeType.MASTER)
-        mi_name = get_unique_name("Memory", NodeType.MEMORY_INTERCONNECT)
-        pi_name = get_unique_name("Peripherals",
-                                    NodeType.PERIPHERAL_INTERCONNECT)
-        drt_name = get_unique_name("DRT",
-                                        NodeType.SLAVE,
-                                        SlaveType.PERIPHERAL,
-                                        slave_index=0)
-
         # Attach all the appropriate nodes.
-        self.gm.connect_nodes(hi_name, m_name)
-        self.gm.connect_nodes(m_name, mi_name)
-        self.gm.connect_nodes(m_name, pi_name)
-        self.gm.connect_nodes(pi_name, drt_name)
+        self.gm.connect_nodes(HOST_INTERFACE, MASTER)
+        self.gm.connect_nodes(MASTER, MEMORY_BUS)
+        self.gm.connect_nodes(MASTER, PERIPHERAL_BUS)
+        self.gm.connect_nodes(PERIPHERAL_BUS, DRT)
 
         # Get module data for the DRT.
         # Attempt to load data from the tags.
-        sp_count = self.gm.get_number_of_peripheral_slaves()
-        if debug:
-            print (("loading %d peripheral slave(s)" % sp_count))
-
         #print "Config Dict: %s" % str(self.config_dict)
         if "SLAVES" in self.config_dict:
             for slave_name in self.config_dict["SLAVES"]:
-                if debug:
-                    print (("loading slave: %s" % slave_name))
+                #Get the slave tags for this project
+                slave_project_tags = self.config_dict["SLAVES"][slave_name]
+                module_tags = {}
+                #Check to see if there is a file for this slave
+                if "filename" in slave_project_tags:
+                    filename = slave_project_tags["filename"]
+                    try:
+                        filepath = utils.find_rtl_file_location(filename, self.paths)
+                        module_tags = vutils.get_module_tags(filepath)
+                    except IOError as ex:
+                        #File not found, there is no associated tags with this
+                        print "File: %s not found, passing in an empty module" % filename
 
                 uname = self.add_slave(slave_name,
-                                       SlaveType.PERIPHERAL)
+                                       SlaveType.PERIPHERAL,
+                                       module_tags = module_tags,
+                                       slave_project_tags = slave_project_tags)
 
         # Load all the memory slaves.
-        sm_count = self.gm.get_number_of_memory_slaves()
-        if debug:
-            print(("loading %d memory slaves" % sm_count))
-
         if "MEMORY" in self.config_dict:
             for slave_name in self.config_dict["MEMORY"]:
+                #Get the slave tags for thir project
+                slave_project_tags = self.config_dict["MEMORY"][slave_name]
+                module_tags = {}
+                #Check to see if there is a file for this slave
+                if "filename" in slave_project_tags:
+                    filename = slave_project_tags["filename"]
+                    try:
+                        filepath = utils.find_rtl_file_location(filename, self.paths)
+                        module_tags = vutils.get_module_tags(filepath)
+                    except IOError as ex:
+                        #File not found, there is no verilog core associated with this slave on this machine
+                        print "File: %s not found, no verilog core associated with this module" % filename
 
                 uname = self.add_slave(slave_name,
                                         SlaveType.MEMORY,
-                                        slave_index=-1)
+                                        module_tags = module_tags,
+                                        slave_project_tags = slave_project_tags)
 
         # Check if there is a host interface defined.
         if "INTERFACE" in self.config_dict:
-            self.set_host_interface("Host Interface")
+            self.setup_host_interface()
 
         if debug:
             print ("Finish Initialize graph")
@@ -158,13 +174,61 @@ class WishboneModel():
     def get_number_of_peripheral_slaves(self):
         return self.gm.get_number_of_peripheral_slaves()
 
-    def apply_slave_tags_to_project(self, debug=False):
+    def get_board_name(self):
+        if "board" in list(self.config_dict.keys()):
+            return self.config_dict["board"]
+        return "undefined"
+
+    def set_bus_type(self, bus_type):
+        """Set the bus type to Wishbone or Axie."""
+        self.bus_type = bus_type
+
+    def get_bus_type(self):
+        return self.bus_type
+
+    def get_host_interface_name(self):
+        hi = self.gm.get_node(HOST_INTERFACE)
+        return "Host Interface"
+
+    def get_constraint_filenames(self):
+        board_name = self.config_dict["board"]
+        pt = self.config_dict
+        if "constraint_files" not in list(pt.keys()):
+            pt["constraint_files"] = []
+
+        cfiles = utils.get_constraint_filenames(board_name, debug = True)
+        for cf in pt["constraint_files"]:
+            cfiles.append(cf)
+        return cfiles
+
+    def get_unique_from_module_name(self, module_name):
+        """Return the unique name associated with the module_name"""
+        if module_name == "Host Interface":
+            return self.get_host_interface_name()
+        pcount = self.get_number_of_peripheral_slaves()
+        for i in range(pcount):
+            name = self.get_slave_name(SlaveType.PERIPHERAL, i)
+            if module_name == name:
+                return get_unique_name(name, NodeType.SLAVE, SlaveType.PERIPHERAL, i)
+
+        mcount = self.get_number_of_memory_slaves()
+        for i in range(mcount):
+            name = self.get_slave_name(SlaveType.MEMORY, i)
+            if module_name == name:
+                return get_unique_name(name, NodeType.SLAVE, SlaveType.MEMORY, i)
+
+        raise SlaveError("Module with name %s not found" % module_name)
+
+    #XXX: Work through
+    def commit_project_to_tags(self, debug=False):
         """Apply the slave tags to the project tags."""
         # Get all the slaves.
         p_count = self.get_number_of_slaves(SlaveType.PERIPHERAL)
         m_count = self.get_number_of_slaves(SlaveType.MEMORY)
         self.config_dict["SLAVES"] = {}
         self.config_dict["MEMORY"] = {}
+
+        self.gm.set_project_tags(HOST_INTERFACE, cu.expand_user_constraints(self.config_dict["INTERFACE"]))
 
         for i in range(0, p_count):
             #print "apply slave tags to project: %d:" % i
@@ -186,8 +250,8 @@ class WishboneModel():
             if "BUS" in list(pt_slave.keys()):
                 pt_slave["BUS"] = {}
 
-            if "arbitor_masters" in list(sc_slave.parameters.keys()):
-                ams = sc_slave.parameters["arbitor_masters"]
+            if "arbitor_masters" in list(sc_slave.project_tags.keys()):
+                ams = sc_slave.project_tags["arbitor_masters"]
                 if len(ams) > 0:
                     # Add the BUS keyword to the arbitor master.
                     pt_slave["BUS"] = {}
@@ -217,8 +281,8 @@ class WishboneModel():
             if "BUS" in list(pt_slave.keys()):
                 pt_slave["BUS"] = {}
 
-            if "arbitor_masters" in list(sc_slave.parameters.keys()):
-                ams = sc_slave.parameters["arbitor_masters"]
+            if "arbitor_masters" in list(sc_slave.project_tags.keys()):
+                ams = sc_slave.project_tags["arbitor_masters"]
                 if len(ams) > 0:
                     # Add the BUS keyword to the arbitor master.
                     pt_slave["BUS"] = {}
@@ -231,31 +295,14 @@ class WishboneModel():
                         arb_name = self.gm.get_node(arb_slave).name
                         if arb_slave is not None:
                             pt_slave["BUS"][a] = arb_name
-            module = sc_slave.parameters["module"]
+            module = sc_slave.project_tags["module"]
 
-    def get_board_name(self):
-        if "board" in list(self.config_dict.keys()):
-            return self.config_dict["board"]
-        return "undefined"
+    def get_graph_manager(self):
+        '''Returns the graph manager.'''
+        raise Exception("BAD!")
+        return self.gm
 
-    def set_bus_type(self, bus_type):
-        """Set the bus type to Wishbone or Axie."""
-        self.bus_type = bus_type
-
-    def get_bus_type(self):
-        return self.bus_type
-
-    def get_host_interface_name(self):
-        hi_name = get_unique_name("Host Interface",
-                                       NodeType.HOST_INTERFACE)
-        hi = self.gm.get_node(hi_name)
-        return "Host Interface"
-
-    def get_slave_name(self, slave_type, slave_index):
-        s_name = self.gm.get_slave_name_at(slave_type, slave_index)
-        slave = self.gm.get_node(s_name)
-        return slave.name
-
+    #Arbitor Control
     def is_arb_master_connected(self, slave_name, arb_host, debug=False):
         slaves = self.gm.get_connected_slaves(slave_name)
         for key in slaves:
@@ -266,7 +313,7 @@ class WishboneModel():
         return False
 
     def add_arbitor_by_name(self, host_name, arbitor_name, slave_name):
-        tags = self.gm.get_parameters(host_name)
+        tags = self.gm.get_project_tags(host_name)
         if arbitor_name not in tags["arbitor_masters"]:
             raise WishboneModelError("%s is not an arbitor of %s" %
                                     (arbitor_name, host_name))
@@ -282,7 +329,7 @@ class WishboneModel():
         self.add_arbitor_by_name(h_name, arbitor_name, s_name)
 
     def get_connected_arbitor_slave(self, host_name, arbitor_name):
-        tags = self.gm.get_parameters(host_name)
+        tags = self.gm.get_project_tags(host_name)
         if arbitor_name not in tags["arbitor_masters"]:
             SlaveError("This slave has no arbitor masters")
 
@@ -299,7 +346,7 @@ class WishboneModel():
         h_name = self.gm.get_slave_name_at(host_type, host_index)
         s_name = self.gm.get_slave_name_at(slave_type, slave_index)
 
-        tags = self.gm.get_parameters(h_name)
+        tags = self.gm.get_project_tags(h_name)
         for arb_name in tags["arbitor_masters"]:
             slave_name = self.get_connected_arbitor_slave(h_name, arb_name)
             if slave_name == s_name:
@@ -323,7 +370,7 @@ class WishboneModel():
 
     def is_active_arbitor_host(self, host_type, host_index):
         h_name = self.gm.get_slave_name_at(host_type, host_index)
-        tags = self.gm.get_parameters(h_name)
+        tags = self.gm.get_project_tags(h_name)
         if h_name not in tags["arbitor_masters"]:
             if len(tags["arbitor_masters"]) == 0:
                 return False
@@ -333,10 +380,6 @@ class WishboneModel():
 
         return True
 
-    def get_slave_name_by_unique(self, slave_name):
-        node = self.gm.get_node(slave_name)
-        return node.name
-
     def get_arbitor_dict(self, host_type, host_index):
         if not self.is_active_arbitor_host(host_type, host_index):
             return {}
@@ -344,26 +387,105 @@ class WishboneModel():
         h_name = self.gm.get_slave_name_at(host_type, host_index)
         return self.gm.get_connected_slaves(h_name)
 
-    def add_slave(self, name, slave_type, slave_index=-1):
+    #Host Interface
+    def setup_host_interface(self):
+        #Host interface is always present, if there is a user configuration
+        #Associated with it, set all the appropriate values
+        #print "setup host interface: %s" % (self.config_dict["PROJECT_NAME"])
+        if "INTERFACE" not in self.config_dict:
+            print "Interface is not in project tags"
+            return
+        project_tags = self.config_dict["INTERFACE"]
+        self.set_node_project_tags(HOST_INTERFACE, project_tags)
+
+        module_tags = {}
+
+        if "filename" in project_tags:
+            filename = project_tags["filename"]
+            try:
+                filepath = utils.find_rtl_file_location(filename, self.paths)
+                module_tags = vutils.get_module_tags(filepath)
+            except:
+                print "%s: Could not  find Host Interface for file: %s" % (__file__, filename)
+
+        self.set_node_module_tags(HOST_INTERFACE, module_tags)
+        self.update_node_ports(HOST_INTERFACE)
+        if "bind" in project_tags:
+            self.set_node_bindings(HOST_INTERFACE, cu.expand_user_constraints(project_tags["bind"]))
+        #self.set_node_bindings(HOST_INTERFACE, project_tags["bind"])
+
+    def get_host_interface_ports(self):
+        return self.get_node_ports(HOST_INTERFACE)
+
+    #Slave Control
+    def add_drt(self):
+        DRT_NAME = "DRT"
+        slave = None
+        try:
+            slave = self.gm.get_slave_at(SlaveType.PERIPHERAL, 0)
+        except SlaveError:
+            pass
+
+        if slave is not None:
+            print "%s: add_drt: name: %s" % (__file__, slave.name)
+            if slave.name == DRT_NAME:
+                print "%s: DRT Already in Graph Manager" % (__file__)
+                return
+        s_count = self.gm.get_number_of_peripheral_slaves()
+        uname = self.gm.add_node(   DRT_NAME,
+                                    NodeType.SLAVE,
+                                    SlaveType.PERIPHERAL)
+
+        slave = self.gm.get_node(uname)
+        self.gm.move_peripheral_slave(slave.slave_index, 0)
+
+    def add_peripheral_slave(self, name, module_tags = {}, project_tags = {}, index = -1):
+        self.add_slave(name, SlaveType.PERIPHERAL, module_tags, project_tags, index)
+
+    def add_memory_slave(self, name, module_tags = {}, project_tags = {}, index = -1):
+        self.add_slave(name, SlaveType.MEMORY, module_tags, project_tags, index)
+
+    def add_slave(self, name, slave_type, module_tags = {}, slave_project_tags = {}, slave_index=-1):
         """Adds a slave to the specified bus at the specified index."""
         # Check if the slave_index makes sense.  If slave index s -1 then add it
         # to the next available location
-        s_count = self.gm.get_number_of_slaves(slave_type)
-        self.gm.add_node(name, NodeType.SLAVE, slave_type)
+        if name == "DRT":
+            return self.add_drt()
 
         slave = None
 
-        if slave_index == -1: #Add slave at the end
+        module_ports = {}
+        if "ports" in module_tags:
+            #module_ports = cu.expand_ports(module_tags["ports"])
+            module_ports = module_tags["ports"]
+
+        bindings = {}
+        if "bind" in slave_project_tags:
+            bindings = cu.expand_user_constraints(slave_project_tags["bind"])
+
+        #Check to see if the project overrides the project_tags
+        self.gm.add_node( name,
+                          NodeType.SLAVE,
+                          slave_type,
+                          project_tags = slave_project_tags,
+                          module_tags = module_tags,
+                          ports = module_ports,
+                          bindings = bindings)
+
+        s_count = self.gm.get_number_of_slaves(slave_type)
+        #If the user didn't specify the slave index put it at the end
+        if slave_index == -1:
             slave_index = s_count
-        else:  # Add the slave to where the index is pointing
+
+        else:  # Add the slave wherever.
             if slave_type == SlaveType.PERIPHERAL:
                 if slave_index == 0 and name != "DRT":
                     raise gm.SlaveError("Only the DRT can be at position 0")
                 s_count = self.gm.get_number_of_peripheral_slaves()
                 uname = get_unique_name(name,
-                                        NodeType.SLAVE,
-                                        slave_type,
-                                        s_count - 1)
+                                             NodeType.SLAVE,
+                                             slave_type,
+                                             s_count - 1)
                 slave = self.gm.get_node(uname)
                 if slave_index < s_count - 1:
                     self.gm.move_peripheral_slave(slave.slave_index,
@@ -371,22 +493,14 @@ class WishboneModel():
             elif slave_type == SlaveType.MEMORY:
                 s_count = self.gm.get_number_of_memory_slaves()
                 uname = get_unique_name(name,
-                                        NodeType.SLAVE,
-                                        slave_type,
-                                        s_count - 1)
+                                             NodeType.SLAVE,
+                                             slave_type,
+                                             s_count - 1)
                 slave = self.gm.get_node(uname)
                 if slave_index < s_count - 1:
                     self.gm.move_slave(slave.slave_index,
                                        slave_index,
                                        SlaveType.MEMORY)
-
-        uname = get_unique_name(name,
-                                NodeType.SLAVE,
-                                slave_type,
-                                slave_index)
-
-        slave = self.gm.get_node(uname)
-        return uname
 
     def move_slave(self,
                    slave_name=None,
@@ -414,41 +528,311 @@ class WishboneModel():
                                from_slave_type)
             return
 
-    def get_graph_manager(self):
-        '''Returns the graph manager.'''
-        return self.gm
+    def remove_slave(self, slave_type=SlaveType.PERIPHERAL, slave_index=0):
+        """Removes slave from specified index."""
+        #Check if there are any bindings to remove
+        name = self.get_slave_name(slave_type, slave_index)
+        bindings = self.get_slave_bindings(slave_type, slave_index)
+        uname = get_unique_name(name, NodeType.SLAVE, slave_type, slave_index)
+        bnames = bindings.keys()
+        for bname in bnames:
+            bind = bindings[bname]
 
-    def get_unique_from_module_name(self, module_name):
-        """Return the unique name associated with the module_name"""
-        if module_name == "Host Interface":
-            return self.get_host_interface_name()
+            if bind["range"]:
+                indexes = bind.keys()
+                indexes.remove("range")
+                for index in indexes:
+                    self.gm.unbind_port(uname, bname, index)
+
+                break
+            else:
+                self.gm.unbind_port(uname, bname)
+                break
+        self.gm.remove_slave(slave_type, slave_index)
+        return
+
+    def get_slave_ports(self, slave_type, slave_index):
+        slave_name = self.get_slave_name(slave_type, slave_index)
+        uname = get_unique_name(slave_name, NodeType.SLAVE, slave_type,
+                                     slave_index)
+        return self.get_node_ports(uname)
+
+    def get_slave_name(self, slave_type, slave_index):
+        s_name = self.gm.get_slave_name_at(slave_type, slave_index)
+        slave = self.gm.get_node(s_name)
+        return slave.name
+
+    def get_slave_name_by_unique(self, slave_name):
+        node = self.gm.get_node(slave_name)
+        return node.name
+
+    #Bindings
+    def set_node_bindings(self, node_name, bindings):
+        self.gm.set_node_bindings(node_name, bindings)
+
+    def bind_port(self, node_name, port_name, pin_name, index=None):
+        """Add a binding between the port and the pin."""
+        un = self.get_unique_from_module_name(node_name)
+        self.gm.bind_port(un, port_name, pin_name, index)
+        return
+
+    def unbind_port(self, node_name, port_name, index=None):
+        """Remove a binding with the port name."""
+        #print "node name: %s" % node_name
+        #un = self.get_unique_from_module_name(node_name)
+        self.gm.unbind_port(node_name, port_name, index=None)
+        return
+
+    def unbind_all(self, debug=False):
+        if debug:
+            print ("unbind all")
+        mbd = self.get_consolodated_master_bind_dict()
+        if debug:
+            print (("Master Bind Dict: %s" % str(mbd)))
+        node_names = self.gm.get_node_names()
+        for nn in node_names:
+            nb = copy.deepcopy(self.gm.get_node_bindings(nn))
+            for b in nb:
+                if debug:
+                    print (("Unbindig %s" % b))
+                self.gm.unbind_port(nn, b)
+
+    def get_consolodated_master_bind_dict(self):
+        """Combine the dictionary from:
+          - project
+          - host interface
+          - peripheral slaves
+          - memory slaves
+
+          The returned dictionary is consolodated in that all the pins are
+          not expanded to a unique index, this is good for a project but not
+          good for manipulation
+          """
+
+        # The dictionary to put the entries in and return.
+        bind_dict = {}
+
+        # Get project bindings.
+        print "TODO: Need to visualize the board level binds like CLOCK and RESET!"
+        #print "config dict: %s" % str(self.config_dict)
+        bind = self.config_dict["bind"]
+        for k in bind:
+            bind_dict[k] = bind[k]
+
+        # Get host interface bindings.
+        hib = cu.consolodate_constraints(self.gm.get_node_bindings(HOST_INTERFACE))
+        for k, v in list(hib.items()):
+            bind_dict[k] = v
+
+        # Get all the peripheral slave bindings.
+        p_count = self.get_number_of_slaves(SlaveType.PERIPHERAL)
+        for i in range(p_count):
+            slave = self.gm.get_slave_at(SlaveType.PERIPHERAL, i)
+            pb = cu.consolodate_constraints(
+                                self.gm.get_node_bindings(slave.unique_name))
+            for key in pb:
+                bind_dict[key] = pb[key]
+
+        # Get all the memory slave bindings.
+        m_count = self.get_number_of_slaves(SlaveType.MEMORY)
+        for i in range(m_count):
+            slave = self.gm.get_slave_at(SlaveType.MEMORY, i)
+            mb = cu.consolodate_constraints(
+                                self.gm.get_node_bindings(slave.unique_name))
+            for key in mb:
+                bind_dict[key] = mb[key]
+
+        return bind_dict
+
+    def get_expanded_master_bind_dict(self):
+        """Create a large dictionary of all the constraints from
+            - project
+            - host interface
+            - peripheral slaves
+            - memory slaves
+        """
+        bind_dict = {}
+        bind_dict["project"] = cu.expand_user_constraints(
+                                        self.config_dict["bind"])
+        bind_dict["host interface"] = self.get_host_interface_bindings()
+
+        #Get Peripheral Slaves
+        p_count = self.get_number_of_slaves(SlaveType.PERIPHERAL)
+        for i in range(p_count):
+            slave = self.gm.get_slave_at(SlaveType.PERIPHERAL, i)
+            bind_dict[slave.name] = self.gm.get_node_bindings(slave.unique_name)
+
+        #Get Memory Slaves
+        m_count = self.get_number_of_slaves(SlaveType.MEMORY)
+        for i in range(m_count):
+            slave = self.gm.get_slave_at(SlaveType.MEMORY, i)
+            bind_dict[slave.name] = self.gm.get_node_bindings(slave.unique_name)
+
+        return bind_dict
+
+    def get_slave_bindings(self, slave_type, slave_index):
+        slave_name = self.get_slave_name(slave_type, slave_index)
+        uname = get_unique_name(slave_name,
+                                     NodeType.SLAVE,
+                                     slave_type,
+                                     slave_index)
+        return self.gm.get_node_bindings(uname)
+
+    def get_host_interface_bindings(self):
+        return self.gm.get_node_bindings(HOST_INTERFACE)
+
+    #Setting Graph Node Properties
+    def update_node_bindings_from_project(self, uname):
+        project_tags = self.gm.get_project_tags(uname)
+        bindings = project_tags["bind"]
+        self.gm.set_node_bindings(uname, bindings)
+
+    def get_node_bindings(self, uname):
+        return self.gm.get_node_bindings(uname)
+
+    def set_node_project_tags(self, uname, tags):
+        self.gm.set_node_project_tags(uname, tags)
+
+    def get_node_project_tags(self, uname):
+        return self.gm.get_node_project_tags(uname)
+
+    def set_node_module_tags(self, uname, tags):
+        self.gm.set_node_module_tags(uname, tags)
+
+    def get_node_module_tags(self, uname):
+        return self.gm.get_node_module_tags(uname)
+
+    def update_node_ports(self, uname):
+        self.gm.update_node_ports(uname)
+
+    def get_node_ports(self, uname):
+        return self.gm.get_node_ports(uname)
+
+    def _commit_bindings_to_project_tags(self, uname):
+        print "committing"
+        project_tags = self.get_node_project_tags(uname)
+        ports = self.get_node_ports(uname)
+        ports = cu.get_only_signal_ports(ports)
+        bindings = project_tags["bind"]
+        bkeys = bindings.keys()
+        for b in bkeys:
+            #print "Looking at: %s" % b
+            if b not in ports.keys():
+                #print "\t%s not in new ports" % b
+                self.gm.unbind_port(uname, b)
+                continue
+
+            if ports[b]["range"] and not bindings[b]["range"]:
+                #Used to be one now there is a range
+                #print "\tnew port has range, old port doesn't"
+                bind = bindings[b]["loc"]
+                tk = []
+                tk = copy.deepcopy(ports[b].keys())
+                tk.remove("range")
+                tk.sort()
+
+                self.gm.unbind_port(uname, b)
+                self.gm.bind_port(name = uname,
+                                  port_name = b,
+                                  loc = bind,
+                                  index = tk[0])
+
+            elif not ports[b]["range"] and bindings[b]["range"]:
+                #print "\tnew port doesn't have range, old port does"
+                #Used to have a range now there is only one
+                tk = []
+                tk = copy.deepcopy(bindings[b].keys())
+                tk.remove("range")
+                tk.sort()
+                print "tk: %s" % str(tk)
+                bind = bindings[b][tk[0]]["loc"]
+
+                self.gm.unbind_port(name = uname,
+                                    port_name = b)
+                #bind the lowest value to the only value
+                self.gm.bind_port(name = uname,
+                                  port_name = b,
+                                  loc = bind)
+
+
+            elif ports[b]["range"] and bindings[b]["range"]:
+                #Both have ranges, now I need to adjust
+                #print "check if all the values within bindings range are within the new ports"
+                ok = copy.deepcopy(bindings[b].keys())
+                ok.remove("range")
+                nk = copy.deepcopy(ports[b].keys())
+                nk.remove("range")
+                good = True
+                for a in ok:
+                    #print "Checking %s with %s" % (str(a), str(nk))
+                    if a not in nk:
+                        good = False
+                if good:
+                    #print "All old items within new items"
+                    continue
+                #get all the bindings items in a list
+                td = {}
+                for a in ok:
+                    td[a] = {}
+                    td[a] = bindings[b][a]["loc"]
+                indexes = copy.deepcopy(td.keys())
+                indexes.sort()
+                self.gm.unbind_port(uname, b)
+
+                new_indexes = copy.deepcopy(ports[b].keys())
+                new_indexes.remove("range")
+                new_indexes.sort()
+                lold = len(indexes)
+                #print "Length of old: %d" % lold
+                lnew = len(new_indexes)
+                #print "Length of new: %d" % lnew
+                first = new_indexes[0]
+                length = lold
+                if lnew < lold:
+                    length = lnew
+                fin = length + new_indexes[0]
+                #print "start: %d" % new_indexes[0]
+                #print "length: %d" % fin
+                for i in range (length):
+                    #print "old: %d" % indexes[i]
+                    #print "new index: %d" % new_indexes[i]
+                    self.gm.bind_port(name = uname,
+                                      port_name = b,
+                                      loc = td[indexes[i]],
+                                      index = new_indexes[i])
+        project_tags["bind"] = bindings
+        self.gm.set_project_tags(uname, project_tags)
+
+    def commit_all_project_tags(self):
+        #Go through the host interface first
+        self._commit_bindings_to_project_tags(HOST_INTERFACE)
+
         pcount = self.get_number_of_peripheral_slaves()
         for i in range(pcount):
-            name = self.get_slave_name(SlaveType.PERIPHERAL, i)
-            if module_name == name:
-                return get_unique_name(name, NodeType.SLAVE, SlaveType.PERIPHERAL, i)
+            uname = get_unique_name(name, NodeType.SLAVE, SlaveType.PERIPHERAL, i)
+            self._commit_bindings_to_project_tags(uname)
 
         mcount = self.get_number_of_memory_slaves()
         for i in range(mcount):
-            name = self.get_slave_name(SlaveType.MEMORY, i)
-            if module_name == name:
-                return get_unique_name(name, NodeType.SLAVE, SlaveType.MEMORY, i)
+            uname = get_unique_name(name, NodeType.SLAVE, SlaveType.MEMORY, i)
+            self._commit_bindings_to_project_tags(uname)
 
-        raise SlaveError("Module with name %s not found" % module_name)
 
-    def set_host_interface(self, host_interface_name, debug=False):
-        """Sets the host interface type. If host_interface_name is not a valid
-        module name (or cannot be found for whatever reason), throws a
-        ModuleNotFound exception."""
-        hi_name = get_unique_name("Host Interface",
-                                       NodeType.HOST_INTERFACE)
-        if debug:
-            print (("hi_name: %s" % hi_name))
+    def get_unique_slave_name(self, module_tags, bus):
+        print "bus: %s" % str(bus)
+        count = 0
+        ucount = 0
+        bus_type = SlaveType.PERIPHERAL
+        if bus == "peripehral_bus":
+            count = self.gm.get_number_of_peripheral_slaves()
+        else:
+            count = self.gm.get_number_of_memory_slaves()
+            bus_type = SlaveType.MEMORY
 
-        node_names = self.gm.get_node_names()
-        if hi_name not in node_names:
-            self.gm.add_node("Host Interface", NodeType.HOST_INTERFACE)
-
-        return True
-
+        for i in range(count):
+            slave = self.gm.get_slave_at(bus_type, i)
+            if "module" in slave.module_tags:
+                if module_tags["module"] == slave.module_tags["module"]:
+                    ucount += 1
+        return "%s_%d" % (module_tags["module"], ucount)
 
