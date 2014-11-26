@@ -25,3 +25,6 @@ class IBuilderProjectActions(QtCore.QObject):
     #Bind events
     internal_bind_disconnect = QtCore.pyqtSignal(str, name = "ibuilder_configuration_ib_disc")
     internal_bind_connect = QtCore.pyqtSignal(str, str, name = "ibuilder_configuration_ib_conn")
+
+    #Configuration options
+    update_project_name = QtCore.pyqtSignal(str, str, name = "ibuilder_configuration_update_name")

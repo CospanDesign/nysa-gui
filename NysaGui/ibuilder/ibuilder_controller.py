@@ -57,6 +57,19 @@ class IBuilderController(QObject):
         self.actions.ibuilder_new_project.connect(self.new_project)
         self.gui_actions.ibuilder_save.connect(self.save)
         self.gui_actions.ibuilder_open.connect(self.open)
+        self.actions.update_project_name.connect(self.update_project_name)
+
+    def update_project_name(self, from_name, to_name):
+        print "Update project %s to %s" % (from_name, to_name)
+        if from_name == to_name:
+            self.status.Info("No change to project name!")
+            return
+
+        project = self.project_tree.get_project_by_name(from_name)
+        self.view.remove_project(from_name)
+        project.set_name(to_name)
+        self.view.add_project(project)
+        project.update_project()
 
     def new_project(self):
         self.status.Debug("New Project Clicked!")
@@ -94,8 +107,10 @@ class IBuilderController(QObject):
         except IndexError as ex:
             #Project not highlighted, find out which project is selected by which one is in focus in ibuilder
             project_name = self.view.get_current_project_name()
+            self.status.Info("Selecting Project: %s" % project_name)
             #print "project name: %s" % project_name
             project = self.project_tree.get_project_by_name(project_name)
+            self.status.Info("Selecting Project (From Project): %s" % project.get_name())
         print "Name: %s" % project.get_name()
         project.save_project()
 

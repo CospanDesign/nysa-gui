@@ -59,7 +59,6 @@ class IBuilderProject(QObject):
 
         self.project_view = ProjectView(self.project_actions, status)
 
-        self.name = QString(name)
         self.path = path
         self.config = None
         if self.path is not None:
@@ -82,6 +81,9 @@ class IBuilderProject(QObject):
         self.project_actions.internal_bind_connect.connect(self.controller.bind_internal_signal)
         self.project_actions.internal_bind_disconnect.connect(self.controller.unbind_internal_signal)
         self.controller.initialize_constraint_editor(self.project_view.get_constraint_editor())
+        self.controller.initialize_configuration_editor(self.project_view.get_configuration_editor())
+
+    def update_project(self):
         self.controller.initialize_configuration_editor(self.project_view.get_configuration_editor())
 
     def load_project(self):
@@ -110,15 +112,16 @@ class IBuilderProject(QObject):
         self.project_actions.setup_peripheral_bus_list.emit(peripheral_dict)
         self.project_actions.setup_memory_bus_list.emit(memory_dict)
         #self.project_view.get_designer_scene().view.fit_in_view()
+        self.project_actions.update_project_name.connect(self.actions.update_project_name)
 
     def get_view_names(self):
         return self.project_view.get_view_names()
 
     def get_name(self):
-        return self.name
+        return QString(self.controller.get_project_name())
 
     def set_name(self, name):
-        self.name = name
+        self.controller.set_project_name(str(name))
 
     def get_path(self):
         return self.path

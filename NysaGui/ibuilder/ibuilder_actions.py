@@ -30,3 +30,5 @@ class _Actions(QtCore.QObject):
 
     remove_tab = QtCore.pyqtSignal(object, name = "ibuilder_remove_tab")
 
+    update_project_name = QtCore.pyqtSignal(str, str, name = "ibuilder_rename_project")
+

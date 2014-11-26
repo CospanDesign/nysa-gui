@@ -32,10 +32,16 @@ class Configuration(QWidget):
         self.status = status
         self.actions = actions
         layout = QFormLayout()
+        name_layout = QHBoxLayout()
         self.project_name_line = QLineEdit()
+        update_project_name_button = QPushButton("Update Project Name")
+        update_project_name_button.clicked.connect(self.update_project_name_button)
+        name_layout.addWidget(self.project_name_line)
+        name_layout.addWidget(update_project_name_button)
         self.board_list = QComboBox()
+        self.current_project_name = ""
 
-        layout.addRow("project name", self.project_name_line)
+        layout.addRow("project name", name_layout)
         layout.addRow("board select", self.board_list)
         layout.addRow("internal bindings", self.setup_internal_bind_widget())
 
@@ -104,6 +110,7 @@ class Configuration(QWidget):
 
     def set_project_name(self, name):
         self.project_name_line.setText(name)
+        self.current_project_name = name
 
     def get_project_name(self):
         return self.project_name_line.text()
@@ -133,6 +140,9 @@ class Configuration(QWidget):
         self.board_list.clear()
         self.board_list.addItems(boards)
 
+    def update_project_name_button(self):
+        project_name = self.project_name_line.text()
+        self.actions.update_project_name.emit(self.current_project_name, project_name)
 
 class InternalBindModel(QAbstractTableModel):
     def __init__(self, header_data=["Signal To", "Signal From"], parent=None, *args):
