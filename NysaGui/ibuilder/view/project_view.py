@@ -98,6 +98,8 @@ class ProjectView(QWidget):
     def get_color(self, name):
         return CONFIG_DICT[str(name)]
 
+    def get_configuration_editor(self):
+        return self.configuration
 
     '''
     def setup_tabs( self,

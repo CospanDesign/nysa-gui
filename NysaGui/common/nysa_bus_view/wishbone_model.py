@@ -609,6 +609,23 @@ class WishboneModel():
                     print (("Unbindig %s" % b))
                 self.gm.unbind_port(nn, b)
 
+    def get_global_bindings(self):
+        if "bind" not in self.config_dict:
+            self.config_dict["bind"] = {}
+        return self.config_dict["bind"]
+
+    def get_available_internal_bind_signals(self):
+        return []
+
+    def get_possible_internal_bind_signals(self, name):
+        return []
+        
+    def get_internal_bindings(self):
+        if "internal_bind" not in self.config_dict:
+            self.config_dict["internal_bind"] = {}
+
+        return self.config_dict["internal_bind"]
+        
     def get_consolodated_master_bind_dict(self):
         """Combine the dictionary from:
           - project

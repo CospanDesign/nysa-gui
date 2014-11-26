@@ -294,6 +294,14 @@ class Controller (QObject):
         self.constraint_editor.initialize_view()
         self.refresh_constraint_editor()
 
+    def initialize_configuration_editor(self, configuration_editor):
+        self.configuration_editor = configuration_editor
+        self.configuration_editor.set_project_name(self.get_project_name())
+        self.configuration_editor.populate_board_list(utils.get_board_names())
+        self.configuration_editor.set_board(self.model.get_board_name())
+        self.configuration_editor.populate_connected_signals(self.model.get_internal_bindings())
+        self.configuration_editor.populate_available_signals(self.model.get_available_internal_bind_signals())
+
     def get_project_location(self):
         return self.model.get_project_location()
 

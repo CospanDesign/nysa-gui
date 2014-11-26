@@ -210,11 +210,11 @@ class MainForm(QMainWindow):
         w = app.focusWidget()
         parse_string = str(w).split(".")
 
-        print "Focus Widget: %s" % str(app.focusWidget())
+        #print "Focus Widget: %s" % str(app.focusWidget())
         if app.focusWidget is None:
             print "Nothing focused"
             return
-        print "parse widget: %s" % parse_string[1]
+        #print "parse widget: %s" % parse_string[1]
         name = parse_string[1]
         #count = 0;
         #parent = w.nativeParentWidget()
@@ -246,8 +246,8 @@ class MainForm(QMainWindow):
         app = QApplication.instance()
         w = app.focusWidget()
         parse_string = str(w).split(".")
-        print "Focus Widget: %s" % str(app.focusWidget())
-        print "parse widget: %s" % parse_string[1]
+        #print "Focus Widget: %s" % str(app.focusWidget())
+        #print "parse widget: %s" % parse_string[1]
         name = parse_string[1]
 
         if name == "host":

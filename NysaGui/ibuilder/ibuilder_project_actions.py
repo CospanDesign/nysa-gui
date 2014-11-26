@@ -21,3 +21,6 @@ class IBuilderProjectActions(QtCore.QObject):
     setup_memory_bus_list= QtCore.pyqtSignal(object, name = "ibuilder_designer_setup_mlist")
 
     remove_slave = QtCore.pyqtSignal(str, int, name = "ibuilder_designer_remove_slave")
+
+    #Bind events
+    internal_bind_disconnect = QtCore.pyqtSignal(str, str, name = "ibuilder_configuration_ib_disc")

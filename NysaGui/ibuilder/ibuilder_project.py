@@ -80,6 +80,7 @@ class IBuilderProject(QObject):
         self.initialize_slave_lists()
         self.project_actions.remove_slave.connect(self.controller.remove_slave)
         self.controller.initialize_constraint_editor(self.project_view.get_constraint_editor())
+        self.controller.initialize_configuration_editor(self.project_view.get_configuration_editor())
 
     def load_project(self):
         self.config_dict = json.load(open(str(self.path), 'r'))
@@ -289,6 +290,10 @@ DEFAULT_CONFIG = {
             "direction":"input",
             "loc":"rst"
         }
+    },
+    "internal_bind":{
+        "test_to":"test_from",
+        "test_to_2nd":"test_from_2nd"
     },
     "constraint_files":[
         ]

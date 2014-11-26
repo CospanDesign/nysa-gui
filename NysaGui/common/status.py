@@ -327,7 +327,6 @@ class _Status(QWidget):
         self.status_list.scrollToBottom()
         hh = self.status_list.horizontalHeader()
         hh.setStretchLastSection(True)
- 
 
     def set_level(self, level):
         self.level = level
