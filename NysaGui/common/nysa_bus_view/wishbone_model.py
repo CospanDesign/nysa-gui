@@ -540,6 +540,10 @@ class WishboneModel():
         """Removes slave from specified index."""
         #Check if there are any bindings to remove
         name = self.get_slave_name(slave_type, slave_index)
+        if slave_type == SlaveType.PERIPHERAL:
+            del(self.config_dict["SLAVES"][name])
+        else:
+            del(self.config_dict["MEMORY"][name])
         bindings = self.get_slave_bindings(slave_type, slave_index)
         uname = get_unique_name(name, NodeType.SLAVE, slave_type, slave_index)
         bnames = bindings.keys()

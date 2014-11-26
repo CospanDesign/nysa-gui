@@ -100,7 +100,7 @@ class IBuilderController(QObject):
         project.save_project()
 
     def open(self):
-        print "ibuilder open"
+        self.status.Important("Open a project")
         initial_dir = utils.get_nysa_user_base()
         initial_dir = os.path.join(initial_dir, "user ibuilder projects")
         path = initial_dir
@@ -109,12 +109,15 @@ class IBuilderController(QObject):
                                         directory = path,
                                         filter = "*.json")
 
-        print "file path: %s" % file_path
+        #print "file path: %s" % file_path
+        if len(file_path) == 0:
+            self.status.Info("Open Canceled")
+            return
         j = json.load(open(file_path, 'r'))
         name = j["PROJECT_NAME"]
         project_names = self.get_project_names()
         if name in project_names:
-            print "Project already found!"
+            #print "Project already found!"
             m = QMessageBox.warning(None,
             "Replace Project %s" % name,
             "Are sure you want to replace the existing project %s with this one?" % name,
@@ -129,9 +132,3 @@ class IBuilderController(QObject):
         self.add_project(name, file_path)
 
 
-
-
-
-
-        
-        

@@ -180,6 +180,7 @@ class MainForm(QMainWindow):
         #    self.cbuilder_widget.hide()
         self.ibuilder_widget.show()
         self.ibuilder_widget.raise_()
+        #app.setFocusWidget(self.ibuilder_widget)
         self.repaint()
 
     def set_cbuilder_view(self):
