@@ -177,6 +177,9 @@ class WishboneModel():
     def get_number_of_peripheral_slaves(self):
         return self.gm.get_number_of_peripheral_slaves()
 
+    def set_board_name(self, board_name):
+        self.config_dict["board"] = board_name
+
     def get_board_name(self):
         if "board" in list(self.config_dict.keys()):
             return self.config_dict["board"]

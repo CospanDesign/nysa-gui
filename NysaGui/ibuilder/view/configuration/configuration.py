@@ -32,17 +32,25 @@ class Configuration(QWidget):
         self.status = status
         self.actions = actions
         layout = QFormLayout()
+
         name_layout = QHBoxLayout()
         self.project_name_line = QLineEdit()
+        self.current_project_name = ""
         update_project_name_button = QPushButton("Update Project Name")
         update_project_name_button.clicked.connect(self.update_project_name_button)
         name_layout.addWidget(self.project_name_line)
         name_layout.addWidget(update_project_name_button)
+
+        board_layout = QHBoxLayout()
         self.board_list = QComboBox()
-        self.current_project_name = ""
+        self.current_board_name = ""
+        update_board_button = QPushButton("Update Board")
+        update_board_button.clicked.connect(self.update_board_clicked)
+        board_layout.addWidget(self.board_list)
+        board_layout.addWidget(update_board_button)
 
         layout.addRow("project name", name_layout)
-        layout.addRow("board select", self.board_list)
+        layout.addRow("board select", board_layout)
         layout.addRow("internal bindings", self.setup_internal_bind_widget())
 
         self.setLayout(layout)
@@ -78,6 +86,23 @@ class Configuration(QWidget):
         layout.addWidget(self.connected_signals)
         layout.addWidget(self.unbind_button)
         return layout
+
+    def update_board_clicked(self):
+        board_name = self.board_list.currentText()
+        if board_name == self.current_board_name:
+            self.status.Info("Board is already: %s" % board_name)
+            return
+
+        m = QMessageBox.warning(None,
+        "Change Board name to %s" % board_name,
+        "Are sure you want to change to board to %s? this will reset all your constraints, this cannot be undone!" % board_name,
+        QMessageBox.Yes | QMessageBox.No,
+        defaultButton = QMessageBox.Yes)
+        if m == QMessageBox.No:
+            print "Cancelled"
+            return
+
+        self.actions.update_board.emit(board_name)
 
     def internal_bind_clicked(self):
         #Error check
@@ -134,6 +159,7 @@ class Configuration(QWidget):
 
     def set_board(self, board):
         index = self.board_list.findText(board, Qt.MatchExactly)
+        self.current_board_name = board
         self.board_list.setCurrentIndex(index)
 
     def populate_board_list(self, boards):

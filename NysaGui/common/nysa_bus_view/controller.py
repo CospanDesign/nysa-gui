@@ -237,6 +237,10 @@ class Controller (QObject):
         self.model.load_config_file(config_file)
         self.model.initialize_graph(self)
 
+    def set_board_name(self, board_name):
+        self.model.set_board_name(board_name)
+        self.model.initialize_graph(self)
+        
     def set_default_board_project(self, board_name):
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
@@ -492,6 +496,10 @@ class Controller (QObject):
         self.model.bind_internal_signal(to_signal, from_signal)
         self.initialize_configuration_editor(self.configuration_editor)
 
+    def unbind_all(self):
+        self.model.unbind_all()
+        self.refresh_constraint_editor()
+
     def unbind_internal_signal(self, to_signal):
         """ unbind the signals that are connected to to_signal
 
@@ -508,5 +516,4 @@ class Controller (QObject):
         #Pass this to the model, this is where the config_dict is held
         self.model.unbind_internal_signal(to_signal)
         self.initialize_configuration_editor(self.configuration_editor)
-
 

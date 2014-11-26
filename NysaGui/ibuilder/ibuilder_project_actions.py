@@ -28,3 +28,4 @@ class IBuilderProjectActions(QtCore.QObject):
 
     #Configuration options
     update_project_name = QtCore.pyqtSignal(str, str, name = "ibuilder_configuration_update_name")
+    update_board = QtCore.pyqtSignal(str, name = "ibuilder_configuration_update_board")

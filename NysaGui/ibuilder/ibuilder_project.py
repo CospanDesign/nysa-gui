@@ -80,9 +80,18 @@ class IBuilderProject(QObject):
         self.project_actions.remove_slave.connect(self.controller.remove_slave)
         self.project_actions.internal_bind_connect.connect(self.controller.bind_internal_signal)
         self.project_actions.internal_bind_disconnect.connect(self.controller.unbind_internal_signal)
+        self.project_actions.update_board.connect(self.update_board)
         self.controller.initialize_constraint_editor(self.project_view.get_constraint_editor())
         self.controller.initialize_configuration_editor(self.project_view.get_configuration_editor())
 
+
+    def update_board(self, board_name):
+        self.status.Important("Changing board to %s" % board_name)
+        self.controller.unbind_all()
+        self.controller.set_board_name(board_name)
+        self.status.Warning("Board Change functionality not fully tested!")
+        self.update_project()
+        
     def update_project(self):
         self.controller.initialize_configuration_editor(self.project_view.get_configuration_editor())
 
