@@ -148,12 +148,26 @@ class RootBranch(BranchNode):
         self.insertChild(node)
         return node
 
-    def remove_project(self, name):
-        child = self.childWithKey(name)
+    def remove_project(self, name, path = None):
+        print "name: %s" % name
+        f = None
+        for child in self.children:
+            if child[0] == name:
+                f = child
+                break
+            
         return self.removeChild(child)
 
-    def get_project(self):
-        return project
+    def get_project(self, name):
+        #print "child: %s" % str(self.childWithKey(name))
+        return self.childWithKey(name).get_project()
+
+    def get_project_names(self):
+        names = []
+        #print "children: %s" % str(self.children)
+        for children in self.children:
+            names.append(children[0])
+        return names
 
 class ProjectTreeTableModel(QAbstractItemModel):
     def __init__(self, actions, status):
@@ -170,7 +184,6 @@ class ProjectTreeTableModel(QAbstractItemModel):
 
         self.focused_font = QFont("White Rabbit")
         self.focused_font.setBold(True)
-
 
     def rowCount(self, parent):
         node = self.nodeFromIndex(parent)
@@ -316,6 +329,12 @@ class ProjectTreeTableModel(QAbstractItemModel):
     def remove_project(self, name, path = None):
         return self.root.remove_project(name, path)
 
+    def get_project_by_name(self, name):
+        return self.root.get_project(name)
+
+    def get_project_names(self):
+        return self.root.get_project_names()
+
 class ProjectTree(QTreeView):
     def __init__(self, actions, status):
         super(ProjectTree, self).__init__()
@@ -358,8 +377,21 @@ class ProjectTree(QTreeView):
         return self.m.add_project(project)
 
     def remove_project(self, name, path = None):
-        return self.m.remove_project(name, path)
+        c = self.m.remove_project(name, path)
+        self.reset()
+        return c
 
     def get_project_color(self):
         pass
 
+    def get_selected_project(self):
+        selected = self.selectedIndexes()
+        node = self.m.nodeFromIndex(selected[0])
+        #print "Node: %s" % str(node)
+        return node.get_project()
+
+    def get_project_by_name(self, name):
+        return self.m.get_project_by_name(name)
+
+    def get_project_names(self):
+        return self.m.get_project_names()

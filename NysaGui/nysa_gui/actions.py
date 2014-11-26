@@ -18,3 +18,10 @@ class _Actions(QtCore.QObject):
     show_ibuilder_view = QtCore.pyqtSignal(name = "show_ibuilder_view")
     show_cbuilder_view = QtCore.pyqtSignal(name = "show_cbuilder_view")
 
+    host_save = QtCore.pyqtSignal(name = "host_save")
+    ibuilder_save = QtCore.pyqtSignal(name = "ibuilder_save")
+    cbuilder_save = QtCore.pyqtSignal(name = "cbuilder_save")
+
+    host_open = QtCore.pyqtSignal(name = "host_open")
+    ibuilder_open = QtCore.pyqtSignal(name = "ibuilder_open")
+    cbuilder_open = QtCore.pyqtSignal(name = "cbuilder_open")

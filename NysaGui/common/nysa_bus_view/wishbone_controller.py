@@ -171,6 +171,9 @@ class WishboneController (controller.Controller):
         s = self.model.get_graph_manager().get_node(uname)
         return s.slave_type, s.slave_index
 
+    def set_project_name(self, name):
+        self.model.set_project_name(name)
+
     def get_project_name(self):
         return self.model.get_project_name()
 
@@ -232,7 +235,7 @@ class WishboneController (controller.Controller):
             data = event.mimeData().data("application/flowchart-data")
             #position = self.fd.position()
 
-            print "Data: %s" % str(data)
+            #print "Data: %s" % str(data)
             d = json.loads(str(data))
             if event.dropAction() == Qt.MoveAction:
                 self.s.Debug("Moving Slave")
@@ -333,7 +336,7 @@ class WishboneController (controller.Controller):
 
         uname = self.model.get_unique_from_module_name(slave_name)
         tags = self.model.get_node_module_tags(uname)
-        print "tags: %s" % str(tags)
+        #print "tags: %s" % str(tags)
 
         #index = bus.get_slave_index(slave_name)
         #slave = bus.get_slave(slave_name)
@@ -357,17 +360,14 @@ class WishboneController (controller.Controller):
         for i in range(pcount):
             name = self.model.get_slave_name(SlaveType.PERIPHERAL, i)
             ports = copy.deepcopy(self.model.get_slave_ports(SlaveType.PERIPHERAL, i))
-            #self.dbg = True
-            if self.dbg: print "%s ports: %s" % (name, str(ports))
             bindings = self.model.get_slave_bindings(SlaveType.PERIPHERAL, i)
-            #signals = ports.keys()
-            #signals = bindings.keys()
-            #Add Peripheral Signals
-            #for key in bindings:
+            signals = ports.keys()
             bound_count = 0
+            #used to keep a copy of the indexes that are bound, this will be used in the constraints view
+            #to tell the user that some of a bus is being used
             used_indexes = []
+            #Add connected peripheral signals to the bottom view
             for key in bindings:
-                #print "binding: %s" % str(key)
                 if not bindings[key]["range"]:
                     self.constraint_editor.add_connection(color = PS_COLOR,
                                                           module_name = name,
@@ -375,17 +375,16 @@ class WishboneController (controller.Controller):
                                                           direction = bindings[key]["direction"],
                                                           pin_name = bindings[key]["loc"])
                 else:
+                    #Get the indexes of all the ports that are bound
                     used_indexes = []
                     indexes = copy.deepcopy(bindings[key].keys())
                     used_indexes = copy.deepcopy(bindings[key].keys())
-                    if self.dbg: print "Indexes: %s" % str(indexes)
                     indexes.remove("range")
                     used_indexes.remove("range")
                     bound_count = 0
                     for i in indexes:
                         bound_count += 1
                         #XXX: This should change to accomodate the tree constraints view
-                        #n = "%s[%d]" % (key, i)
                         self.constraint_editor.add_connection(color = PS_COLOR,
                                                               module_name = name,
                                                               port = key,
@@ -394,13 +393,12 @@ class WishboneController (controller.Controller):
                                                               index = i)
 
 
-                #Subtract out the ports were used so we don't display them to the user
                 for direction in ports:
+                    #Subtract out the ports were used so we don't display them to the user
                     signals = ports[direction].keys()
                     for signal in signals:
                         if signal != key:
                             continue
-                        print "Found %s == %s" % (signal, key)
                         if not bindings[key]["range"]:
                             del(ports[direction][signal])
                         else:
@@ -409,15 +407,13 @@ class WishboneController (controller.Controller):
                                 del(ports[direction][signal])
                             else:
                                 if self.dbg: print "%s is not a port of %s" % (key, signal)
-                                print "indexes used for %s: %s" % (signal, str(used_indexes))
                                 ports[direction][signal]["used"] = copy.deepcopy(used_indexes)
-
-                                #XXX: Need a way to detect partial vectors, sometimes a user will only use part of a vector
 
 
             #Show the available peripheral ports in the top left
             for direction in ports:
                 for signal in ports[direction]:
+
                     if signal == "clk":
                         continue
                     if signal == "rst":
@@ -431,7 +427,7 @@ class WishboneController (controller.Controller):
                         s["used"] = []
 
                     if s["size"] > 1:
-                        print "used: %s" % str(s["used"])
+                        #print "used: %s" % str(s["used"])
                         rng = (s["max_val"], s["min_val"])
                         self.constraint_editor.add_signal(PS_COLOR,
                                                           name,
@@ -453,8 +449,9 @@ class WishboneController (controller.Controller):
             ports = copy.deepcopy(self.model.get_slave_ports(SlaveType.MEMORY, i))
             bindings = self.model.get_slave_bindings(SlaveType.MEMORY, i)
             signals = ports.keys()
-            #signals = bindings.keys()
-
+            #used to keep a copy of the indexes that are bound, this will be used in the constraints view
+            #to tell the user that some of a bus is being used
+            used_indexes = []
             #Add connected memory signals to the bottom view
             for key in bindings:
                 if not bindings[key]["range"]:
@@ -464,14 +461,16 @@ class WishboneController (controller.Controller):
                                                           direction = bindings[key]["direction"],
                                                           pin_name = bindings[key]["loc"])
                 else:
+                    #Get the indexes of all the ports that are bound
+                    used_indexes = []
                     indexes = copy.deepcopy(bindings[key].keys())
-                    if self.dbg: print "Indexes: %s" % str(indexes)
+                    used_indexes = copy.deepcopy(bindings[key].keys())
                     indexes.remove("range")
+                    used_indexes.remove("range")
                     bound_count = 0
                     for i in indexes:
                         bound_count += 1
                         #XXX: This should change to accomodate the tree constraints view
-                        n = "%s[%d]" % (key, i)
                         self.constraint_editor.add_connection(color = MS_COLOR,
                                                               module_name = name,
                                                               port = key,
@@ -484,6 +483,8 @@ class WishboneController (controller.Controller):
                     #Subtract out any of the ports that I used above
                     signals = ports[direction].keys()
                     for signal in signals:
+                        if signal != key:
+                            continue
                         if not bindings[key]["range"]:
                             del(ports[direction][signal])
                         else:
@@ -492,7 +493,7 @@ class WishboneController (controller.Controller):
                                 del(ports[direction][signal])
                             else:
                                 if self.dbg: print "%s is not a port of %s" % (key, signal)
-                                #XXX: Need a way to detect vectors, sometimes a user will only use part of a vector
+                                ports[direction][signal]["used"] = copy.deepcopy(used_indexes)
 
 
             #Add the Memory Ports to the available signals
@@ -506,11 +507,13 @@ class WishboneController (controller.Controller):
                     if wishbone_utils.is_wishbone_bus_signal(signal):
                         continue
 
-                    print "signal: %s" % signal
-
+                    #print "signal: %s" % signal
                     s = ports[direction][signal]
+                    if "used" not in s:
+                        s["used"] = []
 
                     if s["size"] > 1:
+                        #print "used: %s" % str(s["used"])
                         rng = (s["max_val"], s["min_val"])
                         self.constraint_editor.add_signal(MS_COLOR,
                                                           name,

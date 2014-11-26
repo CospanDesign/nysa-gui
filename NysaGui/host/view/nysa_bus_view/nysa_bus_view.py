@@ -129,4 +129,7 @@ class NysaBusView(QWidget):
         event.ignore()
         #self.vc.drop_event(self.position(), event)
 
+    def scale_fit(self):
+        self.fbv.fit_view()
+
 

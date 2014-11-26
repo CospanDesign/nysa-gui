@@ -44,9 +44,9 @@ from host_actions import Actions
 debug = False
 
 class HostController(QObject):
-    def __init__(self, actions, status):
+    def __init__(self, gui_actions, status):
         super(HostController, self).__init__()
-        self.nysa_gui_actions = actions
+        self.gui_actions = gui_actions
         self.actions = Actions()
         self.status = status
         self.init_ui()
@@ -69,10 +69,13 @@ class HostController(QObject):
         self.actions.script_item_selected.connect(self.script_item_selected)
         self.actions.remove_tab.connect(self.remove_script)
 
+        self.gui_actions.host_save.connect(self.save)
+        self.gui_actions.host_open.connect(self.open)
+
         self.sm.scan()
 
     def init_ui(self):
-        self.view = HostView(self.actions, self.status)
+        self.view = HostView(self.gui_actions, self.actions, self.status)
 
     def get_view(self):
         return self.view
@@ -212,6 +215,12 @@ class HostController(QObject):
                 del(self.scripts[i])
                 return
 
+    def save(self):
+        print "Save"
+
+    def open(self):
+        print "host open"
+
 def drt_to_config(n):
     config_dict = {}
     #Read the board id and find out what type of board this is
@@ -263,7 +272,5 @@ def drt_to_config(n):
     config_dict["INTERFACE"] = {}
     return config_dict
     #Read the number of memory devices
-
-
 
 

@@ -36,12 +36,14 @@ from tab_manager import TabManager
 from nysa_bus_view.nysa_bus_view import NysaBusView
 
 class HostView(QWidget):
-    def __init__(self, actions, status):
+    def __init__(self, gui_actions, actions, status):
         super (HostView, self).__init__()
         layout = QVBoxLayout()
         self.status = status
+        self.gui_actions = gui_actions
         self.actions = actions
         self.menu_actions = []
+        self.setObjectName("host")
 
 
         #Refresh Platform Tree
@@ -82,6 +84,10 @@ class HostView(QWidget):
         #Set the layout
         self.setLayout(layout)
         self.actions.platform_tree_changed_signal.connect(self.platform_tree_changed)
+
+
+    def fit(self):
+        self.fpga_image.scale_fit()
 
     def get_menu_actions(self):
         return self.menu_actions

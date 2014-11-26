@@ -82,6 +82,9 @@ class WishboneModel():
         self.build_tool = {}
         #self.board_dict = config_dict["board"]
 
+    def get_config_dict(self):
+        return self.config_dict
+
     def initialize_graph(self, debug=False):
         """Initializes the graph and project tags."""
         # Clear any previous data.
@@ -427,9 +430,9 @@ class WishboneModel():
             pass
 
         if slave is not None:
-            print "%s: add_drt: name: %s" % (__file__, slave.name)
+            #print "%s: add_drt: name: %s" % (__file__, slave.name)
             if slave.name == DRT_NAME:
-                print "%s: DRT Already in Graph Manager" % (__file__)
+                #print "%s: DRT Already in Graph Manager" % (__file__)
                 return
         s_count = self.gm.get_number_of_peripheral_slaves()
         uname = self.gm.add_node(   DRT_NAME,
@@ -439,18 +442,23 @@ class WishboneModel():
         slave = self.gm.get_node(uname)
         self.gm.move_peripheral_slave(slave.slave_index, 0)
 
-    def add_peripheral_slave(self, name, module_tags = {}, project_tags = {}, index = -1):
+    def add_peripheral_slave(self, name, module_tags = {}, project_tags = None, index = -1):
         self.add_slave(name, SlaveType.PERIPHERAL, module_tags, project_tags, index)
 
-    def add_memory_slave(self, name, module_tags = {}, project_tags = {}, index = -1):
+    def add_memory_slave(self, name, module_tags = {}, project_tags = None, index = -1):
         self.add_slave(name, SlaveType.MEMORY, module_tags, project_tags, index)
 
-    def add_slave(self, name, slave_type, module_tags = {}, slave_project_tags = {}, slave_index=-1):
+    def add_slave(self, name, slave_type, module_tags = {}, slave_project_tags = None, slave_index=-1):
         """Adds a slave to the specified bus at the specified index."""
         # Check if the slave_index makes sense.  If slave index s -1 then add it
         # to the next available location
         if name == "DRT":
             return self.add_drt()
+
+        if slave_project_tags is None:
+            slave_project_tags = {}
+            slave_project_tags["filename"] = utils.find_module_filename(module_tags["module"])
+            slave_project_tags["bind"] = {}
 
         slave = None
 
@@ -578,10 +586,10 @@ class WishboneModel():
 
     def unbind_port(self, node_name, port_name, index=None):
         """Remove a binding with the port name."""
-        #print "node name: %s" % node_name
-        #un = self.get_unique_from_module_name(node_name)
-        self.gm.unbind_port(node_name, port_name, index=None)
-        return
+        if node_name == "Host Interface":
+            node_name = HOST_INTERFACE
+        #uname = self.get_unique_from_module_name(node_name)
+        self.gm.unbind_port(node_name, port_name, index)
 
     def unbind_all(self, debug=False):
         if debug:
@@ -709,99 +717,23 @@ class WishboneModel():
         return self.gm.get_node_ports(uname)
 
     def _commit_bindings_to_project_tags(self, uname):
-        print "committing"
-        project_tags = self.get_node_project_tags(uname)
-        ports = self.get_node_ports(uname)
-        ports = cu.get_only_signal_ports(ports)
-        bindings = project_tags["bind"]
-        bkeys = bindings.keys()
-        for b in bkeys:
-            #print "Looking at: %s" % b
-            if b not in ports.keys():
-                #print "\t%s not in new ports" % b
-                self.gm.unbind_port(uname, b)
-                continue
-
-            if ports[b]["range"] and not bindings[b]["range"]:
-                #Used to be one now there is a range
-                #print "\tnew port has range, old port doesn't"
-                bind = bindings[b]["loc"]
-                tk = []
-                tk = copy.deepcopy(ports[b].keys())
-                tk.remove("range")
-                tk.sort()
-
-                self.gm.unbind_port(uname, b)
-                self.gm.bind_port(name = uname,
-                                  port_name = b,
-                                  loc = bind,
-                                  index = tk[0])
-
-            elif not ports[b]["range"] and bindings[b]["range"]:
-                #print "\tnew port doesn't have range, old port does"
-                #Used to have a range now there is only one
-                tk = []
-                tk = copy.deepcopy(bindings[b].keys())
-                tk.remove("range")
-                tk.sort()
-                print "tk: %s" % str(tk)
-                bind = bindings[b][tk[0]]["loc"]
-
-                self.gm.unbind_port(name = uname,
-                                    port_name = b)
-                #bind the lowest value to the only value
-                self.gm.bind_port(name = uname,
-                                  port_name = b,
-                                  loc = bind)
-
-
-            elif ports[b]["range"] and bindings[b]["range"]:
-                #Both have ranges, now I need to adjust
-                #print "check if all the values within bindings range are within the new ports"
-                ok = copy.deepcopy(bindings[b].keys())
-                ok.remove("range")
-                nk = copy.deepcopy(ports[b].keys())
-                nk.remove("range")
-                good = True
-                for a in ok:
-                    #print "Checking %s with %s" % (str(a), str(nk))
-                    if a not in nk:
-                        good = False
-                if good:
-                    #print "All old items within new items"
-                    continue
-                #get all the bindings items in a list
-                td = {}
-                for a in ok:
-                    td[a] = {}
-                    td[a] = bindings[b][a]["loc"]
-                indexes = copy.deepcopy(td.keys())
-                indexes.sort()
-                self.gm.unbind_port(uname, b)
-
-                new_indexes = copy.deepcopy(ports[b].keys())
-                new_indexes.remove("range")
-                new_indexes.sort()
-                lold = len(indexes)
-                #print "Length of old: %d" % lold
-                lnew = len(new_indexes)
-                #print "Length of new: %d" % lnew
-                first = new_indexes[0]
-                length = lold
-                if lnew < lold:
-                    length = lnew
-                fin = length + new_indexes[0]
-                #print "start: %d" % new_indexes[0]
-                #print "length: %d" % fin
-                for i in range (length):
-                    #print "old: %d" % indexes[i]
-                    #print "new index: %d" % new_indexes[i]
-                    self.gm.bind_port(name = uname,
-                                      port_name = b,
-                                      loc = td[indexes[i]],
-                                      index = new_indexes[i])
-        project_tags["bind"] = bindings
-        self.gm.set_project_tags(uname, project_tags)
+        bindings = self.gm.get_node_bindings(uname)
+        #bindings = cu.consolodate_constraints(bindings, debug = True)
+        bindings = cu.consolodate_constraints(bindings)
+        tags = self.get_node_project_tags(uname)
+        #print "old tags: "
+        #utils.pretty_print_dict(tags)
+        tags["bind"] = bindings
+        #print "new tags: "
+        #utils.pretty_print_dict(tags)
+        if self.gm.get_node(uname).node_type == NodeType.HOST_INTERFACE:
+            self.config_dict["INTERFACE"] = self.gm.get_node_project_tags(uname)
+        elif self.gm.get_node(uname).node_type == NodeType.SLAVE:
+            if self.gm.get_node(uname).slave_type == SlaveType.PERIPHERAL:
+                self.config_dict["SLAVES"][self.gm.get_node(uname).name] = self.gm.get_node_project_tags(uname)
+            else:
+                self.config_dict["MEMORY"][self.gm.get_node(uname).name] = self.gm.get_node_project_tags(uname)
+            
 
     def commit_all_project_tags(self):
         #Go through the host interface first
@@ -809,17 +741,30 @@ class WishboneModel():
 
         pcount = self.get_number_of_peripheral_slaves()
         for i in range(pcount):
-            uname = get_unique_name(name, NodeType.SLAVE, SlaveType.PERIPHERAL, i)
+            uname = self.gm.get_slave_name_at(SlaveType.PERIPHERAL, i)
+            print "uname: %s" % uname
+            #name = self.gm.get_node(uname).name
+            #print "name: %s" % self.gm.get_node(uname).name
+            '''
+            if name not in self.config_dict["SLAVES"]:
+                self.config_dict["SLAVES"][name] = {
+                        "filename":self.gm.get_node_module_tags(uname)["filename"],
+                        "bind":{}
+                        }
+            '''
+            #uname = get_unique_name(name, NodeType.SLAVE, SlaveType.PERIPHERAL, i)
             self._commit_bindings_to_project_tags(uname)
 
         mcount = self.get_number_of_memory_slaves()
         for i in range(mcount):
-            uname = get_unique_name(name, NodeType.SLAVE, SlaveType.MEMORY, i)
+            uname = self.gm.get_slave_name_at(SlaveType.MEMORY, i)
+            #uname = self.gm.get_slave_name_at(SlaveType.MEMORY, i)
+            #uname = get_unique_name(name, NodeType.SLAVE, SlaveType.MEMORY, i)
             self._commit_bindings_to_project_tags(uname)
 
 
     def get_unique_slave_name(self, module_tags, bus):
-        print "bus: %s" % str(bus)
+        #print "bus: %s" % str(bus)
         count = 0
         ucount = 0
         bus_type = SlaveType.PERIPHERAL
@@ -835,4 +780,10 @@ class WishboneModel():
                 if module_tags["module"] == slave.module_tags["module"]:
                     ucount += 1
         return "%s_%d" % (module_tags["module"], ucount)
+
+    def set_project_name(self, name):
+        self.config_dict["PROJECT_NAME"] = name
+
+    def get_project_name(self):
+        return self.config_dict["PROJECT_NAME"]
 

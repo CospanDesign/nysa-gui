@@ -68,3 +68,6 @@ class GraphicsView(gv):
     def showEvent(self, sevent):
         super (GraphicsView, self).showEvent(sevent)
 
+    def resizeEvent(self, event):
+        super(GraphicsView, self).resizeEvent(event)
+        self.fit_in_view()

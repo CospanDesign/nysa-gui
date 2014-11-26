@@ -501,6 +501,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
     def removeRecord(self, module_name, signal_name, signal_index = None, callReset=True):
         #print "Remove record"
         root = self.root
+        module_name = str(module_name)
         module_branch = root.childWithKey(module_name.lower())
         if module_branch is None:
             return False

@@ -45,8 +45,14 @@ class CBuilderController(QObject):
         #self.actions = Actions()
         self.status = status
         self.view = CBuilderView(self.actions, self.status)
+        self.nysa_gui_actions.cbuilder_save.connect(self.save)
+        self.nysa_gui_actions.cbuilder_open.connect(self.open)
 
     def get_view(self):
         return self.view
 
+    def save(self):
+        print "cbuilder save"
 
+    def open(self):
+        print "cbuilder open"

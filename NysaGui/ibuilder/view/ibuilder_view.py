@@ -29,9 +29,11 @@ from project_tree import ProjectTree
 from project_tab_manager import ProjectTabManager
 
 class IBuilderView(QWidget):
-    def __init__(self, actions, status):
+    def __init__(self, gui_actions, actions, status):
         super (IBuilderView, self).__init__()
+        self.setObjectName("ibuilder")
         layout = QVBoxLayout()
+        self.gui_actions = gui_actions
         self.status = status
         self.actions = actions
         self.menu_actions = []
@@ -64,6 +66,7 @@ class IBuilderView(QWidget):
 
         layout.addWidget(self.main_splitter)
         self.setLayout(layout)
+        #self.setFocusPolicy(Qt.WheelFocus)
         self.show()
 
     def get_menu_actions(self):
@@ -74,13 +77,21 @@ class IBuilderView(QWidget):
         self.tm.add_tab(project_node.get_name(), project.get_view())
         self.project_tree.reset()
 
-    def remove_project(self, name, path):
-        return self.project_tree.remove_project(name, path)
+    def remove_project(self, name, path = None):
+        p = self.project_tree.remove_project(name, path)
+        self.tm.remove_tab(name)
+        return p
 
     def get_project_tree(self):
         return self.project_tree
 
+    def get_current_project_name(self):
+        tw = self.tab_view.currentWidget()
+        return tw.get_controller().get_project_name()
+
+
     def clear_projects(self):
         self.tm.clear()
         self.project_tree.clear()
+
 

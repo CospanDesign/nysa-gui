@@ -263,9 +263,10 @@ class SignalTable(QTreeView):
         self.expand(self.rootIndex())
 
     def add_signal(self, color, module_name, name, signal_range, direction, used_list = []):
-        print "add signal: %s" % str(used_list)
+        #print "add signal: %s" % str(used_list)
         if len(used_list) > 0:
-            print "used list: %s" % str(used_list)
+            #print "used list: %s" % str(used_list)
+            pass
         #fields = [module_name, name, signal_range, direction]
         self.m.addRecord(color, module_name, name, signal_range, direction, used_list = used_list)
 

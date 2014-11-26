@@ -77,6 +77,8 @@ class NysaGui(QObject):
         self.status.Debug( "Created main form!")
         QThread.currentThread().setObjectName("Nysa GUI Main")
 
+        #app.focusChanged.connect(self.actions.focus_change)
+
         self.hc.refresh_platform_tree()
         sys.exit(app.exec_())
 

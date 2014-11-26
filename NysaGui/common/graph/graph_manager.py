@@ -107,7 +107,8 @@ class GraphManager:
                                             slave_type, node.slave_index)
 
         if node.unique_name in self.graph.node:
-            print "%s is already in graph: %s" % node.unique_name
+            #print "%s is already in graph: %s" % node.unique_name
+            pass
         self.graph.add_node(str(node.unique_name))
         self.graph.node[node.unique_name] = node
 
@@ -560,31 +561,44 @@ class GraphManager:
             pdict["loc"] = loc
 
     def unbind_port(self, name, port_name, index = None):
-        node = self.get_node(name)
-        if port_name not in node.bindings:
+        bindings = self.get_node_bindings(name)
+        #print "unbind_port"
+        #print "\tport name: %s" % port_name
+        if port_name not in bindings:
             raise SlaveError(
               "port %s is not in the binding dictionary for node %s"
               % (port_name, name))
         if index is not None:
-            print "index type: %s : %d" % (str(type(index)), index)
-            port = node.bindings[port_name]
+            #print "\tindex type: %s : %d" % (str(type(index)), index)
+            #print "\tindex: %s" % str(index)
 
+            port = bindings[port_name]
+            #print "\tport: %s" % str(port)
             if index in port.keys():
+                #print "\tport in index"
 
                 if len(port.keys()) == 1:
                     #Only "Range is left
-                    del(node.bindings[port_name])
-                    return
+                    #print "\tRange of port is 1!"
+                    del(bindings[port_name])
                 else:
-                    del(port[index])
-                return
+                    #print "\tRemoving only one item in the port"
+                    #del(port[index])
+                    #bindings[port_name] = port
+                    try:
+                        del(bindings[port_name][index])
+                        #print "\tCommitting node binding for port: %s" % str(bindings[port_name])
+                    except KeyError:
+                        raise SlaveError(
+                            "port %s:%d is not in the binding dictionery for node %s"
+                            % (port_name, index, name))
+        else:
+            #print "\tdeleting port: %s" % str(port_name)
+            del(bindings[port_name])
 
-            raise SlaveError(
-                    "port %s:%d is not in the binding dictionery for node %s"
-                    %(port_name, index, name))
-
-
-        del(node.bindings[port_name])
+        self.set_node_bindings(name, bindings)
+        b = self.get_node_bindings(name)
+        #print "\tbindings: %s" % str(b)
 
     def set_config_bindings(self, name, bindings):
         node = self.get_node(name)

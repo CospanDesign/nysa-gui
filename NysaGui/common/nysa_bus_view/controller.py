@@ -263,6 +263,9 @@ class Controller (QObject):
     def add_bus_link(self, m, bus):
         self.add_link(m, bus, lt.bus, st.right)
 
+    def set_project_name(self, name):
+        raise NotImplementedError("This function should be subclassed")
+
     def get_project_name(self):
         raise NotImplementedError("This function should be subclassed")
 
@@ -298,7 +301,7 @@ class Controller (QObject):
         #If a name is present just populate connections for that one item
         #   e.g. the host interface, master, etc...
         if self.constraint_editor is None:
-            print "constraint editor is none"
+            #print "constraint editor is none"
             return
 
         mbd = self.model.get_consolodated_master_bind_dict()
@@ -357,8 +360,8 @@ class Controller (QObject):
                             #print "remove an item that has only no range: %s" % key
                             del(hip[direction][key])
                         else:
-                            print "Signal: %s" % key
-                            print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
+                            #print "Signal: %s" % key
+                            #print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
                             if bound_count == ports[key]["size"]:
                                 #print "All of the items in the bus are constrained"
                                 #signals.remove[key]
@@ -447,10 +450,13 @@ class Controller (QObject):
         #Remove signal from model
         #print "Controller: Disconnect"
         uname = self.model.get_unique_from_module_name(module_name)
+        #print "unbind: %s, index %s" % (str(signal_name), str(index))
         self.model.unbind_port(uname, signal_name, index)
         self.constraint_editor.remove_connection(module_name, signal_name, index)
         self.refresh_constraint_editor()
 
+    def get_config_dict(self):
+        return self.model.get_config_dict()
 
 
 

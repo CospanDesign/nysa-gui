@@ -85,7 +85,8 @@ class SignalLeafNode(LeafNode):
         self.children = []
         #if there is a range add all the index sigal leaf nodes
         if len(used_list) > 0:
-            print "used list: %s" % str(used_list)
+            #print "used list: %s" % str(used_list)
+            pass
         if self.has_range():
             for i in range (min(signal_range), max(signal_range) + 1):
                 active = True
@@ -269,7 +270,8 @@ class SignalTreeTableModel(QAbstractItemModel):
         sl = module_branch.childWithKey(key)
         if sl is None:
             if len(used_list) > 0:
-                print "used list: %s" % str(used_list)
+                #print "used list: %s" % str(used_list)
+                pass
             sl = SignalLeafNode(signal_name, signal_range, direction, used_list = used_list)
             module_branch.insertChild(sl)
         if callReset:

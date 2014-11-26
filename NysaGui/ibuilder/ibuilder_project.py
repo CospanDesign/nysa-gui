@@ -21,6 +21,7 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import sys
 import os
 import copy
+import json
 
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
@@ -65,6 +66,7 @@ class IBuilderProject(QObject):
             self.load_project()
         else:
             self.config_dict = copy.deepcopy(DEFAULT_CONFIG)
+        self.config_dict["PROJECT_NAME"] = name
         self.project_status = "unsaved"
         self.controller = WishboneController(self.config_dict,
                                             self.project_view.get_designer_scene(),
@@ -79,6 +81,9 @@ class IBuilderProject(QObject):
         self.project_actions.remove_slave.connect(self.controller.remove_slave)
         self.controller.initialize_constraint_editor(self.project_view.get_constraint_editor())
 
+    def load_project(self):
+        self.config_dict = json.load(open(str(self.path), 'r'))
+        
     def initialize_slave_lists(self):
         bus_type = self.controller.get_bus()
         paths = utils.get_local_verilog_paths()
@@ -101,8 +106,7 @@ class IBuilderProject(QObject):
 
         self.project_actions.setup_peripheral_bus_list.emit(peripheral_dict)
         self.project_actions.setup_memory_bus_list.emit(memory_dict)
-
-
+        #self.project_view.get_designer_scene().view.fit_in_view()
 
     def get_view_names(self):
         return self.project_view.get_view_names()
@@ -120,10 +124,36 @@ class IBuilderProject(QObject):
         self.path = path
 
     def save_project(self):
-        self.status.Error("Save Project Not Implemented Yet")
-
-    def load_project(self):
-        self.status.Error("Load Project Not Implemented Yet")
+        #self.status.Error("Save Project Not Implemented Yet")
+        self.controller.model.commit_all_project_tags()
+        project_tags = self.controller.get_config_dict()
+        #print "project tags:"
+        #utils.pretty_print_dict(project_tags)
+        initial_dir = utils.get_nysa_user_base()
+        initial_dir = os.path.join(initial_dir, "user ibuilder projects")
+        print "user base: %s" % initial_dir
+        path = os.path.join(initial_dir, project_tags["PROJECT_NAME"])
+        file_path = path
+        p = path + ".json"
+        if not os.path.exists(p):
+            file_path = QFileDialog.getSaveFileName(None,
+                                            caption = "Select a location to save a project",
+                                            directory = path,
+                                            filter = "*.json")
+        f, e = os.path.splitext(str(file_path))
+        if len(e) == 0:
+            file_path = "%s.%s" % (file_path, "json")
+        if len(file_path) == 0:
+            print "cancel"
+            return
+        print "user path: %s" % file_path
+        f = open(file_path, 'w')
+        js = json.dumps(project_tags,
+                        sort_keys = True,
+                        indent = 2,
+                        separators=(",", ":"))
+        f.write(js)
+        f.close()
 
     def get_status(self):
         return self.project_status
@@ -133,12 +163,6 @@ class IBuilderProject(QObject):
 
     def get_view(self):
         return self.project_view
-
-
-
-
-
-
 
 
 DEFAULT_CONFIG = {

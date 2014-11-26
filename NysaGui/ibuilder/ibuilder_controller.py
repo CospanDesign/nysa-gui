@@ -26,6 +26,7 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
+import json
 import collections
 
 from PyQt4.Qt import *
@@ -34,6 +35,7 @@ from PyQt4.QtCore import *
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)))
 
+from nysa.ibuilder.lib import utils
 from NysaGui.common.utils import create_hash
 from ibuilder_project import IBuilderProject
 from view.ibuilder_view import IBuilderView
@@ -41,35 +43,41 @@ from ibuilder_actions import Actions
 
 
 class IBuilderController(QObject):
-    def __init__(self, actions, status):
+    def __init__(self, gui_actions, status):
         super(IBuilderController, self).__init__()
-        self.nysa_gui_actions = actions
+        self.gui_actions = gui_actions
         self.status = status
         self.actions = Actions()
-        self.view = IBuilderView(self.actions, self.status)
+        self.view = IBuilderView(self.gui_actions, self.actions, self.status)
         self.project_tree = self.view.get_project_tree()
-        self.projects = {}
 
         #XXX: Demo Stuff!
         self.new_project()
         #XXX: End Demo Stuff!
         self.actions.ibuilder_new_project.connect(self.new_project)
+        self.gui_actions.ibuilder_save.connect(self.save)
+        self.gui_actions.ibuilder_open.connect(self.open)
 
     def new_project(self):
         self.status.Debug("New Project Clicked!")
         new_project_name_base = "project_%d"
         index = 1
         new_project_name = new_project_name_base % index
+        project_names = self.get_project_names()
+        print "Project names: %s" % str(project_names)
         conflict = True
         while conflict:
             conflict = False
-            for project_name in self.projects:
-                if project_name == new_project_name:
-                    conflict = True
-                    new_project_name = new_project_name_base % index
-            index += 1
+            if new_project_name in project_names:
+                conflict = True
+                index += 1
+                new_project_name = new_project_name_base % index
+                continue
         #Create a populated new project
         self.add_project(new_project_name)
+
+    def get_project_names(self):
+        return self.project_tree.get_project_names()
 
     def add_project(self, name, path = None):
         self.status.Debug("Add Project: %s" % name)
@@ -79,3 +87,51 @@ class IBuilderController(QObject):
     def get_view(self):
         return self.view
 
+    def save(self):
+        #print "ibuilder save"
+        try:
+            project = self.project_tree.get_selected_project()
+        except IndexError as ex:
+            #Project not highlighted, find out which project is selected by which one is in focus in ibuilder
+            project_name = self.view.get_current_project_name()
+            #print "project name: %s" % project_name
+            project = self.project_tree.get_project_by_name(project_name)
+        print "Name: %s" % project.get_name()
+        project.save_project()
+
+    def open(self):
+        print "ibuilder open"
+        initial_dir = utils.get_nysa_user_base()
+        initial_dir = os.path.join(initial_dir, "user ibuilder projects")
+        path = initial_dir
+        file_path = QFileDialog.getOpenFileName(None,
+                                        caption = "Select a project to open",
+                                        directory = path,
+                                        filter = "*.json")
+
+        print "file path: %s" % file_path
+        j = json.load(open(file_path, 'r'))
+        name = j["PROJECT_NAME"]
+        project_names = self.get_project_names()
+        if name in project_names:
+            print "Project already found!"
+            m = QMessageBox.warning(None,
+            "Replace Project %s" % name,
+            "Are sure you want to replace the existing project %s with this one?" % name,
+            QMessageBox.Yes | QMessageBox.No,
+            defaultButton = QMessageBox.Yes)
+            if m == QMessageBox.No:
+                print "Cancelled"
+                return
+            project = self.project_tree.get_project_by_name(name)
+            self.view.remove_project(name)
+
+        self.add_project(name, file_path)
+
+
+
+
+
+
+        
+        

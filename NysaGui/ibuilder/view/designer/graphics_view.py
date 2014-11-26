@@ -74,3 +74,7 @@ class GraphicsView(gv):
     def dropEvent(self, event):
         super(GraphicsView, self).dropEvent(event)
 
+    def resizeEvent(self, event):
+        super(GraphicsView, self).resizeEvent(event)
+        self.fit_in_view()
+

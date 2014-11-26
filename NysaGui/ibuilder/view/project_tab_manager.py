@@ -66,6 +66,16 @@ class ProjectTabManager(QObject):
         self.tab_view.addTab(widget, icon, name)
         self.tabs.append([name, widget])
 
+
+    def remove_tab(self, name):
+        t = None
+        for i in range(self.tab_view.count()):
+            if name == self.tab_view.tabText(i):
+                t = i
+                break
+        if t is not None:
+            self.tab_view.removeTab(t)
+
     def tab_remove_request(self, index):
         widget = self.tab_view.widget(index)
         #if isinstance(widget, FPGAImage):
@@ -85,4 +95,5 @@ class ProjectTabManager(QObject):
         count = len(self.tabs)
         for i in range(count):
             self.tab_view.removeTab(0)
+
 

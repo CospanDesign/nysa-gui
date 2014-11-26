@@ -32,12 +32,15 @@ class CBuilderView(QWidget):
     def __init__(self, actions, status):
         super (CBuilderView, self).__init__()
         layout = QVBoxLayout()
+        self.setObjectName("cbuilder")
         self.status = status
         self.actions = actions
         self.menu_actions = []
 
         #Place Holder
-        layout.addWidget(QLabel("CBuilder"))
+        l = QLabel("CBuilder")
+        l.setObjectName("cbuilder")
+        layout.addWidget(l)
         #Set the layout of the widget
         self.setLayout(layout)
 

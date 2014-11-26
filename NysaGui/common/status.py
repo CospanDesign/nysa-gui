@@ -237,7 +237,7 @@ class _Status(QWidget):
         header = ["Index", "Level", "Class", "Message"]
         self.mdl = StatusModel([[]], header, self)
         self.status_list.setModel(self.mdl)
-        #self.setMinimumSize(400, 300)
+        #self.setMinimumSize(400, 300)d
         self.setMaximumHeight(200)
        
         #Hide the grids
