@@ -615,9 +615,12 @@ class WishboneModel():
         return self.config_dict["bind"]
 
     def get_available_internal_bind_signals(self):
+        #XXX: Get all internal signals from the generated top document
         return []
 
     def get_possible_internal_bind_signals(self, name):
+        #XXX: Get all internal signals from the generated top document that can
+        #connect to available signal
         return []
         
     def get_internal_bindings(self):
@@ -625,6 +628,45 @@ class WishboneModel():
             self.config_dict["internal_bind"] = {}
 
         return self.config_dict["internal_bind"]
+
+    def bind_internal_signal(self, to_signal, from_signal):
+        """ bind to_signal to from_signal, this will create a line like this
+
+        assign  to_signal = from_signal
+
+        Note: it is possible that the background utilities will actually barf on
+        this, the user has a lot of freedom to connect an arbitrary signal and
+        possibly create loops, so if errors do occur during build this may be
+        the root
+
+        Args:
+            to_signal (str): destination signal
+            from_signal (str): source signal
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        self.config_dict["internal_bind"][to_signal] = from_signal
+
+    def unbind_internal_signal(self, to_signal):
+        """ unbind the signals that are connected to to_signal
+
+        Args:
+            to_signal (str): signal to detach
+
+        Return:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        #Change all strings to standard python string
+        to_signal = str(to_signal)
+        if to_signal in self.config_dict["internal_bind"]:
+            del(self.config_dict["internal_bind"][to_signal])
         
     def get_consolodated_master_bind_dict(self):
         """Combine the dictionary from:

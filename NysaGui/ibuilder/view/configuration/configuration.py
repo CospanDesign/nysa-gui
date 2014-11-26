@@ -44,7 +44,9 @@ class Configuration(QWidget):
     def setup_internal_bind_widget(self):
         layout = QVBoxLayout()
         self.bind_button = QPushButton("Connect")
+        self.bind_button.clicked.connect(self.internal_bind_clicked)
         self.unbind_button = QPushButton("Disconnect")
+        self.unbind_button.clicked.connect(self.internal_unbind_clicked)
 
         self.connected_signals = QTableView()
         self.internal_bind_model = InternalBindModel()
@@ -52,8 +54,14 @@ class Configuration(QWidget):
         self.connected_signals.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.connected_signals.horizontalHeader().setStretchLastSection(True)
 
-        self.available_signals = QListWidget()
-        self.possible_signals = QListWidget()
+        #XXX: Punt internal bind autimation till Rev 2.0 no time :( 
+        #self.available_signals = QListWidget()
+        #self.possible_signals = QListWidget()
+        #XXX: This requires the user to manually enter in signals to bind,
+        #   It is pretty lame but to implement it correctly would require a lot
+        #   of time and I need to get Rev 1.0 out
+        self.available_signals = QLineEdit()
+        self.possible_signals = QLineEdit()
 
         signals_layout = QHBoxLayout()
         signals_layout.addWidget(self.available_signals)
@@ -65,6 +73,35 @@ class Configuration(QWidget):
         layout.addWidget(self.unbind_button)
         return layout
 
+    def internal_bind_clicked(self):
+        #Error check
+        to_signal = self.available_signals.text()
+        from_signal = self.possible_signals.text()
+        if len(to_signal) == 0:
+            self.status.Error("\"to_signal\" must be specified, and cannot be left empty!")
+            return
+
+        if len(from_signal) == 0:
+            self.status.Error("\"from_signal\" must be specified, and cannot be left empty!")
+            return
+        self.actions.internal_bind_connect.emit(to_signal, from_signal)
+
+    def internal_unbind_clicked(self):
+        #Error check
+        selected_indexes = self.connected_signals.selectedIndexes()
+        if len(selected_indexes) == 0:
+            self.connected_signals.setSelection(QRect(0, 0, 2, 1), QItemSelectionModel.Rows | QItemSelectionModel.Select)
+            self.status.Error("Please select a row to disconnect")
+            return
+        #print "selected indexes: %s" % str(selected_indexes)
+        to_signal_index = selected_indexes[0]
+        to_signal  = self.connected_signals.model().data(to_signal_index, role = Qt.DisplayRole)
+        #print "to_signal: %s" % to_signal
+        if len(to_signal) == 0:
+            self.status.Error("\"to_signal\" must be specified, and cannot be left empty!")
+            return
+        self.actions.internal_bind_disconnect.emit(to_signal)
+
     def set_project_name(self, name):
         self.project_name_line.setText(name)
 
@@ -72,12 +109,16 @@ class Configuration(QWidget):
         return self.project_name_line.text()
 
     def populate_available_signals(self, signals):
-        self.available_signals.clear()
-        self.available_signals.addItems(signals)
+        #self.available_signals.clear()
+        #self.available_signals.addItems(signals)
+        #XXX: Punt internal bind autimation till Rev 2.0 no time :( 
+        pass
 
     def populate_signals_possible(self, signals):
-        self.possible_signals.clear()
-        self.possible_signals.addItems(signals)
+        #self.possible_signals.clear()
+        #self.possible_signals.addItems(signals)
+        #XXX: Punt internal bind autimation till Rev 2.0 no time :( 
+        pass
 
     def populate_connected_signals(self, signals):
         self.internal_bind_model.clear()
@@ -91,7 +132,6 @@ class Configuration(QWidget):
     def populate_board_list(self, boards):
         self.board_list.clear()
         self.board_list.addItems(boards)
-
 
 
 class InternalBindModel(QAbstractTableModel):
@@ -125,6 +165,10 @@ class InternalBindModel(QAbstractTableModel):
         self.endInsertRows()
 
     def clear(self):
+        if self.rowCount() > 0:
+            self.beginRemoveRows(QModelIndex(), 0, self.rowCount())
+            self.endRemoveRows()
         self.array_data = []
+
         self.removeRows(0, self.rowCount())
 

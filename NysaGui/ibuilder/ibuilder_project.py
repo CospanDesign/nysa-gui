@@ -79,6 +79,8 @@ class IBuilderProject(QObject):
         self.controller.enable_editing()
         self.initialize_slave_lists()
         self.project_actions.remove_slave.connect(self.controller.remove_slave)
+        self.project_actions.internal_bind_connect.connect(self.controller.bind_internal_signal)
+        self.project_actions.internal_bind_disconnect.connect(self.controller.unbind_internal_signal)
         self.controller.initialize_constraint_editor(self.project_view.get_constraint_editor())
         self.controller.initialize_configuration_editor(self.project_view.get_configuration_editor())
 
@@ -149,10 +151,17 @@ class IBuilderProject(QObject):
             return
         print "user path: %s" % file_path
         f = open(file_path, 'w')
-        js = json.dumps(project_tags,
+        js = None
+        try:
+            js = json.dumps(project_tags,
                         sort_keys = True,
                         indent = 2,
                         separators=(",", ":"))
+        except TypeError as ex:
+            print "Error generating json string: %s" % ex
+            print "Dumping project tags:"
+            utils.pretty_print_dict(project_tags)
+            
         f.write(js)
         f.close()
 

@@ -466,5 +466,47 @@ class Controller (QObject):
     def get_config_dict(self):
         return self.model.get_config_dict()
 
+    def bind_internal_signal(self, to_signal, from_signal):
+        """ bind to_signal to from_signal, this will create a line like this
+
+        assign  to_signal = from_signal
+
+        Note: it is possible that the background utilities will actually barf on
+        this, the user has a lot of freedom to connect an arbitrary signal and
+        possibly create loops, so if errors do occur during build this may be
+        the root
+
+        Args:
+            to_signal (str): destination signal
+            from_signal (str): source signal
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        #Pass this to the model, this is where the config_dict is held
+        to_signal = str(to_signal)
+        from_signal = str(from_signal)
+        self.model.bind_internal_signal(to_signal, from_signal)
+        self.initialize_configuration_editor(self.configuration_editor)
+
+    def unbind_internal_signal(self, to_signal):
+        """ unbind the signals that are connected to to_signal
+
+        Args:
+            to_signal (str): signal to detach
+
+        Return:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        to_signal = str(to_signal)
+        #Pass this to the model, this is where the config_dict is held
+        self.model.unbind_internal_signal(to_signal)
+        self.initialize_configuration_editor(self.configuration_editor)
 
 

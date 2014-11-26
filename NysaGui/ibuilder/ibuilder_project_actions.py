@@ -23,4 +23,5 @@ class IBuilderProjectActions(QtCore.QObject):
     remove_slave = QtCore.pyqtSignal(str, int, name = "ibuilder_designer_remove_slave")
 
     #Bind events
-    internal_bind_disconnect = QtCore.pyqtSignal(str, str, name = "ibuilder_configuration_ib_disc")
+    internal_bind_disconnect = QtCore.pyqtSignal(str, name = "ibuilder_configuration_ib_disc")
+    internal_bind_connect = QtCore.pyqtSignal(str, str, name = "ibuilder_configuration_ib_conn")
