@@ -29,3 +29,11 @@ class IBuilderProjectActions(QtCore.QObject):
     #Configuration options
     update_project_name = QtCore.pyqtSignal(str, str, name = "ibuilder_configuration_update_name")
     update_board = QtCore.pyqtSignal(str, name = "ibuilder_configuration_update_board")
+
+    add_constraint_file = QtCore.pyqtSignal(str, name = "ibuilder_configuration_add_const")
+    remove_constraint_file = QtCore.pyqtSignal(str, name = "ibuilder_configuration_remove_const")
+    add_default_board_constraint = QtCore.pyqtSignal(name = "ibuilder_add_default_board_const")
+    remove_default_board_constraint = QtCore.pyqtSignal(name = "ibuilder_remove_default_board_const")
+
+    #Slave Parameters
+    commit_slave_parameters = QtCore.pyqtSignal(str, object, name = "ibuilder_designer_commit_slave_params")

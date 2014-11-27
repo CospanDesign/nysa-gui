@@ -98,6 +98,15 @@ class WishboneModel():
         else:
             raise WishboneModelError("Template is not specified")
 
+        if "constraint_files" not in self.config_dict:
+            self.config_dict["constraint_files"] = []
+
+        if "board" in self.config_dict:
+            if len(self.config_dict["constraint_files"]) == 0:
+                cfiles = utils.get_constraint_filenames(self.config_dict["board"])
+                for cf in cfiles:
+                    self.config_dict["constraint_files"].append(cf)
+
         # Add the nodes that are always present.
         self.gm.add_node("Host Interface", NodeType.HOST_INTERFACE)
         self.gm.add_node("Master", NodeType.MASTER)
@@ -197,15 +206,68 @@ class WishboneModel():
         return "Host Interface"
 
     def get_constraint_filenames(self):
-        board_name = self.config_dict["board"]
-        pt = self.config_dict
-        if "constraint_files" not in list(pt.keys()):
-            pt["constraint_files"] = []
+        extended_fn = []
+        for f in self.config_dict["constraint_files"]:
+            extended_fn.append(utils.get_constraint_file_path(self.config_dict["board"],
+                                        f,
+                                        self.paths))
 
-        cfiles = utils.get_constraint_filenames(board_name, debug = True)
-        for cf in pt["constraint_files"]:
-            cfiles.append(cf)
-        return cfiles
+        #print "extended fn: %s" % str(extended_fn)
+        #return self.config_dict["constraint_files"]
+        return extended_fn
+
+    def add_default_board_constraint(self):
+        cfiles = utils.get_constraint_filenames(self.config_dict["board"])
+        found = False
+        for cf_long in cfiles:
+            cf = os.path.split(cf_long)[-1]
+            found = False
+            for cfname_long in self.config_dict["constraint_files"]:
+                cfname = os.path.split(cfname_long)[-1]
+                if cf == cfname:
+                    found = True
+                    break
+            if found:
+                continue
+            self.config_dict["constraint_files"].append(cf)
+                
+
+    def remove_default_board_constraint(self):
+        cfiles = utils.get_constraint_filenames(self.config_dict["board"])
+        found = False
+        for cf_long in cfiles:
+            cf = os.path.split(cf_long)[-1]
+            found = False
+            ref = None
+            for cfname_long in self.config_dict["constraint_files"]:
+                cfname = os.path.split(cfname_long)[-1]
+                if cf == cfname:
+                    ref = cfname_long
+                    break
+            if ref is None:
+                continue
+            self.config_dict["constraint_files"].remove(ref)
+
+    def add_constraint_file(self, constraint_name):
+        for cf in self.config_dict["constraint_files"]:
+            c = os.path.split(cf)[-1]
+            if c == constraint_name:
+                return
+        self.config_dict["constraint_files"].append(constraint_name)
+
+    def remove_constraint_file(self, constraint_name):
+        ref = None
+        print "constraint files: %s" % str(self.config_dict["constraint_files"])
+        for cf in self.config_dict["constraint_files"]:
+            cn = os.path.split(cf)[-1]
+            c = os.path.split(cf)[-1]
+            print "comparing: %s with %s" % (cn, c)
+            if c == cn:
+                ref = cf
+
+        if ref is None:
+            return
+        self.config_dict["constraint_files"].remove(ref)
 
     def get_unique_from_module_name(self, module_name):
         """Return the unique name associated with the module_name"""
@@ -852,4 +914,9 @@ class WishboneModel():
 
     def get_project_name(self):
         return self.config_dict["PROJECT_NAME"]
+
+    def commit_slave_parameters(self, module_name, parameters):
+        uname = self.get_unique_from_module_name(module_name)
+        project_tags = self.get_node_project_tags(uname)
+        project_tags["parameters"] = parameters
 

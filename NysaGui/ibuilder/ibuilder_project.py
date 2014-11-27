@@ -122,6 +122,33 @@ class IBuilderProject(QObject):
         self.project_actions.setup_memory_bus_list.emit(memory_dict)
         #self.project_view.get_designer_scene().view.fit_in_view()
         self.project_actions.update_project_name.connect(self.actions.update_project_name)
+        self.project_actions.add_constraint_file.connect(self.add_constraint)
+        self.project_actions.remove_constraint_file.connect(self.remove_constraint)
+        self.project_actions.add_default_board_constraint.connect(self.add_default_board_constraint)
+        self.project_actions.remove_default_board_constraint.connect(self.remove_default_board_constraint)
+        self.project_actions.commit_slave_parameters.connect(self.commit_slave_parameters)
+
+    def add_default_board_constraint(self):
+        self.controller.add_default_board_constraint()
+
+    def remove_default_board_constraint(self):
+        self.controller.remove_default_board_constraint()
+
+    def add_constraint(self, constraint_name):
+        self.status.Important("adding constraint file: %s" % constraint_name)
+        #XXX: Implement adding constraints
+        self.controller.add_constraint_file(constraint_name)
+
+    def remove_constraint(self, constraint_name):
+        self.status.Important("Removing constraint: %s" % constraint_name)
+        self.controller.remove_constraint_file(constraint_name)
+
+    def commit_slave_parameters(self, name, param_dict):
+        #Create a native python version ofthe dictionary
+        nparam_dict = {}
+        for param in param_dict:
+            nparam_dict[str(param)] = str(param_dict[param])
+        self.controller.commit_slave_parameters(name, nparam_dict)
 
     def get_view_names(self):
         return self.project_view.get_view_names()

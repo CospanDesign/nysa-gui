@@ -25,6 +25,8 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from nysa.ibuilder.lib import utils
+
 class Configuration(QWidget):
 
     def __init__(self, actions, status):
@@ -49,9 +51,29 @@ class Configuration(QWidget):
         board_layout.addWidget(self.board_list)
         board_layout.addWidget(update_board_button)
 
+        constraints_layout = QHBoxLayout()
+        constraints_button_layout = QVBoxLayout()
+        self.constraints_list = QListWidget()
+        add_constraint_button = QPushButton("Add Constraint File")
+        add_constraint_button.clicked.connect(self.add_constraint_clicked)
+        remove_constraint_button = QPushButton("Remove Constraint File")
+        remove_constraint_button.clicked.connect(self.remove_constraint_clicked)
+        add_default_board_constraint = QPushButton("Add Default Board Constraint")
+        add_default_board_constraint.clicked.connect(self.add_default_board_constraint_clicked)
+        remove_default_board_constraint = QPushButton("Remove Default Board Constraint")
+        remove_default_board_constraint.clicked.connect(self.remove_default_board_constraint_clicked)
+
+        constraints_button_layout.addWidget(add_constraint_button)
+        constraints_button_layout.addWidget(remove_constraint_button)
+        constraints_button_layout.addWidget(add_default_board_constraint)
+        constraints_button_layout.addWidget(remove_default_board_constraint)
+        constraints_layout.addWidget(self.constraints_list)
+        constraints_layout.addLayout(constraints_button_layout)
+
         layout.addRow("project name", name_layout)
         layout.addRow("board select", board_layout)
         layout.addRow("internal bindings", self.setup_internal_bind_widget())
+        layout.addRow("constraint files", constraints_layout)
 
         self.setLayout(layout)
 
@@ -95,7 +117,7 @@ class Configuration(QWidget):
 
         m = QMessageBox.warning(None,
         "Change Board name to %s" % board_name,
-        "Are sure you want to change to board to %s? this will reset all your constraints, this cannot be undone!" % board_name,
+        "Are sure you want to change to board to %s? this will reset all your constraints, this cannot be undone!\r\nNOTE: This functionality has not been fully tested!" % board_name,
         QMessageBox.Yes | QMessageBox.No,
         defaultButton = QMessageBox.Yes)
         if m == QMessageBox.No:
@@ -156,6 +178,53 @@ class Configuration(QWidget):
         self.internal_bind_model.clear()
         for signal in signals:
             self.internal_bind_model.insert_line(signal, signals[signal])
+
+    def add_constraint_clicked(self):
+        """User wants to add a constraint
+        """
+        initial_dir = utils.get_nysa_user_base()
+        initial_dir = os.path.join(initial_dir, "user ibuilder projects")
+        path = initial_dir
+        file_path = QFileDialog.getOpenFileName(None,
+                                        caption = "Select a project to open",
+                                        directory = path,
+                                        filter = "*.ucf")
+        #print "file path: %s" % file_path
+        f, e = os.path.splitext(str(file_path))
+        if len(e) == 0:
+            file_path = "%s.%s" % (file_path, "ucf")
+        if len(file_path) == 0:
+            self.status.Info("Open Constraint File Canceled")
+            return
+        file_path = str(file_path)
+        self.actions.add_constraint_file.emit(os.path.split(file_path)[-1])
+
+    def remove_constraint_clicked(self):
+        """User wants to remove constraints from the project
+        """
+        constraint_item = self.constraints_list.currentItem()
+        if constraint_item is None:
+            self.status.Error("No item is selected in the constraints list")
+            return
+
+        cname = constraint_item.text()
+        #print "Constraint item: %s" % str(dir(constraint_item))
+        print "Constraint item: %s" % str(cname)
+        self.actions.remove_constraint_file.emit(cname)
+
+    def add_default_board_constraint_clicked(self):
+        self.actions.add_default_board_constraint.emit()
+
+    def remove_default_board_constraint_clicked(self):
+        self.actions.remove_default_board_constraint.emit()
+        
+    def populate_constraints_file_list(self, constraints_list):
+        """ Populate the list of constraints
+        """
+        self.constraints_list.clear()
+        for constraint_file in constraints_list:
+            c = os.path.split(constraint_file)[-1]
+            self.constraints_list.addItem(c)
 
     def set_board(self, board):
         index = self.board_list.findText(board, Qt.MatchExactly)

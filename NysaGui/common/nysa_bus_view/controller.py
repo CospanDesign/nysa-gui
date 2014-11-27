@@ -120,7 +120,6 @@ class Controller (QObject):
         self.status = status
         QObject.__init__(self)
 
-        self.fd = None
         self.model = model
         self.canvas = None
         self.boxes = {}
@@ -193,24 +192,6 @@ class Controller (QObject):
         Remove the slave from both the visual interface and from the model
         """
         pass
-
-    def box_select(self, data):
-        """An item has been selected"""
-        #Get the module tags for this item
-        #XXX:Need to get the module tags for this
-        #m = self.model
-
-        if type(data) is str:
-            d = {}
-            d["module"] = data
-            d["parameters"] = {}
-            self.fd.populate_param_table(d)
-        else:
-            self.fd.populate_param_table(data)
-
-    def box_deselect(self):
-        """No item is selected"""
-        self.fd.clear_param_table()
 
     def valid_box_area(self, ID, rect, position):
         """
@@ -305,6 +286,7 @@ class Controller (QObject):
         self.configuration_editor.set_board(self.model.get_board_name())
         self.configuration_editor.populate_connected_signals(self.model.get_internal_bindings())
         self.configuration_editor.populate_available_signals(self.model.get_available_internal_bind_signals())
+        self.configuration_editor.populate_constraints_file_list(self.model.get_constraint_filenames())
 
     def get_project_location(self):
         return self.model.get_project_location()
@@ -470,6 +452,29 @@ class Controller (QObject):
     def get_config_dict(self):
         return self.model.get_config_dict()
 
+    def get_module_module_tags(self, module_name):
+        uname = self.model.get_unique_from_module_name(module_name)
+        return self.model.get_module_tags(uname)
+
+    def get_module_project_tags(self, module_name):
+        uname = self.model.get_unique_from_module_name(module_name)
+        return self.model.get_node_project_tags(uname)
+
+    def unbind_all(self):
+        """  unbind all signals in the design
+
+        Args:
+            Nothing
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        self.model.unbind_all()
+        self.refresh_constraint_editor()
+
     def bind_internal_signal(self, to_signal, from_signal):
         """ bind to_signal to from_signal, this will create a line like this
 
@@ -496,10 +501,6 @@ class Controller (QObject):
         self.model.bind_internal_signal(to_signal, from_signal)
         self.initialize_configuration_editor(self.configuration_editor)
 
-    def unbind_all(self):
-        self.model.unbind_all()
-        self.refresh_constraint_editor()
-
     def unbind_internal_signal(self, to_signal):
         """ unbind the signals that are connected to to_signal
 
@@ -517,3 +518,37 @@ class Controller (QObject):
         self.model.unbind_internal_signal(to_signal)
         self.initialize_configuration_editor(self.configuration_editor)
 
+    def add_constraint_file(self, constraint_fname):
+        self.model.add_constraint_file(str(constraint_fname))
+        self.initialize_configuration_editor(self.configuration_editor)
+
+    def remove_constraint_file(self, constraint_fname):
+        self.model.remove_constraint_file(constraint_fname)
+        self.initialize_configuration_editor(self.configuration_editor)
+
+    def add_default_board_constraint(self):
+        self.model.add_default_board_constraint()
+        self.initialize_configuration_editor(self.configuration_editor)
+        self.refresh_constraint_editor()
+
+    def remove_default_board_constraint(self):
+        self.model.remove_default_board_constraint()
+        self.initialize_configuration_editor(self.configuration_editor)
+        self.refresh_constraint_editor()
+
+    def commit_slave_parameters(self, name, param_dict):
+        self.model.commit_slave_parameters(name, param_dict)
+
+    '''
+    def slave_selected(self, slave_type, slave_name):
+        pass
+
+    def slave_deselected(self, slave_type, slave_name):
+        pass
+
+    def node_selected(self, node_type, node_name, slave_type = Slave.PERIPHERAL):
+        pass
+
+    def node_deselected(self, node_type, node_name, slave_type = Slave.PERIPHERAL):
+        pass
+    '''
