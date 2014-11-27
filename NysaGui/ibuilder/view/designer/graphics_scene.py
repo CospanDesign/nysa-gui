@@ -47,7 +47,7 @@ def enum(*sequential, **named):
   return type('Enum', (), enums)
 
 view_state = enum(  "normal",
-                    "arbitor_master_selected")
+                    "arbiter_master_selected")
 
 
 
@@ -57,7 +57,7 @@ class GraphicsScene(gs):
         super (GraphicsScene, self).__init__(view, None)
         self.status = status
         self.actions = actions
-        self.arbitor_selected = None
+        self.arbiter_selected = None
         self.state = view_state.normal
         self.dbg = False
         if self.dbg: print "GS: Set state for normal"
@@ -123,74 +123,74 @@ class GraphicsScene(gs):
     def slave_deselected(self, name, bus):
         self.actions.slave_deselected.emit(name, bus.box_name)
 
-    def is_arbitor_master_active(self):
-        if self.dbg: print "GS: is_arbitor_master_active()"
-        #return self.state == view_state.arbitor_master_selected
-        return self.arbitor_selected is not None
+    def is_arbiter_master_active(self):
+        if self.dbg: print "GS: is_arbiter_master_active()"
+        #return self.state == view_state.arbiter_master_selected
+        return self.arbiter_selected is not None
 
-    def arbitor_master_selected(self, slave, arbitor_master):
-        if self.dbg: print "GS: arbitor_master_selected()"
-        name = arbitor_master.box_name
-        self.state = view_state.arbitor_master_selected
-        if self.dbg: print "\tSet state for arbitor master"
-        self.arbitor_selected = arbitor_master
+    def arbiter_master_selected(self, slave, arbiter_master):
+        if self.dbg: print "GS: arbiter_master_selected()"
+        name = arbiter_master.box_name
+        self.state = view_state.arbiter_master_selected
+        if self.dbg: print "\tSet state for arbiter master"
+        self.arbiter_selected = arbiter_master
         self.peripheral_bus.enable_expand_slaves(name, True)
         self.memory_bus.enable_expand_slaves(name, True)
-        slave.arbitor_master_selected(name)
+        slave.arbiter_master_selected(name)
 
-    def arbitor_master_deselected(self, arbitor_master):
-        if self.dbg: print "GS: arbitor_master_deselected()"
+    def arbiter_master_deselected(self, arbiter_master):
+        if self.dbg: print "GS: arbiter_master_deselected()"
         for i in range (len(self.links)):
             self.removeItem(self.links[i])
         self.links = []
-        self.arbitor_selected = None
-        name = arbitor_master.box_name
+        self.arbiter_selected = None
+        name = arbiter_master.box_name
         self.state = view_state.normal
         if self.dbg: print "\tSet state for normal"
         self.peripheral_bus.enable_expand_slaves(name, False)
         self.memory_bus.enable_expand_slaves(name, False)
-        slave = arbitor_master.get_slave()
-        slave.remove_arbitor_masters()
-        slave.show_arbitor_masters()
+        slave = arbiter_master.get_slave()
+        slave.remove_arbiter_masters()
+        slave.show_arbiter_masters()
         slave.setSelected(True)
 
-    #def arbitor_master_fake_selected(self, slave, arbitor_master):
-    #    print "GS: arbitor master selected selected"
-    #    self.arbitor_selected = arbitor_master
+    #def arbiter_master_fake_selected(self, slave, arbiter_master):
+    #    print "GS: arbiter master selected selected"
+    #    self.arbiter_selected = arbiter_master
 
-    def is_arbitor_master_selected(self):
-        if self.dbg: print "GS: is_arbitor_master_selected()"
-        return self.arbitor_selected is not None
+    def is_arbiter_master_selected(self):
+        if self.dbg: print "GS: is_arbiter_master_selected()"
+        return self.arbiter_selected is not None
 
-    def get_arbitor_master_selected(self):
-        if self.dbg: print "GS: get_arbitor_master_selected()"
-        return self.arbitor_selected
+    def get_arbiter_master_selected(self):
+        if self.dbg: print "GS: get_arbiter_master_selected()"
+        return self.arbiter_selected
 
-    def arbitor_master_disconnect(self, arbitor_master, to_slave):
-        if self.dbg: print "GS: arbitor_master_disconnect()"
-        from_slave = arbitor_master.get_slave()
+    def arbiter_master_disconnect(self, arbiter_master, to_slave):
+        if self.dbg: print "GS: arbiter_master_disconnect()"
+        from_slave = arbiter_master.get_slave()
         for i in range (len(self.links)):
             self.removeItem(self.links[i])
 
-        arbitor_name = arbitor_master.box_name
-        if self.dbg: print "\tarbitor_master: %s" % arbitor_master.box_name
+        arbiter_name = arbiter_master.box_name
+        if self.dbg: print "\tarbiter_master: %s" % arbiter_master.box_name
 
-        #XXX: Remove the arbitor connctor
-        self.fd.disconnect_arbitor_master(from_slave, arbitor_name, to_slave)
-        arbitor_master.disconnect_slave()
+        #XXX: Remove the arbiter connctor
+        self.fd.disconnect_arbiter_master(from_slave, arbiter_name, to_slave)
+        arbiter_master.disconnect_slave()
 
-    def get_arbitor_master_connected(self, arbitor_master):
-        if self.dbg: print "GS: get_arbitor_master_connected()"
-        from_slave = arbitor_master.get_slave()
-        arbitor_name = arbitor_master.box_name
+    def get_arbiter_master_connected(self, arbiter_master):
+        if self.dbg: print "GS: get_arbiter_master_connected()"
+        from_slave = arbiter_master.get_slave()
+        arbiter_name = arbiter_master.box_name
         typ = None
         index = 0
         slave = None
 
-        typ, index = self.fd.get_arbitor_master_connected(from_slave, arbitor_name)
+        typ, index = self.fd.get_arbiter_master_connected(from_slave, arbiter_name)
 
         if typ is None:
-            if self.dbg: print "\tNo slave is attached to the arbitor"
+            if self.dbg: print "\tNo slave is attached to the arbiter"
             return None
 
         if typ == SlaveType.PERIPHERAL:
@@ -198,7 +198,7 @@ class GraphicsScene(gs):
         else:
             slave = self.memory_bus.get_slave_from_index(index)
 
-        if self.dbg: print "\tGetting Arbitor Master connected for %s which is: %s" % (arbitor_name, slave.box_name)
+        if self.dbg: print "\tGetting Arbiter Master connected for %s which is: %s" % (arbiter_name, slave.box_name)
         return slave
 
     '''

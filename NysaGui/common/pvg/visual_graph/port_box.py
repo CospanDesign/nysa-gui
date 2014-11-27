@@ -163,11 +163,11 @@ class PortBox(Box):
 
 
         '''
-        for i in range(0, len(self.arbitor_masters)):
-            #print "Add Arbitor %s" % self.arbitor_masters[i]
+        for i in range(0, len(self.arbiter_masters)):
+            #print "Add Arbiter %s" % self.arbiter_masters[i]
             arb_rect = QRectF(ARB_MASTER_RECT)
 
-            am = ArbitorMaster(name = self.arbitor_masters[i], 
+            am = ArbiterMaster(name = self.arbiter_masters[i], 
                                position = arb_pos,
                                y_pos = position.y(),
                                scene = self.scene(),
@@ -175,8 +175,8 @@ class PortBox(Box):
 
             #am.movable(False)
 
-            self.arbitor_boxes.append(am)
-            al = Link(self, am, self.scene(), lt.arbitor_master)
+            self.arbiter_boxes.append(am)
+            al = Link(self, am, self.scene(), lt.arbiter_master)
             al.from_box_side(st.right)
             al.to_box_side(st.left)
 

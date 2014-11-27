@@ -199,7 +199,7 @@ class Bus(Box):
         self.master.update()
         super(Bus, self).update()
 
-    def enable_expand_slaves(self, arbitor_master, enable):
+    def enable_expand_slaves(self, arbiter_master, enable):
         if self.dbg: print "BUS: enable_expand_slaves()"
         self.expand_slaves = enable
         self.recalculate_size_pos()

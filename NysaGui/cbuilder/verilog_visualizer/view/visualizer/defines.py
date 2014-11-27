@@ -32,13 +32,13 @@ from PyQt4.QtCore import *
 PERIPHERAL_COLOR="blue"
 MEMORY_COLOR="purple"
 
-LINK_ARBITOR_COLOR = QColor("black")
+LINK_ARBITER_COLOR = QColor("black")
 LINK_BUS_COLOR = QColor("black")
 LINK_HOST_INTERFACE_COLOR = QColor("black")
 LINK_PORT_COLOR = QColor("black")
 LINK_MASTER_COLOR = QColor("black")
 LINK_SLAVE_COLOR = QColor("black")
-LINK_ARBITOR_MASTER_COLOR = QColor("blue")
+LINK_ARBITER_MASTER_COLOR = QColor("blue")
 
 HI_COLOR = "yellow"
 HOST_INTERFACE_RECT = QRectF(0, 0, 100, 200)

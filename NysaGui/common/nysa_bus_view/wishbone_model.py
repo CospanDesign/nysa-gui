@@ -314,20 +314,20 @@ class WishboneModel():
 
             pt_slave = self.config_dict["SLAVES"][name]
 
-            # Overwrite the current arbitor dictionary.
+            # Overwrite the current arbiter dictionary.
             if "BUS" in list(pt_slave.keys()):
                 pt_slave["BUS"] = {}
 
-            if "arbitor_masters" in list(sc_slave.project_tags.keys()):
-                ams = sc_slave.project_tags["arbitor_masters"]
+            if "arbiter_masters" in list(sc_slave.project_tags.keys()):
+                ams = sc_slave.project_tags["arbiter_masters"]
                 if len(ams) > 0:
-                    # Add the BUS keyword to the arbitor master.
+                    # Add the BUS keyword to the arbiter master.
                     pt_slave["BUS"] = {}
                     # Add all the items from the sc version.
                     for a in ams:
                         if debug:
-                            print (("arbitor name: %s" % a))
-                        arb_slave = self.get_connected_arbitor_slave(uname, a)
+                            print (("arbiter name: %s" % a))
+                        arb_slave = self.get_connected_arbiter_slave(uname, a)
 
                         arb_name = self.gm.get_node(arb_slave).name
                         if arb_slave is not None:
@@ -345,20 +345,20 @@ class WishboneModel():
 
             pt_slave = self.config_dict["MEMORY"][name]
 
-            # Overwrite the current arbitor dictionary.
+            # Overwrite the current arbiter dictionary.
             if "BUS" in list(pt_slave.keys()):
                 pt_slave["BUS"] = {}
 
-            if "arbitor_masters" in list(sc_slave.project_tags.keys()):
-                ams = sc_slave.project_tags["arbitor_masters"]
+            if "arbiter_masters" in list(sc_slave.project_tags.keys()):
+                ams = sc_slave.project_tags["arbiter_masters"]
                 if len(ams) > 0:
-                    # Add the BUS keyword to the arbitor master.
+                    # Add the BUS keyword to the arbiter master.
                     pt_slave["BUS"] = {}
                     # Add all the items from the sc version.
                     for a in list(ams):
                         if debug:
-                            print (("arbitor name: %s" % a))
-                        arb_slave = self.get_connected_arbitor_slave(uname, a)
+                            print (("arbiter name: %s" % a))
+                        arb_slave = self.get_connected_arbiter_slave(uname, a)
 
                         arb_name = self.gm.get_node(arb_slave).name
                         if arb_slave is not None:
@@ -370,7 +370,7 @@ class WishboneModel():
         raise Exception("BAD!")
         return self.gm
 
-    #Arbitor Control
+    #Arbiter Control
     def is_arb_master_connected(self, slave_name, arb_host, debug=False):
         slaves = self.gm.get_connected_slaves(slave_name)
         for key in slaves:
@@ -380,67 +380,67 @@ class WishboneModel():
                 return True
         return False
 
-    def add_arbitor_by_name(self, host_name, arbitor_name, slave_name):
+    def add_arbiter_by_name(self, host_name, arbiter_name, slave_name):
         tags = self.gm.get_project_tags(host_name)
-        if arbitor_name not in tags["arbitor_masters"]:
-            raise WishboneModelError("%s is not an arbitor of %s" %
-                                    (arbitor_name, host_name))
+        if arbiter_name not in tags["arbiter_masters"]:
+            raise WishboneModelError("%s is not an arbiter of %s" %
+                                    (arbiter_name, host_name))
 
         self.gm.connect_nodes(host_name, slave_name)
-        self.gm.set_edge_name(host_name, slave_name, arbitor_name)
+        self.gm.set_edge_name(host_name, slave_name, arbiter_name)
 
-    def add_arbitor(self, host_type, host_index,
-                         arbitor_name, slave_type, slave_index):
-        """Adds an arbitor and attaches it between the host and the slave."""
+    def add_arbiter(self, host_type, host_index,
+                         arbiter_name, slave_type, slave_index):
+        """Adds an arbiter and attaches it between the host and the slave."""
         h_name = self.gm.get_slave_name_at(host_type, host_index)
         s_name = self.gm.get_slave_name_at(slave_type, slave_index)
-        self.add_arbitor_by_name(h_name, arbitor_name, s_name)
+        self.add_arbiter_by_name(h_name, arbiter_name, s_name)
 
-    def get_connected_arbitor_slave(self, host_name, arbitor_name):
+    def get_connected_arbiter_slave(self, host_name, arbiter_name):
         tags = self.gm.get_project_tags(host_name)
-        if arbitor_name not in tags["arbitor_masters"]:
-            SlaveError("This slave has no arbitor masters")
+        if arbiter_name not in tags["arbiter_masters"]:
+            SlaveError("This slave has no arbiter masters")
 
         slaves = self.gm.get_connected_slaves(host_name)
         for arb_name in slaves:
             slave = slaves[arb_name]
             edge_name = self.gm.get_edge_name(host_name, slave)
-            if edge_name == arbitor_name:
+            if edge_name == arbiter_name:
                 return slave
         return None
 
-    def get_connected_arbitor_name(self, host_type, host_index,
+    def get_connected_arbiter_name(self, host_type, host_index,
                                       slave_type, slave_index):
         h_name = self.gm.get_slave_name_at(host_type, host_index)
         s_name = self.gm.get_slave_name_at(slave_type, slave_index)
 
         tags = self.gm.get_project_tags(h_name)
-        for arb_name in tags["arbitor_masters"]:
-            slave_name = self.get_connected_arbitor_slave(h_name, arb_name)
+        for arb_name in tags["arbiter_masters"]:
+            slave_name = self.get_connected_arbiter_slave(h_name, arb_name)
             if slave_name == s_name:
                 return arb_name
 
         raise WishboneModelError(
             "host: %s is not connected to %s" % (h_name, s_name))
 
-    def remove_arbitor_by_arb_master(self, host_name, arb_name):
-        slave_name = self.get_connected_arbitor_slave(host_name, arb_name)
-        self.remove_arbitor_by_name(host_name, slave_name)
+    def remove_arbiter_by_arb_master(self, host_name, arb_name):
+        slave_name = self.get_connected_arbiter_slave(host_name, arb_name)
+        self.remove_arbiter_by_name(host_name, slave_name)
 
-    def remove_arbitor_by_name(self, host_name, slave_name):
+    def remove_arbiter_by_name(self, host_name, slave_name):
         self.gm.disconnect_nodes(host_name, slave_name)
 
-    def remove_arbitor(self, host_type, host_index, slave_type, slave_index):
-        """Finds and removes the arbitor from the host."""
+    def remove_arbiter(self, host_type, host_index, slave_type, slave_index):
+        """Finds and removes the arbiter from the host."""
         h_name = self.gm.get_slave_name_at(host_type, host_index)
         s_name = self.gm.get_slave_name_at(slave_type, slave_index)
-        self.remove_arbitor_by_name(h_name, s_name)
+        self.remove_arbiter_by_name(h_name, s_name)
 
-    def is_active_arbitor_host(self, host_type, host_index):
+    def is_active_arbiter_host(self, host_type, host_index):
         h_name = self.gm.get_slave_name_at(host_type, host_index)
         tags = self.gm.get_project_tags(h_name)
-        if h_name not in tags["arbitor_masters"]:
-            if len(tags["arbitor_masters"]) == 0:
+        if h_name not in tags["arbiter_masters"]:
+            if len(tags["arbiter_masters"]) == 0:
                 return False
 
         if not self.gm.is_slave_connected_to_slave(h_name):
@@ -448,8 +448,8 @@ class WishboneModel():
 
         return True
 
-    def get_arbitor_dict(self, host_type, host_index):
-        if not self.is_active_arbitor_host(host_type, host_index):
+    def get_arbiter_dict(self, host_type, host_index):
+        if not self.is_active_arbiter_host(host_type, host_index):
             return {}
 
         h_name = self.gm.get_slave_name_at(host_type, host_index)

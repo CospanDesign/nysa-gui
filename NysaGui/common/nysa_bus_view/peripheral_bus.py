@@ -96,7 +96,7 @@ class PeripheralBus(Bus):
         #Calculate the position of each slave
         for i in range(len(self.slaves)):
             self.slaves[i].selectable(False)
-            am = self.s.get_arbitor_master_selected()
+            am = self.s.get_arbiter_master_selected()
             sm = None
             if am is not None:
                 sm = am.get_slave()
@@ -118,15 +118,15 @@ class PeripheralBus(Bus):
 
     def update_slaves(self, slave_list, editable = False):
 
-        if self.scene().is_arbitor_master_selected():
-            am = self.scene().get_arbitor_master_selected()
-            self.scene().arbitor_master_deselected(am)
+        if self.scene().is_arbiter_master_selected():
+            am = self.scene().get_arbiter_master_selected()
+            self.scene().arbiter_master_deselected(am)
             self.scene().clear_links()
  
         if self.prev_selected_slave is not None:
             self.prev_selected_slave = None
 
-           #self.scene().arbitor_master_deselected(am) 
+           #self.scene().arbiter_master_deselected(am) 
  
         super(PeripheralBus, self).update_slaves(slave_list, editable)
         for slave in self.slaves:
@@ -135,8 +135,8 @@ class PeripheralBus(Bus):
             else:
                 slave.movable(editable)
 
-    def enable_expand_slaves(self, arbitor_master, enable):
-        super(PeripheralBus, self).enable_expand_slaves(arbitor_master, enable)
+    def enable_expand_slaves(self, arbiter_master, enable):
+        super(PeripheralBus, self).enable_expand_slaves(arbiter_master, enable)
 
     def get_bus_type(self):
         return "peripheral_bus"

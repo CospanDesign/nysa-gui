@@ -51,10 +51,10 @@ def enum(*sequential, **named):
 
 link_type = enum(   "bus",
                     "host_interface",
-                    "arbitor",
+                    "arbiter",
                     "slave",
                     "port",
-                    "arbitor_master")
+                    "arbiter_master")
 
 
 side_type = enum(   "top",
@@ -64,13 +64,13 @@ side_type = enum(   "top",
 
 from defines import BEZIER_CONNECTION
 
-from defines import LINK_ARBITOR_COLOR
+from defines import LINK_ARBITER_COLOR
 from defines import LINK_BUS_COLOR
 from defines import LINK_HOST_INTERFACE_COLOR
 from defines import LINK_PORT_COLOR
 from defines import LINK_MASTER_COLOR
 from defines import LINK_SLAVE_COLOR
-from defines import LINK_ARBITOR_MASTER_COLOR
+from defines import LINK_ARBITER_MASTER_COLOR
 
 
 padding = 20
@@ -86,13 +86,13 @@ class Link (VLink):
             self.paint_normal_connect(painter, 4, get_color_from_type(self.ltype))
         if self.ltype == link_type.host_interface:
             self.paint_normal_connect(painter, 8, get_color_from_type(self.ltype))
-        if self.ltype == link_type.arbitor:
+        if self.ltype == link_type.arbiter:
             self.paint_normal_connect(painter, 4, get_color_from_type(self.ltype))
         if self.ltype == link_type.port:
             self.paint_normal_connect(painter, 4, get_color_from_type(self.ltype))
         if self.ltype == link_type.slave:
             self.paint_direct_connect(painter, 2, get_color_from_type(self.ltype))
-        if self.ltype == link_type.arbitor_master:
+        if self.ltype == link_type.arbiter_master:
             self.paint_normal_connect(painter, 2, get_color_from_type(self.ltype))
         else:
             self.paint_normal_connect(painter, 2, get_color_from_type(self.ltype))
@@ -103,14 +103,14 @@ def get_color_from_type(lt):
         return LINK_BUS_COLOR
     elif lt == link_type.host_interface:
         return LINK_HOST_INTERFACE_COLOR
-    elif lt == link_type.arbitor:
-        return LINK_ARBITOR_COLOR
+    elif lt == link_type.arbiter:
+        return LINK_ARBITER_COLOR
     elif lt == link_type.port:
         return LINK_PORT_COLOR
     elif lt == link_type.slave:
         return LINK_SLAVE_COLOR
-    elif lt == link_type.arbitor_master:
-        return LINK_ARBITOR_MASTER_COLOR
+    elif lt == link_type.arbiter_master:
+        return LINK_ARBITER_MASTER_COLOR
     raise BoxLinkError("Invalid or undefined link type: %s, valid options \
             are: %s" % (str(lt), str(link_type)))
 

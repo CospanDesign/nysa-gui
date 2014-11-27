@@ -49,10 +49,10 @@ def enum(*sequential, **named):
 
 lt = enum(   "bus",
              "host_interface",
-             "arbitor",
+             "arbiter",
              "slave",
              "port",
-             "arbitor_master")
+             "arbiter_master")
 
 
 st = enum(   "top",

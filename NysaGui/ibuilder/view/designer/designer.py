@@ -125,7 +125,7 @@ class Designer(QWidget):
         self.clear_param_table()
         self.populate_param_table(slave_name, parameters)
 
-        #Does this slave have a arbitor master?
+        #Does this slave have a arbiter master?
 
     def slave_deselected(self, slave_name, bus_name):
         #print "%s-%s deselected" % (bus_name, slave_name)

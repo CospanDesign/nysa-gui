@@ -106,8 +106,8 @@ class WishboneController (controller.Controller):
     #def initialize_bindings(self):
     #    pass
 
-    def add_arbitor_link(self, arb_master, slave):
-        self.add_link(arb_master, slave, lt.arbitor, st.right)
+    def add_arbiter_link(self, arb_master, slave):
+        self.add_link(arb_master, slave, lt.arbiter, st.right)
 
     def refresh_slaves(self, editable = None):
         if editable is None:
@@ -148,23 +148,23 @@ class WishboneController (controller.Controller):
         self.s.Debug("WBC: updating slave view")
         mb.update_slaves(slave_list, editable)
 
-    def connect_arbitor_master(self, from_type, from_index, arbitor_name, to_type, to_index):
+    def connect_arbiter_master(self, from_type, from_index, arbiter_name, to_type, to_index):
         if from_type == SlaveType.PERIPHERAL and from_index == 0:
-            raise DesignControlError("DRT cannot be a Arbitor slave")
-        self.model.add_arbitor(from_type, from_index, arbitor_name, to_type, to_index)
+            raise DesignControlError("DRT cannot be a Arbiter slave")
+        self.model.add_arbiter(from_type, from_index, arbiter_name, to_type, to_index)
 
-    def disconnect_arbitor_master(self, from_type, from_index, arbitor_name, to_type, to_index):
-        self.model.remove_arbitor(from_type, from_index, to_type, to_index)
+    def disconnect_arbiter_master(self, from_type, from_index, arbiter_name, to_type, to_index):
+        self.model.remove_arbiter(from_type, from_index, to_type, to_index)
 
-    def get_arbitor_master_connected(self, host_type, host_index, arbitor_name):
+    def get_arbiter_master_connected(self, host_type, host_index, arbiter_name):
         name = self.model.get_slave_name(host_type, host_index)
-        #print "WBC: get_arbitor_master_connected name: %s" % name
+        #print "WBC: get_arbiter_master_connected name: %s" % name
         uname = self.model.get_unique_name(name = name,
                                            node_type = NodeType.SLAVE,
                                            slave_type = host_type,
                                            slave_index = host_index)
         #print "WBC: unique name: %s" % uname
-        uname = self.model.get_connected_arbitor_slave(uname, arbitor_name)
+        uname = self.model.get_connected_arbiter_slave(uname, arbiter_name)
         if uname is None:
             return None, None
 
