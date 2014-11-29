@@ -53,8 +53,8 @@ view_state = enum(  "normal",
 
 class GraphicsScene(gs):
 
-    def __init__(self, view, status, actions):
-        super (GraphicsScene, self).__init__(view, None)
+    def __init__(self, view, status, actions, app):
+        super (GraphicsScene, self).__init__(view, app)
         self.status = status
         self.actions = actions
         self.arbiter_selected = None
@@ -92,16 +92,6 @@ class GraphicsScene(gs):
         if self.dbg: print "GS: Drag start event"
 
 
-    def auto_update_all_links(self):
-        #for l in self.links:
-        #    if l.is_center_track():
-        #        print "Center track!"
-        #        print "\tlink_ref: %s - %s" % (l.from_box.box_name, l.to_box.box_name)
-        #        l.auto_update_center()
-        #self.peripheral_bus.update_links()
-        #self.memory_bus.update_links()
-        pass
-
     #States
     def get_state(self):
         if self.dbg: print "GS: get_state()"
@@ -121,6 +111,49 @@ class GraphicsScene(gs):
 
     def slave_deselected(self, name, bus):
         self.actions.slave_deselected.emit(name, bus.box_name)
+
+    #Arbiter Interface
+    def is_arbiter_master(self, module_name):
+        if self.controller is None:
+            self.status.Verbose("controller is not connected!")
+            return False
+        return self.controller.is_arbiter_master(module_name)
+
+    def is_arbiter_master_connected(self, module_name, arbiter_name = None):
+        if self.controller is None:
+            self.status.Verbose("controller is not connected!")
+            return False
+        return self.controller.is_arbiter_master_connected(module_name, arbiter_name)
+
+    def module_arbiter_count(self, module_name):
+        if self.controller is None:
+            self.status.Verbose("controller is not connected!")
+            return False
+        return self.controller.module_arbiter_count(module_name)
+
+    def connect_arbiter_master(self, from_module_name, to_module_name, arbiter_name):
+        if self.controller is None:
+            self.status.Verbose("controller is not connected!")
+            return
+        self.controller.connect_arbiter_master(from_module_name, to_module_name, arbiter_name)
+
+    def disconnect_arbiter_master(from_module_name, to_module_name = None, arbiter_name = None):
+        if self.controller is None:
+            self.status.Verbose("controller is not connected!")
+            return
+        self.controller.disconnect_arbiter_master(from_module_name, to_module_name, arbiter_name)
+
+    def get_connected_arbiter_name(self, from_module_name, to_module_name):
+        if self.controller is None:
+            self.status.Verbose("controller is not connected!")
+            return ""
+        return self.controller.get_connected_arbiter_name(from_module_name, to_module_name)
+
+    def is_modules_connected_through_arbiter(self, from_module_name, to_module_name):
+        if self.controller is None:
+            self.status.Verbose("controller is not connected!")
+            return False
+        return self.controller.is_modules_connected_through_arbiter(from_module_name, to_module_name)
 
     def is_arbiter_master_active(self):
         if self.dbg: print "GS: is_arbiter_master_active()"
@@ -152,10 +185,6 @@ class GraphicsScene(gs):
         slave.remove_arbiter_masters()
         slave.show_arbiter_masters()
         slave.setSelected(True)
-
-    #def arbiter_master_fake_selected(self, slave, arbiter_master):
-    #    print "GS: arbiter master selected selected"
-    #    self.arbiter_selected = arbiter_master
 
     def is_arbiter_master_selected(self):
         if self.dbg: print "GS: is_arbiter_master_selected()"
@@ -200,6 +229,12 @@ class GraphicsScene(gs):
         if self.dbg: print "\tGetting Arbiter Master connected for %s which is: %s" % (arbiter_name, slave.box_name)
         return slave
 
+    def show_arbiters(self):
+        return False
+
+
+
+
     def remove_slave(self, slave):
         if self.dbg: print "GS: Remove slave"
         index = slave.bus.get_slave_index(slave.box_name)
@@ -209,4 +244,13 @@ class GraphicsScene(gs):
     def clear_links(self):
         self.links = []
 
+    def auto_update_all_links(self):
+        #for l in self.links:
+        #    if l.is_center_track():
+        #        print "Center track!"
+        #        print "\tlink_ref: %s - %s" % (l.from_box.box_name, l.to_box.box_name)
+        #        l.auto_update_center()
+        #self.peripheral_bus.update_links()
+        #self.memory_bus.update_links()
+        pass
 

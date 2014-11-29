@@ -104,23 +104,27 @@ class Designer(QWidget):
     def slave_selected(self, slave_name, bus_name):
         #print "%s-%s selected" % (bus_name, slave_name)
         parameters = {}
-        if not str(slave_name).lower() == "drt":
-            tags = self.controller.get_slave_tags(bus_name, slave_name)
-            project_tags = self.controller.get_module_project_tags(slave_name)
-            pfound = False
-            if "parameters" in tags:
-                for parameter in tags["parameters"]:
-                    if "parameters" in project_tags:
-                        pfound = False
-                        for pparameter in project_tags["parameters"]:
-                            if pparameter == parameter:
-                                #print "pparameter: %s" % pparameter
-                                #print "parameter: %s" % parameter
-                                parameters[parameter] = project_tags["parameters"][pparameter]
-                                pfound = True
-                                break
-                    if not pfound:
-                        parameters[parameter] = tags["parameters"][parameter]
+        if str(slave_name).lower() == "drt":
+            self.clear_param_table()
+            self.populate_param_table(slave_name, parameters)
+            return
+
+        tags = self.controller.get_slave_tags(bus_name, slave_name)
+        project_tags = self.controller.get_module_project_tags(slave_name)
+        pfound = False
+        if "parameters" in tags:
+            for parameter in tags["parameters"]:
+                if "parameters" in project_tags:
+                    pfound = False
+                    for pparameter in project_tags["parameters"]:
+                        if pparameter == parameter:
+                            #print "pparameter: %s" % pparameter
+                            #print "parameter: %s" % parameter
+                            parameters[parameter] = project_tags["parameters"][pparameter]
+                            pfound = True
+                            break
+                if not pfound:
+                    parameters[parameter] = tags["parameters"][parameter]
 
         self.clear_param_table()
         self.populate_param_table(slave_name, parameters)

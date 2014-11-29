@@ -41,21 +41,25 @@ class GraphicsScene(QGraphicsScene):
     def __init__(self, view, app):
         super(GraphicsScene, self).__init__()
         self.view = view
+        self.controller = None
         self.app = app
         self.links = []
         self.dbg = False
         if self.dbg: print "GS: Set state for normal"
         #self.setAcceptDrops(True)
 
+    def set_controller(self, controller):
+        self.controller = controller
+
     def get_view(self):
         return self.view
-
-    def fit_view(self):
-        self.app.fit_view()
 
     def box_selected(self, data):
         #raise AssertionError ("box_selected() is not defined")
         pass
+
+    def fit_in_view(self):
+        self.app.fit_in_view()
 
     def box_deselected(self, data):
         #raise AssertionError ("box_deselected() is not defined")

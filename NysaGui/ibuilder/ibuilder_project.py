@@ -46,9 +46,6 @@ PROJECT_STATUS_DICT = {
 from NysaGui.common.nysa_bus_view.wishbone_controller import WishboneController
 #Default Project
 
-
-
-
 class IBuilderProject(QObject):
 
     def __init__(self, actions, status, name, path = None):
@@ -81,9 +78,15 @@ class IBuilderProject(QObject):
         self.project_actions.internal_bind_connect.connect(self.controller.bind_internal_signal)
         self.project_actions.internal_bind_disconnect.connect(self.controller.unbind_internal_signal)
         self.project_actions.update_board.connect(self.update_board)
+
+        scene = self.project_view.get_designer_scene()
+        self.project_actions.arbiter_selected.connect(scene.arbiter_master_selected)
+        self.project_actions.arbiter_deselected.connect(scene.arbiter_master_deselected)
+        self.project_actions.arbiter_connect.connect(scene.connect_arbiter_master)
+        self.project_actions.arbiter_disconnect.connect(self.disconnect_arbiter_master)
+
         self.controller.initialize_constraint_editor(self.project_view.get_constraint_editor())
         self.controller.initialize_configuration_editor(self.project_view.get_configuration_editor())
-
 
     def update_board(self, board_name):
         self.status.Important("Changing board to %s" % board_name)
@@ -212,6 +215,14 @@ class IBuilderProject(QObject):
 
     def get_view(self):
         return self.project_view
+
+    def disconnect_arbiter_master(self, from_module_name, to_module_name, arbiter_name):
+        if len(to_module_name) == 0:
+            to_module_name = None
+        if len(arbiter_name) == 0:
+            arbiter_name = None
+        scene = self.project_view.get_designer_scene()
+        scene.disconnect_arbiter_master(from_module_name, to_module_name, arbiter_name)
 
 
 DEFAULT_CONFIG = {

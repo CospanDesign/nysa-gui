@@ -126,8 +126,6 @@ class PeripheralBus(Bus):
         if self.prev_selected_slave is not None:
             self.prev_selected_slave = None
 
-           #self.scene().arbiter_master_deselected(am) 
- 
         super(PeripheralBus, self).update_slaves(slave_list, editable)
         for slave in self.slaves:
             if slave.box_name == "DRT":

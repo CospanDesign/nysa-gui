@@ -37,6 +37,8 @@ p = os.path.join(os.path.dirname(__file__),
 
 sys.path.append(p)
 
+#from arbiter_master import ArbiterMaster
+
 from pvg.visual_graph.box import Box
 import pvg.visual_graph.graphics_utils as gu
 
@@ -61,6 +63,8 @@ class Slave(Box):
                                      color = color,
                                      rect = rect,
                                      user_data = parameters)
+
+
         md = {}
         md["name"] = instance_name
         md["color"] = "color"
@@ -94,10 +98,10 @@ class Slave(Box):
         menu.exec_(event.screenPos())
 
     def remove_slave(self):
-        
-
         self.s.actions.remove_slave.emit(self.bus.get_bus_type(), self.bus.get_slave_index(self.box_name))
-        #self.s.remove_slave(self)
+
+    def hide_arbiter_masters(self):
+        pass
 
     def itemChange(self, a, b):
         if QGraphicsItem.ItemSelectedHasChanged == a:
@@ -107,29 +111,18 @@ class Slave(Box):
                 self.s.slave_deselected(self.box_name, self.bus)
         return super(Slave, self).itemChange(a, b)
 
-    '''
-    def dropEvent(self, event):
-        print "Slave drop event"
-        super(Slave, self).dropEvent(event)
-
-    def dragMoveEvent(self, event):
-        print "Drag Move Event"
-        super(Slave, self).dragMoveEvent(event)
-    '''
-
     def mouseMoveEvent(self, event):
         if not self.is_movable():
-            #print "Not Movable"
             return super(Slave, self).mouseMoveEvent(event)
+
         if (Qt.LeftButton & event.buttons()) > 0:
             pos = event.pos()
             epos = event.buttonDownPos(Qt.LeftButton)
             l = QLineF(pos, epos)
             if (l.length() < QApplication.startDragDistance()):
-
-                #print "\tLength: %f" % l.length()
                 event.accept
                 return
+
             elif not self.dragging:
                 self.dragging = True
                 self.hide()
@@ -139,8 +132,7 @@ class Slave(Box):
                 drag = QDrag(event.widget())
                 drag.start(Qt.MoveAction)
                 drag.setMimeData(mime_data)
-                #drag.start(Qt.MoveAction)
-                
+
                 #create an image for the drag
                 size = QSize(self.start_rect.width(), self.start_rect.height())
                 pixmap = QPixmap(size)
@@ -168,20 +160,10 @@ class Slave(Box):
                 value = drag.exec_(Qt.MoveAction)
                 self.show()
                 if value == 0:
-                    #XXX: There is a bug where if you drop an item out of the
-                    #   application the item can end up at location 0... 
-                    #print "illegal drop... refresh"
-                    #print "Position: %f, %f" % (self.pos().x(), self.pos().y())
-                    #self.bus.update()
-                    #self.setPos(prev_pos.x(), prev_pos.y())
                     event.accept
-                    #self.s.get_view().update()
                 else:
                     event.accept
-                #print "Drag finished executing: %s" % str(value)
                 self.dragging = False
-                #print "rect: %f, %f" % (self.rect.x(), self.rect.y())
-                #self.bus.update()
 
         super(Slave, self).mouseMoveEvent(event)
 
@@ -190,10 +172,7 @@ class Slave(Box):
         super (Slave, self).mouseReleaseEvent(event)
 
     def paint(self, painter, option, widget):
-        #if self.dbg: print "Position: %f %f" % (self.pos().x(), self.pos().y())
-        #print "Position: %f %f" % (self.pos().x(), self.pos().y())
-        #if self.pos().x() < self.bus.pos().x():
-        #    self.bus.recalculate_size_pos()
-
         super(Slave, self).paint(painter, option, widget)
         
+    def is_arbiter_master(self):
+        return False

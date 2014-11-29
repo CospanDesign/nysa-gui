@@ -33,12 +33,15 @@ class FPGABusView(GraphicsWidget):
         #Create a view
         self.view = GraphicsView(parent)
         #Create a scene
-        self.scene = GraphicsScene(self.view, status, actions)
+        self.scene = GraphicsScene(self.view, status, actions, self)
         super (FPGABusView, self).__init__(self.view, self.scene)
         self.boxes = {}
         self.show()
         self.fi = parent
 
+    def fit_in_view(self):
+        self.view.fit_in_view()
+        
     def clear(self):
         #self.status.Verbose( "Clearing the FPGA Image")
         #print "Items: %s" % str(self.view.items())

@@ -31,17 +31,8 @@ from PyQt4.QtCore import *
 from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
-from visual_graph.box import Box
-
-from graphics_scene import view_state as vs
-import visual_graph.graphics_utils as gu
-
-
-from link import side_type as st
-from link import link_type as lt
-from link import Link
-
-
+from pvg.visual_graph.box import Box
+from pvg.visual_graph import graphics_utils as gu
 
 from defines import ARB_MASTER_RECT
 from defines import ARB_MASTER_COLOR
@@ -51,6 +42,10 @@ from defines import ARB_MASTER_COLOR
 
 from defines import ARB_MASTER_ACT_RECT
 from defines import ARB_MASTER_ACT_COLOR
+
+from link import side_type as st
+from link import link_type as lt
+from link import Link
 
 highlight_width = 8
 
@@ -64,8 +59,11 @@ class ArbiterMaster(Box):
                  scene,
                  slave):
 
-        QGraphicsItem.__init__(self)
+        super(ArbiterMaster, self).__init__(name = name,
+                                            position = position,
+                                            scene = scene)
 
+        self.from_slave_link = None
         self.box_name = name
         self.color = ARB_MASTER_COLOR
         self.activate = False
@@ -74,7 +72,6 @@ class ArbiterMaster(Box):
         self.start_rect = QRectF(self.rect)
         self.s = scene
 
-        self.link = None
         self.slave = slave
 
         #UI Stuff
@@ -84,7 +81,6 @@ class ArbiterMaster(Box):
         #User cannot move us directly
         self.setFlags(QGraphicsItem.ItemIsSelectable    |
                       QGraphicsItem.ItemIsFocusable)
-        scene.addItem(self)
 
         #Tooltip
         self.setToolTip(
@@ -125,13 +121,12 @@ class ArbiterMaster(Box):
         self.dbg = False
         if self.dbg: print "**AM**: New Arbiter Master: %s" % name
 
-
     def update_view(self):
         if self.dbg: print "AM: update_view()"
         #if self.activate:
         if self.s.is_arbiter_master_active():
             if self.dbg: print "\tactivate"
-            connected_slave = self.s.get_arbiter_master_connected(self)
+            connected_slave = self.s.get_arbiter_master_connected(self.slave.box_name, self.box_name)
             if connected_slave is not None:
                 if self.dbg: print "\tConnected slave: %s" % connected_slave.box_name
                 self.connect_slave(connected_slave)
@@ -156,18 +151,32 @@ class ArbiterMaster(Box):
         self.start_rect = self.rect
         self.s.invalidate(self.s.sceneRect())
 
+    def set_activate(self, enable):
+        if enable:
+            self.s.arbiter_master_selected(self.slave, self)
+
     def mousePressEvent(self, event):
-        if self.dbg: print "AM: mousePressEvent()"
-        connected_slave = self.s.get_arbiter_master_connected(self)
-        if self.s.get_state() == vs.arbiter_master_selected:
+        print "AM: mousePressEvent()"
+        connected_slave = self.s.get_arbiter_master_connected(self.slave.box_name, self.box_name)
+        if self.s.is_arbiter_master_selected():
             if self.back_rect.contains(event.pos()):
-                if self.dbg: print "\tBack was pressed"
-                self.clear_link()
+                print "\tBack was pressed"
+                #self.remove_from_link()
+                for link in self.links:
+                    print "Removing: %s" % link
+                    self.s.removeItem(self.links[link])
+                self.links = {}
                 self.s.arbiter_master_deselected(self)
+                self.s.invalidate(self.s.sceneRect())
             elif self.disconnect_rect.contains(event.pos()) and connected_slave is not None:
-                if self.dbg: print "\tDisconnect was pressed"
-                self.clear_link()
+                print "\tDisconnect was pressed"
+                #self.remove_from_link()
+                for link in self.links:
+                    print "Removing: %s" % link
+                    self.s.removeItem(self.links[link])
+                self.links = {}
                 self.s.arbiter_master_disconnect(self, connected_slave)
+                self.s.invalidate(self.s.sceneRect())
         else:
             self.s.arbiter_master_selected(self.slave, self)
             self.setSelected(True)
@@ -175,40 +184,55 @@ class ArbiterMaster(Box):
 
     def connect_slave(self, slave):
         if self.dbg: print "AM: connect_slave()"
-        #print "AM: Connected to slave: %s" % slave.box_name
+        print "AM: Connected to slave: %s" % slave.box_name
+        if len(self.links) > 0:
+            print "\tThere is already a connection"
+            return
+        #if self.s.is_modules_connected_through_arbiter(self.get_slave().box_name, slave.box_name):
+        #    print "Already connected!"
+        #    return
+        link = self.add_link(slave)
+        link.en_bezier_connections(True)
+        self.update_links()
+        #self.update(self.rect)
+        self.s.invalidate(self.s.sceneRect())
 
-        if self.link is None:
-            self.link = Link(self, slave, self.s, lt.arbiter_master)
-            self.s.set_link_ref(self.link)
-            self.link.from_box_side(st.right)
-            self.link.to_box_side(st.left)
-            self.link.en_bezier_connections(True)
-            #self.s.addItem(self.link)
+        '''
+        if self.from_slave_link is None:
+            self.from_slave_link = Link(self, slave, self.s, lt.arbiter_master)
+            self.s.set_link_ref(self.from_slave_link)
+            self.from_slave_link.from_box_side(st.right)
+            self.from_slave_link.to_box_side(st.left)
+            self.from_slave_link.en_bezier_connections(True)
+            #self.s.addItem(self.from_slave_link)
             self.update_link()
 
         self.update(self.rect)
         self.s.invalidate(self.s.sceneRect())
+        '''
 
-    def clear_link(self):
-        if self.dbg: print "AM: clear_link()"
-        if self.link is not None:
-            if self.dbg: print "\tLink to Remove: %s - %s" % (self.link.from_box.box_name, self.link.to_box.box_name)
-            self.s.removeItem(self.link)
+    def remove_from_link(self):
+        if self.dbg: print "AM: remove_from_link()"
+        if self.from_slave_link is not None:
+            if self.dbg: print "\tLink to Remove: %s - %s" % (self.from_slave_link.from_box.box_name, self.from_slave_link.to_box.box_name)
+            self.s.removeItem(self.from_slave_link)
 
     def disconnect_slave(self):
         if self.dbg: print "AM: disconnect_slave()"
-        if self.link is None:
+        if self.from_slave_link is None:
             return
-        if self.dbg: print "Remove link %s - %s" % (self.link.from_box.box_name, self.link.to_box.box_name)
-        self.s.removeItem(self.link)
-        self.link = None
+        if self.dbg: print "Remove link %s - %s" % (self.from_slave_link.from_box.box_name, self.from_slave_link.to_box.box_name)
+        self.s.removeItem(self.from_slave_link)
+        self.from_slave_link = None
 
     def update_link(self):
         if self.dbg: print "AM: update_link()"
-        if self.link is None:
+        if self.from_slave_link is None:
             return
 
-        self.link.auto_update()
+        #self.from_slave_link.auto_update()
+
+        self.update_links()
         #print "\tY Position: %f" % (self.y_pos)
 
         x = ARB_MASTER_ACT_RECT.width()
@@ -225,10 +249,10 @@ class ArbiterMaster(Box):
         start = self.mapToScene(p)
         start.setY(self.slave.y() + ARB_MASTER_ACT_RECT.height() / 2)
         print "\tStart Position: %f, %f" % (start.x(), start.y())
-        to_box = self.link.to_box
+        to_box = self.from_slave_link.to_box
 
         end = self.mapToScene(self.mapFromItem(to_box, to_box.side_coordinates(st.left)))
-        self.link.set_start_end(start, end)
+        self.from_slave_link.set_start_end(start, end)
 
     #Paint
     def paint(self, painter, option, widget):
@@ -273,7 +297,8 @@ class ArbiterMaster(Box):
         gu.add_label_to_rect(painter, self.back_rect, "back")
 
         #draw disconnect
-        connected_slave = self.s.get_arbiter_master_connected(self)
+        connected_slave = self.s.get_arbiter_master_connected(self.slave.box_name, self.box_name)
+        print "AM: connected slave: %s" % str(connected_slave)
         if connected_slave is not None:
             painter.drawRect(self.disconnect_rect)
             painter.fillRect(self.disconnect_rect, QColor("red"))
@@ -304,7 +329,6 @@ class ArbiterMaster(Box):
                 painter.scale(scale_x, scale_x)
                 painter.drawText(br, Qt.TextSingleLine, "disconnect")
 
-
     def paint_not_selected(self, painter, option, widget):
         pen = QPen(self.style)
         pen.setColor(Qt.black)
@@ -326,7 +350,7 @@ class ArbiterMaster(Box):
         
     def get_connected_slave(self):
         if self.dbg: print "AM: get_connected_slave()"
-        return self.s.get_arbiter_master_connected(self)
+        return self.s.get_arbiter_master_connected(self.slave.box_name, self.box_name)
 
     def get_slave(self):
         if self.dbg: print "AM: get_slave()"

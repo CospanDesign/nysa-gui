@@ -23,7 +23,6 @@ class PeripheralSlaveProperties(PropertiesBase):
         self.layout.addRow(QLabel("Scripts"), self.script_list)
         self.hide()
 
-
     def set_slave(self, name, config_dict, n, scripts):
         self.name.setText(name)
         self.clear_scripts_list()

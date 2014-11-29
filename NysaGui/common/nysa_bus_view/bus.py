@@ -203,7 +203,7 @@ class Bus(Box):
         if self.dbg: print "BUS: enable_expand_slaves()"
         self.expand_slaves = enable
         self.recalculate_size_pos()
-        self.scene().fit_view()
+        #self.scene().fit_view()
         #view = self.scene().get_view()
         #view.fitInView(self.scene().sceneRect(), Qt.KeepAspectRatio)
 

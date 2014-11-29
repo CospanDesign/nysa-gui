@@ -54,7 +54,6 @@ lt = enum(   "bus",
              "port",
              "arbiter_master")
 
-
 st = enum(   "top",
              "bottom",
              "right",
@@ -262,11 +261,13 @@ class Controller (QObject):
         #print "Connect"
         self.model.set_binding(module_name, signal_name, pin_name, index)
 
+    '''
     def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
         #Remove signal from model
         #print "Controller: Disconnect"
         uname = self.model.get_unique_from_module_name(module_name)
         self.model.unbind_port(uname, signal_name, index)
+    '''
 
     def get_model(self):
         return self.model
@@ -454,7 +455,7 @@ class Controller (QObject):
 
     def get_module_module_tags(self, module_name):
         uname = self.model.get_unique_from_module_name(module_name)
-        return self.model.get_module_tags(uname)
+        return self.model.gm.get_node_module_tags(uname)
 
     def get_module_project_tags(self, module_name):
         uname = self.model.get_unique_from_module_name(module_name)
@@ -539,16 +540,174 @@ class Controller (QObject):
     def commit_slave_parameters(self, name, param_dict):
         self.model.commit_slave_parameters(name, param_dict)
 
-    '''
-    def slave_selected(self, slave_type, slave_name):
-        pass
+    #Arbiter Interface
+    def is_arbiter_master(self, module_name):
+        """ Returns true if this module is an arbiter master
 
-    def slave_deselected(self, slave_type, slave_name):
-        pass
+        Args:
+            module_name (string): the user readible string on the module boxes
 
-    def node_selected(self, node_type, node_name, slave_type = Slave.PERIPHERAL):
-        pass
+        Return: (Boolean)
+            True: this is an arbiter master
+            False: This is not an arbiter master
 
-    def node_deselected(self, node_type, node_name, slave_type = Slave.PERIPHERAL):
-        pass
-    '''
+        Raises:
+            Nothing
+        """
+        uname = self.model.get_unique_from_module_name(module_name)
+        return self.model.is_arbiter_master(uname)
+
+    def arbiter_master_names(self, module_name):
+        uname = self.model.get_unique_from_module_name(module_name)
+        return self.model.arbiter_master_names(uname)
+
+    def is_arbiter_master_connected(self, module_name, arbiter_name = None):
+        """ Returns true if this arbiter master is connected to a slave
+        on the specified bus
+
+        Args:
+            module_name (string): the user readible string on the module boxes
+            arbiter_name (string): the bus to query if the arbiter is connected
+                Note: this can be left blank to see if the arbiter master module
+                is connected at all
+
+        Return: (Boolean)
+            True: this arbiter master is connected
+            False: This arbiter master is not connected
+
+        Raises:
+            Nothing
+        """
+        uname = self.model.get_unique_from_module_name(module_name)
+        return self.model.is_arbiter_master_connected(uname, arbiter_name)
+
+    def module_arbiter_count(self, module_name):
+        """ Returns the number of arbiters that this module has
+
+        Args:
+            module_name (string): the user readible string on the module boxes
+
+        Return: (int)
+            Number of arbiters that this module has
+
+        Raises:
+            Nothing
+        """
+        return len(self.arbiter_master_names(module_name))
+
+    def arbiter_master_names(self, module_name):
+        uname = self.model.get_unique_from_module_name(module_name)
+        return self.model.arbiter_master_names(uname)
+
+    def connect_arbiter_master(self, from_module_name, to_module_name, arbiter_name):
+        """ Connect an module through an arbiter to another module
+
+        Args:
+            from_module_name (string): the user readible string on the module boxes
+                that the arbiter will originate from
+            to_module_name (string): the user readible string on the module boxes
+                that the arbiter will connect to
+            arbiter_name (string): the name of the arbiter that will connect that
+                from module to the to module
+
+        Return:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+
+        if str(to_module_name).lower() == "drt":
+            raise DesignControlError("Can't attach to the DRT")
+        from_uname = self.model.get_unique_from_module_name(from_module_name)
+        to_uname = self.model.get_unique_from_module_name(to_module_name)
+        self.model.connect_arbiter(from_uname, arbiter_name, to_uname)
+
+    def disconnect_arbiter_master(self, from_module_name, to_module_name = None, arbiter_name = None):
+        """ Disconnect an arbiter originating from from_module to to_module using
+        the arbiter name arbiter_name
+
+        Note: either to_module_name or arbiter_name can be left blank (but not both!)
+
+        Args:
+            from_module_name (string): the user readible string on the module boxes
+                that the arbiter originates from
+            to_module_name (string): the user readible string on the module boxes
+                that the arbiter is connected to
+            arbiter_name (string): the name of the arbiter that connects the
+                from_module to the to_module
+
+        Return:
+            Nothing
+
+        Raises:
+            DesignControlError: Both the to_module_name and arbiter_name were left blank
+        """
+        if to_module_name is None and arbiter_name is None:
+            raise DesignControlError("disconnect arbiter requires a to_module_name or an arbiter_name, \
+                                        both values cannot be left empty")
+        from_uname = self.model.get_unique_from_module_name(from_module_name)
+        to_uname = self.model.get_unique_from_module_name(to_module_name)
+        self.model.disconnect_arbiter(from_uname, to_uname, arbiter_name)
+
+    def get_connected_arbiter_name(self, from_module_name, to_module_name):
+        """ Return the name of the arbiter that is connected between from_module to
+        to_module
+
+        Args:
+            from_module_name (string): the user readible string on the module boxes
+                that the arbiter originates from
+            to_module_name (string): the user readible string on the module boxes
+                that the arbiter is connected to
+
+        Return: string
+            name of the arbiter connected or an empty string if they are not connected
+
+        Raises:
+            Nothing
+        """
+        from_uname = self.model.get_unique_from_module_name(from_module_name)
+        to_uname = self.model.get_unique_from_module_name(to_module_name)
+        try:
+            return self.model.get_connected_arbiter_name(from_uname, to_uname)
+        except WishboneModelError:
+            return ""
+
+    def is_modules_connected_through_arbiter(self, from_module_name, to_module_name):
+        """ Returns true if an arbiter connects from_module to to_module
+
+        Args:
+            from_module_name (string): the user readible string on the module boxes
+                that the arbiter originates from
+            to_module_name (string): the user readible string on the module boxes
+                that the arbiter is connected to
+
+        Return: Boolean
+            True: is connected
+            False: is not connected
+
+        Raises:
+            Nothing
+        """
+
+        if len(self.get_connected_arbiter_name(from_module_name, to_module_name)) == 0:
+            return False
+        return True
+            
+    def get_arbiter_master_connected(self, from_module_name, arbiter_name):
+        uname = self.model.get_unique_from_module_name(from_module_name)
+        if uname is None:
+            return None
+
+        to_uname = self.model.get_connected_arbiter_slave(uname, arbiter_name)
+        if to_uname is None:
+            return None, None
+
+        to_name = self.model.gm.get_node_display_name(to_uname)
+        bus = "peripheral"
+        if self.model.is_memory_slave(to_uname):
+            bus = "memory"
+
+        return bus, to_name
+
+

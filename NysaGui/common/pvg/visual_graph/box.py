@@ -71,6 +71,7 @@ class Box (QGraphicsItem):
         self.setMatrix(QMatrix())
         scene.clearSelection()
         scene.addItem(self)
+        self.s = scene
 
         #self.setSelected(True)
         #self.setFocus()
@@ -136,11 +137,11 @@ class Box (QGraphicsItem):
     def itemChange(self, a, b):
         if QGraphicsItem.ItemSelectedHasChanged == a:
             if b.toBool():
-                if self.scene() is not None:
-                    self.scene().box_selected(self.user_data)
+                if self.s is not None:
+                    self.s.box_selected(self.user_data)
             else:
-                if self.scene() is not None:
-                    self.scene().box_deselected(self.user_data)
+                if self.s is not None:
+                    self.s.box_deselected(self.user_data)
 
         return QGraphicsItem.itemChange(self, a, b)
 
@@ -186,7 +187,7 @@ class Box (QGraphicsItem):
         return self.rect.adjusted(-2, -2, 2, 2)
 
     def parentWidget(self):
-        return self.scene().views()[0]
+        return self.s.views()[0]
 
     def add_label_to_rect(self, painter, rect, label):
         painter.save()
@@ -214,7 +215,7 @@ class Box (QGraphicsItem):
         self.links[name].from_box_side(from_side)
         self.links[name].to_box_side(to_side)
         self.update_links()
-        self.scene().invalidate(self.scene().sceneRect())
+        self.s.invalidate(self.s.sceneRect())
         return self.links[name]
 
     def update_links(self):

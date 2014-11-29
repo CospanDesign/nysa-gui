@@ -650,6 +650,9 @@ class GraphManager:
     def get_node_ports(self, name):
         return self.get_node(name).ports
 
+    def get_node_display_name(self, uname):
+        return self.get_node(uname).name
+
 #  def bind_pin_to_port(self, name, port, loc, debug = False):
 #    """
 #    binds the specific port to a loc

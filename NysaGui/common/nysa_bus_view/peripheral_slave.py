@@ -36,9 +36,9 @@ p = os.path.join(os.path.dirname(__file__),
 
 sys.path.append(p)
 
-
 from pvg.visual_graph.box import Box
 from slave import Slave
+from arbiter_master import ArbiterMaster
 
 from defines import SLAVE_RECT
 from defines import PERIPHERAL_SLAVE_COLOR
@@ -66,9 +66,15 @@ class PeripheralSlave(Slave):
                  bus):
 
         self.nochange = False
+        self.arbiter_master = False
+        self.arbiter_boxes = []
+        if scene.is_arbiter_master(instance_name):
+            self.arbiter_master = True
 
         self.links = {}
         self.am_selected = False
+        self.show_arbiter_masters_boxes = False
+
         self.peripheral_bus = bus
         self.ignore_selection = False
         self.dbg = False
@@ -100,6 +106,29 @@ class PeripheralSlave(Slave):
         #draw text
         r = QRectF(self.rect)
 
+
+        if self.arbiter_master and not self.show_arbiter_masters_boxes:
+            #Paint Arbiter
+            arb_height = self.rect.height()
+            arb_width  = self.rect.width() / 4
+            arb_pos = QPointF(self.rect.width() - arb_width, 0)
+            arb_rect = QRectF(arb_pos, QSizeF(arb_width, arb_height))
+            r = QRectF(QPointF(r.x(), r.y()), QSizeF(self.rect.width() - arb_width, r.height())) 
+
+            pen = QPen(self.style)
+            pen.setColor(Qt.black)
+            pen.setWidth(1)
+            if option.state & QStyle.State_Selected:
+                #Selected
+                pen.setColor(Qt.black)
+                pen.setWidth(highlight_width)
+
+            painter.setPen(pen)
+            painter.drawRect(arb_rect)
+            painter.fillRect(arb_rect, QColor(Qt.white))
+
+            painter.drawText(arb_rect, Qt.AlignCenter, "M")
+
         painter.setFont(self.text_font)
         pen.setColor(Qt.black)
         painter.setPen(pen)
@@ -127,10 +156,134 @@ class PeripheralSlave(Slave):
             self.links[link].set_start_end(start, end)
 
     def mouseReleaseEvent(self, event):
-        if self.dbg: print "PS: mouse release event()"
+        if self.show_arbiter_masters_boxes:
+            if len(self.arbiter_boxes) == 0:
+                self.show_arbiter_masters()
         return QGraphicsItem.mouseReleaseEvent(self, event)
 
     def itemChange(self, a, b):
+        result = super(PeripheralSlave, self).itemChange(a, b)
         if self.isSelected():
             self.peripheral_bus.slave_selection_changed(self)
-        return super(PeripheralSlave, self).itemChange(a, b)
+            if self.arbiter_master:
+                self.show_arbiter_masters_boxes = True
+
+        return result
+
+    def clear_links(self):
+        for link in self.links:
+            self.scene().removeItem(self.links[link])
+        self.links = {}
+
+    def hide_arbiter_masters(self):
+        self.show_arbiter_masters_boxes = False
+        self.remove_arbiter_masters()
+
+    def remove_arbiter_masters(self):
+        print "PS: Removed arbiter masters"
+
+        self.clear_links()
+
+        for ab in self.arbiter_boxes:
+            ab.remove_from_link()
+            self.s.removeItem(ab)
+
+        self.arbiter_boxes = []
+        self.s.invalidate(self.s.sceneRect())
+
+    def is_arbiter_master_selected(self):
+        if self.dbg: print "PS: is_arbiter_master_selected()"
+        for am in self.arbiter_boxes:
+            if am.isSelected():
+                return True
+        return False
+
+    def arbiter_master_selected(self, arbiter_master):
+        self.dbg = True
+        if self.dbg: print "PS: arbiter_master_selected()"
+        if self.ignore_selection:
+            return
+
+        self.ignore_selection = True
+        self.s.clearSelection()
+        #Maybe this is to remove other arbiter masters!
+        self.remove_arbiter_masters()
+        position = QPointF(self.pos())
+        rect = QRectF(self.rect)
+        arb_x = position.x() + rect.width() + ARB_MASTER_HORIZONTAL_SPACING
+        arb_y = position.y() + (rect.height() / 2)  - (ARB_MASTER_ACT_RECT.height() / 2)
+
+        arb_pos = QPointF(arb_x, arb_y)
+        #print "Adding arbiter master"
+        am = ArbiterMaster(name = arbiter_master,
+                           position = arb_pos,
+                           y_pos = arb_y,
+                           scene = self.scene(),
+                           slave = self)
+
+        am.set_activate(True)
+        am.update_view()
+        self.arbiter_boxes.append(am)
+        al = Link(self, am, self.scene(), lt.arbiter_master)
+        al.from_box_side(st.right)
+        al.to_box_side(st.left)
+
+        al.en_bezier_connections(True)
+        self.links[am] = al
+
+        #print "update links"
+        self.update_links()
+        self.ignore_selection = False
+        self.s.invalidate(self.s.sceneRect())
+        self.dbg = True
+
+    def show_arbiter_masters(self):
+        if len(self.arbiter_boxes) > 0:
+            return
+        print "show_arbiter_masters()"
+        count = self.s.module_arbiter_count(self.box_name)
+        print "%d arbiters" % count
+
+        #print "Add %d arbiter boxes" % num_m
+
+        #setup the start position for the case where there is only one master
+        position = QPointF(self.pos())
+        rect = QRectF(self.rect)
+        arb_x = position.x() + rect.width() + ARB_MASTER_HORIZONTAL_SPACING
+        arb_y = position.y() + rect.height() / 2
+        arb_y -= (count - 1) * ARB_MASTER_VERTICAL_SPACING
+        arb_y -= ((count - 1) * ARB_MASTER_RECT.height()) / 2
+
+        arb_pos = QPointF(arb_x, arb_y)
+
+        #for i in range(0, len(self.arbiter_masters)):
+        for name in self.s.arbiter_master_names(self.box_name):
+            #print "Add Arbiter %s" % self.arbiter_masters[i]
+            arb_rect = QRectF(ARB_MASTER_RECT)
+
+            #am = ArbiterMaster(name = self.arbiter_masters[i], 
+            am = ArbiterMaster(name = name, 
+                               position = arb_pos,
+                               y_pos = position.y(),
+                               scene = self.scene(),
+                               slave = self)
+
+            #am.movable(False)
+
+            self.arbiter_boxes.append(am)
+            al = Link(self, am, self.scene(), lt.arbiter_master)
+            al.from_box_side(st.right)
+            al.to_box_side(st.left)
+
+            al.en_bezier_connections(True)
+            self.links[am] = al
+
+            #Progress the position
+            arb_pos = QPointF(arb_pos.x(), arb_pos.y() + arb_rect.height() + ARB_MASTER_VERTICAL_SPACING)
+
+        self.update_links()
+
+    def is_arbiter_master(self):
+        return self.arbiter_master
+
+

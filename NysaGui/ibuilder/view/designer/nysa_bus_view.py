@@ -33,15 +33,19 @@ class NysaBusView(GraphicsWidget):
         #Create a view
         self.view = GraphicsView(parent, self.actions, self.status)
         #Create a scene
-        self.scene = GraphicsScene(self.view, status, actions)
+        self.scene = GraphicsScene(self.view, status, actions, self)
         super (NysaBusView, self).__init__(self.view, self.scene)
         self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
         self.boxes = {}
         self.show()
         self.fi = parent
 
+    def fit_in_view(self):
+        self.view.fit_in_view()
+
     def set_controller(self, controller):
         self.view.set_controller(controller)
+        self.scene.set_controller(controller)
 
     def clear(self):
         #self.status.Verbose( "Clearing the FPGA Image")
@@ -63,3 +67,4 @@ class NysaBusView(GraphicsWidget):
 
     def get_scene(self):
         return self.scene
+
