@@ -80,6 +80,7 @@ class IBuilderController(QObject):
         print "Project names: %s" % str(project_names)
         conflict = True
         while conflict:
+            print "ibuilder_controller: name conflict, get a new name!"
             conflict = False
             if new_project_name in project_names:
                 conflict = True

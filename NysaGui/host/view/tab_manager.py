@@ -25,6 +25,7 @@ import os
 from PyQt4.Qt import QObject
 from PyQt4.Qt import QIcon
 from PyQt4.Qt import QPixmap
+from PyQt4.Qt import QColor
 from PyQt4.Qt import SIGNAL
 from PyQt4.Qt import QSize
 
@@ -68,14 +69,15 @@ class TabManager(QObject):
 
         if nysa_id is None:
             pm = QPixmap(QSize(16, 16))
-            pm.fill()
+            pm.fill(QColor('white'))
             icon = QIcon(pm)
             self.tab_view.addTab(widget, icon, name)
 
         else: 
             color = get_color_from_id(nysa_id)
             pm = QPixmap(QSize(16, 16))
-            pm.fill(color)
+            #pm.fill(color)
+            pm.fill()
             icon = QIcon(pm)
             
             self.tab_view.addTab(widget, icon, name)

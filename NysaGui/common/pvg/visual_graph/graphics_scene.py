@@ -46,6 +46,7 @@ class GraphicsScene(QGraphicsScene):
         self.links = []
         self.dbg = False
         if self.dbg: print "GS: Set state for normal"
+        self.view.set_scene(self)
         #self.setAcceptDrops(True)
 
     def set_controller(self, controller):
@@ -79,7 +80,9 @@ class GraphicsScene(QGraphicsScene):
             self.removeItem(self.links[i])
 
     def auto_update_all_links(self):
+        print "updating links!"
         for l in self.links:
+            print "updating: %s" % l
             if l.is_center_track():
                 l.auto_update_center()
 

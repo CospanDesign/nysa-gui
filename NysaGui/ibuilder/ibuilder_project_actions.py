@@ -3,7 +3,7 @@ from PyQt4 import QtGui
 from PyQt4 import QtCore
 
 class IBuilderProjectActions(QtCore.QObject):
-    
+
     #Menu Actions
     module_selected = QtCore.pyqtSignal(str, name = "ibuilder_project_module_selected")
     module_deselected = QtCore.pyqtSignal(str, name = "ibuilder_project_module_deselected")

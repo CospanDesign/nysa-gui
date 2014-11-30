@@ -59,6 +59,7 @@ class GraphicsScene(gs):
         self.state = view_state.normal
         self.dbg = False
         self.prev_slave = None
+        self.master = None
         if self.dbg: print "GS: Set state for normal"
 
     #Overriden Methods
@@ -93,14 +94,15 @@ class GraphicsScene(gs):
         if self.dbg: print "GS: Drag start event"
 
     def auto_update_all_links(self):
-        #for l in self.links:
-        #    if l.is_center_track():
-        #        print "Center track!"
-        #        print "\tlink_ref: %s - %s" % (l.from_box.box_name, l.to_box.box_name)
-        #        l.auto_update_center()
-        #self.peripheral_bus.update_links()
-        #self.memory_bus.update_links()
-        pass
+        for l in self.links:
+            if l.is_center_track():
+                #print "Center track!"
+                #print "\tlink_ref: %s - %s" % (l.from_box.box_name, l.to_box.box_name)
+                l.auto_update_center()
+        if self.master is not None:
+            self.master.update_master_links()
+        self.peripheral_bus.update_links()
+        self.memory_bus.update_links()
 
     #States
     def get_state(self):

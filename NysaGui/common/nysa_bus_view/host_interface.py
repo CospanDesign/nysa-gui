@@ -74,8 +74,8 @@ class HostInterface(Box):
         self.links[master].track_nodes()
 
     def paint(self, painter, option, widget):
+        #for link in self.links:
+        #    self.links[link].auto_update_center()
         super(HostInterface, self).paint(painter, option, widget)
-        for link in self.links:
-            self.links[link].auto_update_center()
 
 

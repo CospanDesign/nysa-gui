@@ -171,8 +171,5 @@ class Slave(Box):
         #print "Slave: Mouse Release Event"
         super (Slave, self).mouseReleaseEvent(event)
 
-    def paint(self, painter, option, widget):
-        super(Slave, self).paint(painter, option, widget)
-        
     def is_arbiter_master(self):
         return False

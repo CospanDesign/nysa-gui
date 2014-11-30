@@ -81,8 +81,8 @@ class Master(Box):
         self.links[memory_bus].to_box_side(st.left)
 
     def paint(self, painter, option, widget):
+        #self.update_master_links()
         super(Master, self).paint(painter, option, widget)
-        self.update_master_links()
 
     def update_master_links(self):
         pbus_start = self.mapToScene(self.side_coordinates(st.right))

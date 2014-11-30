@@ -94,13 +94,13 @@ class IBuilderProject(QObject):
         self.controller.set_board_name(board_name)
         self.status.Warning("Board Change functionality not fully tested!")
         self.update_project()
-        
+
     def update_project(self):
         self.controller.initialize_configuration_editor(self.project_view.get_configuration_editor())
 
     def load_project(self):
         self.config_dict = json.load(open(str(self.path), 'r'))
-        
+
     def initialize_slave_lists(self):
         bus_type = self.controller.get_bus()
         paths = utils.get_local_verilog_paths()
@@ -203,7 +203,7 @@ class IBuilderProject(QObject):
             print "Error generating json string: %s" % ex
             print "Dumping project tags:"
             utils.pretty_print_dict(project_tags)
-            
+
         f.write(js)
         f.close()
 

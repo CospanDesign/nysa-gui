@@ -254,7 +254,6 @@ class WishboneModel():
                 continue
             self.config_dict["constraint_files"].append(cf)
 
-
     def remove_default_board_constraint(self):
         cfiles = utils.get_constraint_filenames(self.config_dict["board"])
         found = False

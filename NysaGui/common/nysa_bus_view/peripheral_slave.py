@@ -90,7 +90,6 @@ class PeripheralSlave(Slave):
         self.movable(False)
 
     def paint(self, painter, option, widget):
-
         pen = QPen(self.style)
         pen.setColor(Qt.black)
         pen.setWidth(1)

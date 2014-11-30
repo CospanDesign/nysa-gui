@@ -66,6 +66,7 @@ class GraphicsView(gv):
     def paint(self, painter, option, widget):
         super(GraphicsView, self).paint(painter, option, widget)
         if self.initialize:
+            print "init!"
             self.update()
 
     def showEvent(self, sevent):
@@ -76,5 +77,7 @@ class GraphicsView(gv):
 
     def resizeEvent(self, event):
         super(GraphicsView, self).resizeEvent(event)
+        #print "resize event"
+        self.s.auto_update_all_links()
         self.fit_in_view()
 

@@ -101,34 +101,3 @@ class ProjectView(QWidget):
     def get_configuration_editor(self):
         return self.configuration
 
-    '''
-    def setup_tabs( self,
-                    designer_color,
-                    builder_color,
-                    constraints_color,
-                    configuration_color):
-
-        color = designer_node.get_color(1)
-        pm = QPixmap(QSize(16, 16))
-        pm.fill(color)
-        icon = QIcon(pm)
-        self.tab_view.addTab(self.designer, icon, "designer")
-
-        color = builder_node.get_color(1)
-        pm = QPixmap(QSize(16, 16))
-        pm.fill(color)
-        icon = QIcon(pm)
-        self.tab_view.addTab(self.builder, icon, "builder")
-
-        color = constraint_node.get_color(1)
-        pm = QPixmap(QSize(16, 16))
-        pm.fill(color)
-        icon = QIcon(pm)
-        self.tab_view.addTab(self.constraints, icon, "constraints")
-
-        color = configuration_node.get_color(1)
-        pm = QPixmap(QSize(16, 16))
-        pm.fill(color)
-        icon = QIcon(pm)
-        self.tab_view.addTab(self.configuration, icon, "configuration")
-    '''

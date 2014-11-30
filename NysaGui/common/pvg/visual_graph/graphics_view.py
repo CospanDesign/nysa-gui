@@ -55,6 +55,9 @@ class GraphicsView(QGraphicsView):
         self.dbg = False
         #self.dbg = True
 
+    def set_scene(self, scene):
+        self.s = scene
+
     def set_controller(self, controller):
         self.controller = controller
 
@@ -79,9 +82,6 @@ class GraphicsView(QGraphicsView):
     def mouseReleaseEvent(self, event):
         if self.dbg: print "GV: mouseReleaseEvent"
         super(GraphicsView, self).mouseReleaseEvent(event)
-
-    #def mouseMoveEvent(self, event):
-    #    super(QGraphicsView, self).mouseMoveEvent(event)
 
     def dropEvent(self, event):
         if self.dbg: print "GV: dropEvent"
@@ -128,4 +128,15 @@ class GraphicsView(QGraphicsView):
     def _scale_fit(self):
         if self.dbg: print "GV: Set scale to fit all items"
         self.fitInView(self.scene().sceneRect(), Qt.KeepAspectRatio)
+
+    def paintEvent(self, event):
+        #print 'paint event'
+        #self.s.auto_update_all_links()
+        super(GraphicsView, self).paintEvent(event)
+
+    def resizeEvent(self, event):
+        super(GraphicsView, self).resizeEvent(event)
+        #print "resize event"
+        self.s.auto_update_all_links()
+        self.fit_in_view()
 

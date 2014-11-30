@@ -1,5 +1,3 @@
-#! /usr/bin/python
-
 # Copyright (c) 2014 Dave McCoy (dave.mccoy@cospandesign.com)
 
 # This file is part of Nysa (wiki.cospandesign.com/index.php?title=Nysa).
@@ -26,6 +24,7 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
+import argparse
 import collections
 
 from PyQt4.Qt import *
@@ -76,33 +75,12 @@ class NysaGui(QObject):
 
         self.status.Debug( "Created main form!")
         QThread.currentThread().setObjectName("Nysa GUI Main")
-
-        #app.focusChanged.connect(self.actions.focus_change)
-
         self.hc.refresh_platform_tree()
-        sys.exit(app.exec_())
+        #sys.exit(app.exec_())
+        app.exec_()
 
-
-def main(argv):
-    #Parse out the commandline arguments
-    parser = argparse.ArgumentParser(
-            formatter_class = argparse.RawDescriptionHelpFormatter,
-            description = DESCRIPTION,
-            epilog = EPILOG
-    )
-    debug = False
-
-    parser.add_argument("-d", "--debug",
-                        action = "store_true",
-                        help = "Enable Debug Messages")
-
-    args = parser.parse_args()
-
-    if args.debug:
-        print ("Debug Enable")
-        debug = True
-
-    n = NysaGui()
+def main(argv = None):
+    n = NysaGui(debug = True)
 
 if __name__ == "__main__":
     main(sys.argv)
