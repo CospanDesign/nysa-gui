@@ -25,11 +25,36 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from info_view import InfoView
+from tool_properties_view import ToolPropertiesView
+from build_flow_view import BuildFlowView
+
 class Builder(QWidget):
+
     def __init__(self, actions, status):
         super (Builder, self).__init__()
         self.status = status
         self.actions = actions
+        self.config = {}
+
         layout = QVBoxLayout()
+
+        self.info = InfoView(actions, status)
+        self.bfv = BuildFlowView(actions, status)
+        self.tpv = ToolPropertiesView(actions, status)
+        layout.addWidget(self.info)
+        layout.addWidget(self.bfv)
+        layout.addWidget(self.tpv)
         self.setLayout(layout)
 
+    def set_project_name(self, name):
+        self.info.set_project_name(None, name)
+
+    def set_project_directory(self, path):
+        self.info.set_project_directory(path)
+
+    def set_board_dict(self, board_dict):
+        self.info.set_board_dict(board_dict)
+
+    def set_project_status(self, status):
+        self.info.set_status(status)

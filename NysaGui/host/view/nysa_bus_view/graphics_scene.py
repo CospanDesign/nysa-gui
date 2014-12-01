@@ -60,6 +60,8 @@ class GraphicsScene(gs):
         self.arbiter_selected = None
         self.state = view_state.normal
         self.master = None
+        self.peripheral_bus = None
+        self.memory_bus = None
         self.dbg = False
         if self.dbg: print "GS: Set state for normal"
         #self.setAcceptDrops(True)
@@ -253,6 +255,8 @@ class GraphicsScene(gs):
                 l.auto_update_center()
         if self.master is not None:
             self.master.update_master_links()
-        self.peripheral_bus.update_links()
-        self.memory_bus.update_links()
+        if self.peripheral_bus is not None:
+            self.peripheral_bus.update_links()
+        if self.memory_bus is not None:
+            self.memory_bus.update_links()
 

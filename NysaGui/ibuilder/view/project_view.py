@@ -66,12 +66,16 @@ class ProjectView(QWidget):
         self.add_tab("constraints", self.constraints)
         self.add_tab("builder", self.builder)
         self.controller = None
+        self.builder.set_project_status("Loaded default project")
 
     def set_controller(self, controller):
         self.designer.set_controller(controller)
         self.constraints.set_controller(controller)
         self.controller = controller
         #controller.initialize_constraint_editor(self.constraints)
+        self.builder.set_project_name(self.controller.get_project_name())
+        self.builder.set_project_directory(self.controller.get_project_location())
+        self.builder.set_board_dict(self.controller.get_board_dict())
 
     def get_controller(self):
         return self.controller

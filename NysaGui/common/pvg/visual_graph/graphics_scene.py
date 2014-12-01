@@ -80,9 +80,9 @@ class GraphicsScene(QGraphicsScene):
             self.removeItem(self.links[i])
 
     def auto_update_all_links(self):
-        print "updating links!"
+        #print "updating links!"
         for l in self.links:
-            print "updating: %s" % l
+            #print "updating: %s" % l
             if l.is_center_track():
                 l.auto_update_center()
 

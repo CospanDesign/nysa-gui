@@ -89,7 +89,6 @@ class IBuilderView(QWidget):
         tw = self.tab_view.currentWidget()
         return tw.get_controller().get_project_name()
 
-
     def clear_projects(self):
         self.tm.clear()
         self.project_tree.clear()

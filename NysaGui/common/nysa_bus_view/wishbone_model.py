@@ -899,7 +899,6 @@ class WishboneModel():
             else:
                 self.config_dict["MEMORY"][self.gm.get_node(uname).name] = self.gm.get_node_project_tags(uname)
 
-
     def commit_all_project_tags(self):
         #Go through the host interface first
         self._commit_bindings_to_project_tags(HOST_INTERFACE)
@@ -927,7 +926,6 @@ class WishboneModel():
             #uname = get_unique_name(name, NodeType.SLAVE, SlaveType.MEMORY, i)
             self._commit_bindings_to_project_tags(uname)
 
-
     def get_unique_slave_name(self, module_tags, bus):
         #print "bus: %s" % str(bus)
         count = 0
@@ -951,6 +949,9 @@ class WishboneModel():
 
     def get_project_name(self):
         return self.config_dict["PROJECT_NAME"]
+
+    def get_project_location(self):
+        return utils.resolve_path(self.config_dict["BASE_DIR"])
 
     def commit_slave_parameters(self, module_name, parameters):
         uname = self.get_unique_from_module_name(module_name)

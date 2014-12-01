@@ -220,6 +220,15 @@ class Controller (QObject):
     def set_board_name(self, board_name):
         self.model.set_board_name(board_name)
         self.model.initialize_graph(self)
+
+    def get_board_name(self):
+        return self.model.get_board_name()
+
+    def get_board_dict(self):
+        board_name = self.model.get_board_name()
+        if board_name is "undefined":
+            raise DesignControlError("Board is not defined")
+        return utils.get_board_config(board_name)
         
     def set_default_board_project(self, board_name):
         if self.model is None:
