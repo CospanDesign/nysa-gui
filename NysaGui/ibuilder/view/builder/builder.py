@@ -48,6 +48,7 @@ from defines import PAR_ID
 from defines import BITGEN_ID
 from defines import TRACE_ID
 from defines import DOWNLOADER_ID
+builders = [GEN_ID, SYNTHESIZER_ID, TRANSLATOR_ID, MAP_ID, PAR_ID, BITGEN_ID, TRACE_ID, DOWNLOADER_ID]
 
 class Builder(QWidget):
 
@@ -80,6 +81,9 @@ class Builder(QWidget):
         self.xmodel = xmsgs_tree_model.XmsgsTreeModel()
         self.ibuilder_project_path = None
 
+        self.builder_index = -1
+        self.final_builder_index = -1
+
     def reset(self):
         self.xv.set_model(None)
         self.bfv.reset_status()
@@ -97,10 +101,12 @@ class Builder(QWidget):
         pass
 
     def process_finished(self, exit_code, exit_status):
-        target = "test"
+        target = self.builder_index
         data = self.proc.readAllStandardError()
+        self.bfv.set_status(target, BUILD_STATUS.pass_build)
         print "Finish execution: for %s: Exit Code: %d, Exit Status: %d" % (target, exit_code, exit_status)
         print "%s" % str(data)
+        self.finished_build_request()
 
     def process_read_standard_output(self):
         data = self.proc.readAllStandardOutput()
@@ -132,52 +138,62 @@ class Builder(QWidget):
     def set_board_dict(self, board_dict):
         self.info.set_board_dict(board_dict)
 
-    def build_callback(self, builder_id):
+    def finished_build_request(self):
+        if self.builder_index == self.final_builder_index:
+            return True
 
-        if builder_id == GEN_ID:
+        if self.builder_index == SYNTHESIZER_ID:
+            self.builder_index = TRANSLATOR_ID
+        elif self.builder_index == TRANSLATOR_ID:
+            self.builder_index = MAP_ID
+        elif self.builder_index == MAP_ID:
+            self.builder_index = PAR_ID
+        elif self.builder_index == PAR_ID:
+            if self.final_builder_index == TRACE_ID:
+                self.builder_index = TRACE_ID
+            else:
+                self.builder_index = BITGEN_ID
+        elif self.builder_index == BITGEN_ID:
+            self.builder_index = DOWNLOADER_ID
+        else:
+            self.status.Fatal("finished_build_request(): Unknown build ID: %d" % self.builder_index)
+            return
+
+        self.process_build_request()
+
+    def process_build_request(self):
+        if self.builder_index == GEN_ID:
             if not self.generate_project():
-                return False
-        elif builder_id == SYNTHESIZER_ID:
-            if not self.generate_project():
-                return False
+                return
+            if self.final_builder_index == self.builder_index:
+                return
+            self.builder_index = SYNTHESIZER_ID
+
+        if self.builder_index == SYNTHESIZER_ID:
             self.external_build_tool("xst")
 
-        elif builder_id == TRANSLATOR_ID:
-            if not self.generate_project():
-                return False
-            self.external_build_tool("ngd")
+        elif self.builder_index == TRANSLATOR_ID:
+            self.external_build_tool("ngdbuild")
 
-        elif builder_id == MAP_ID:
-            if not self.generate_project():
-                return False
+        elif self.builder_index == MAP_ID:
             self.external_build_tool("map")
 
-        elif builder_id == PAR_ID:
-            if not self.generate_project():
-                return False
+        elif self.builder_index == PAR_ID:
             self.external_build_tool("par")
 
-        elif builder_id == BITGEN_ID:
-            if not self.generate_project():
-                return False
+        elif self.builder_index == TRACE_ID:
+            self.external_build_tool("trce")
+
+        elif self.builder_index == BITGEN_ID:
             self.external_build_tool("bitgen")
 
-        elif builder_id == TRACE_ID:
-            if not self.generate_project():
-                return False
-            self.external_build_tool("trace")
-
-        elif builder_id == DOWNLOADER_ID:
-            if not self.generate_project():
-                return False
-            self.external_build_tool("bitgen")
+        elif self.builder_index == DOWNLOADER_ID:
             self.download_image()
 
-        else:
-            self.status.Error("Unrecognize Builder ID: %d" % builder_id)
-            return False
-
-        return True
+    def build_callback(self, builder_id):
+        self.final_builder_index = builder_id
+        self.builder_index = GEN_ID
+        self.process_build_request()
 
     def download_image(self):
         print "download image"
@@ -189,6 +205,7 @@ class Builder(QWidget):
         self.proc.setProcessEnvironment(env)
         self.proc.closeWriteChannel()
         self.proc.start("scons", [build_command])
+        self.bfv.set_status(build_command, BUILD_STATUS.build)
 
     def generate_project(self):
         result = self.controller.generate_image()
