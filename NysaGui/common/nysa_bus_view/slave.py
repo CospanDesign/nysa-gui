@@ -37,8 +37,6 @@ p = os.path.join(os.path.dirname(__file__),
 
 sys.path.append(p)
 
-#from arbiter_master import ArbiterMaster
-
 from pvg.visual_graph.box import Box
 import pvg.visual_graph.graphics_utils as gu
 

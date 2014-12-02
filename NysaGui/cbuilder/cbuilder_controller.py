@@ -34,7 +34,7 @@ from PyQt4.QtCore import *
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)))
 
-from NysaGui.common.utils import create_hash
+from NysaGui.common.gui_utils import create_hash
 from view.cbuilder_view import CBuilderView
 
 class CBuilderController(QObject):

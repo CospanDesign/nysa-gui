@@ -80,6 +80,7 @@ class Bus(Box):
         self.expand_slaves = False
         self.s = scene
         self.dbg = False
+        self.slaves_expanded = False
         #self.dbg = True
 
     def recalculate_size_pos(self):
@@ -202,10 +203,9 @@ class Bus(Box):
     def enable_expand_slaves(self, arbiter_master, enable):
         if self.dbg: print "BUS: enable_expand_slaves()"
         self.expand_slaves = enable
-        self.recalculate_size_pos()
-        #self.scene().fit_view()
-        #view = self.scene().get_view()
-        #view.fitInView(self.scene().sceneRect(), Qt.KeepAspectRatio)
+        if self.slaves_expanded != self.expand_slaves:
+            self.slaves_expanded = self.expand_slaves
+            self.recalculate_size_pos()
 
     def get_bus_type(self):
         raise NotImplementedError("Subclass must implement this function")

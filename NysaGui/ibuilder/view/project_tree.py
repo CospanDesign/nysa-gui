@@ -335,6 +335,13 @@ class ProjectTreeTableModel(QAbstractItemModel):
     def get_project_names(self):
         return self.root.get_project_names()
 
+    def get_project_node_by_name(self, project_name):
+        return self.root.get_project(project_name)
+
+    def get_project_row(self, name):
+        node = self.get_project_node_by_name(name)
+        return self.root.rowOfChild(name)
+
 class ProjectTree(QTreeView):
     def __init__(self, actions, status):
         super(ProjectTree, self).__init__()
@@ -372,6 +379,7 @@ class ProjectTree(QTreeView):
     def select_first_item(self):
         self.status.Debug("Selecting First Item in ProjectTree")
         self.status.Error("Not Implemented Yet!")
+        self.setSelection(QRect(0, 0, self.m.columnCount(None), 1), QItemSelectionModel.Rows | QItemSelectionModel.Select)
 
     def add_project(self, project):
         return self.m.add_project(project)
@@ -391,7 +399,11 @@ class ProjectTree(QTreeView):
         return node.get_project()
 
     def get_project_by_name(self, name):
-        return self.m.get_project_by_name(name)
+        project = self.m.get_project_by_name(name)
+        row = self.m.get_project_row(name)
+        self.setSelection(QRect(row, 0, row + 1, self.m.columnCount(None)), QItemSelectionModel.Rows | QItemSelectionModel.Select)
+        return project
 
     def get_project_names(self):
         return self.m.get_project_names()
+

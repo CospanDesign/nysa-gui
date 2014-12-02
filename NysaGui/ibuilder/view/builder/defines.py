@@ -97,6 +97,7 @@ LINK_COLOR = QColor("black")
 BEZIER_CONNECTION = False
 
 BUILD_STATUS_UNKNOWN = os.path.join(image_path, "unknown.png")
+BUILD_STATUS_READY = os.path.join(image_path, "ready.png")
 BUILD_STATUS_STOP = os.path.join(image_path, "stop.png")
 BUILD_STATUS_BUILD = [os.path.join(image_path, "go1.png"),
                       os.path.join(image_path, "go2.png"),

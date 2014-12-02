@@ -45,7 +45,7 @@ from NysaGui.cbuilder.cbuilder_controller import CBuilderController
 from view.main_view import MainForm
 from actions import Actions
 
-from NysaGui.common.utils import create_hash
+from NysaGui.common.gui_utils import create_hash
 
 debug = False
 

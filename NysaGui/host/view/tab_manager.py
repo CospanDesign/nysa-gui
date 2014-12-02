@@ -36,7 +36,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from nysa_bus_view.nysa_bus_view import NysaBusView
 
 
-from NysaGui.common.utils import get_color_from_id
+from NysaGui.common.gui_utils import get_color_from_id
 
 class TabManagerException(Exception):
     pass

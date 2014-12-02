@@ -47,7 +47,6 @@ NO_BOARD_SELECTED = "<No Board Selected>"
 
 class InfoView(QWidget):
 
-
     def __init__(self, actions, status):
         super(InfoView, self).__init__()
         self.actions = actions
@@ -80,7 +79,16 @@ class InfoView(QWidget):
         layout.addWidget(self.image_view)
 
         self.setLayout(layout)
-        self.actions.update_project_name.connect(self.set_project_name)
+        #self.actions.update_project_name.connect(self.set_project_name)
+
+    def set_controller(self, controller):
+        self.controller = controller
+        self.actions.update_view.connect(self.update_view)
+
+    def update_view(self):
+        self.set_project_name(None, self.controller.get_project_name())
+        self.set_project_directory(self.controller.get_project_location())
+        self.set_board_dict(self.controller.get_board_dict())
 
     def set_project_name(self, prev_project_name, project_name):
         self.project_name_label.setText(project_name)
@@ -121,4 +129,5 @@ class InfoView(QWidget):
         self.set_board_name(NO_BOARD_SELECTED)
         self.board_image_view = QPixmap(NO_BOARD_IMAGE)
         self.image_view.setPixmap(self.board_image_view)
+
 

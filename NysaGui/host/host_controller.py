@@ -36,7 +36,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 
 from nysa.host.platform_scanner import PlatformScanner
 from script_manager import ScriptManager
-from NysaGui.common.utils import create_hash
+from NysaGui.common.gui_utils import create_hash
 
 from view.host_view import HostView
 from host_actions import Actions

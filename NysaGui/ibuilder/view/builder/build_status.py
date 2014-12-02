@@ -33,6 +33,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from defines import BUILD_STATUS_UNKNOWN
+from defines import BUILD_STATUS_READY
 from defines import BUILD_STATUS_STOP
 from defines import BUILD_STATUS_BUILD
 from defines import BUILD_STATUS_PASS
@@ -47,6 +48,7 @@ def enum(*sequential, **named):
 
 
 STATUS = enum("unknown",
+              "ready",
               "stop",
               "fail",
               "build",
@@ -60,6 +62,7 @@ class BuildStatus(QObject):
         self.rect = rect
         width = rect.width()
         self.unknown_image = QPixmap(BUILD_STATUS_UNKNOWN).scaledToWidth(width)
+        self.ready_image = QPixmap(BUILD_STATUS_READY).scaledToWidth(width)
         self.stop_image = QPixmap(BUILD_STATUS_STOP).scaledToWidth(width)
         self.pass_image = QPixmap(BUILD_STATUS_PASS).scaledToWidth(width)
         self.pass_warnings_image = QPixmap(BUILD_STATUS_PASS_WARNINGS).scaledToWidth(width)
@@ -98,9 +101,10 @@ class BuildStatus(QObject):
 
         #self.animation_timer.start()
 
-
     def set_status(self, status):
         self.status = status
+        if self.status == STATUS.ready:
+            self.image = self.ready_image
         if self.status == STATUS.unknown:
             self.animation_timer.stop()
             self.image = self.unknown_image

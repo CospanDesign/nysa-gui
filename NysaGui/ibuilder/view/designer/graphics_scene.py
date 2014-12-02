@@ -167,7 +167,6 @@ class GraphicsScene(gs):
             self.prev_slave = bus.get_slave(name)
             self.prev_slave.hide_arbiter_masters()
 
-
     #Arbiter Interface
     def is_arbiter_master(self, module_name):
         if self.controller is None:
@@ -237,6 +236,7 @@ class GraphicsScene(gs):
         #for i in range (len(self.links)):
         #    self.removeItem(self.links[i])
         self.arbiter_selected.remove_from_link()
+        self.arbiter_selected.remove_to_link()
         #self.links = []
         self.arbiter_selected = None
         name = arbiter_master.box_name
@@ -245,9 +245,10 @@ class GraphicsScene(gs):
         self.peripheral_bus.enable_expand_slaves(name, False)
         self.memory_bus.enable_expand_slaves(name, False)
         slave = arbiter_master.get_slave()
-        slave.remove_arbiter_masters()
-        slave.show_arbiter_masters()
-        slave.setSelected(True)
+        #slave.remove_arbiter_masters()
+        slave.hide_arbiter_masters()
+        #slave.show_arbiter_masters()
+        #slave.setSelected(True)
 
     def is_arbiter_master_selected(self):
         if self.dbg: print "GS: is_arbiter_master_selected()"

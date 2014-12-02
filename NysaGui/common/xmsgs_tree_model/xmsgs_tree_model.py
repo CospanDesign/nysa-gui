@@ -50,7 +50,6 @@ class BuilderNode(Node):
         self.filter_type = "all"
         self.delta = "false"
 
-
     def update(self, type_filter = [], new_items = False):
         #Update the count of messages
         self._children = self.xp.get_messages(self.name(),

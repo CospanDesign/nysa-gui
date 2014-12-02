@@ -51,7 +51,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from NysaGui.common.utils import get_color_from_id
+from NysaGui.common.gui_utils import get_color_from_id
 
 
 

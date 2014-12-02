@@ -44,3 +44,6 @@ class IBuilderProjectActions(QtCore.QObject):
     arbiter_connect = QtCore.pyqtSignal(str, str, str, name = "ibuilder_designer_arbiter_connected")
     arbiter_disconnect = QtCore.pyqtSignal(str, str, str, name = "ibuilder_designer_arbiter_disconnected")
 
+    #Display Stuff
+    update_view = QtCore.pyqtSignal(name = "ibuilder_update_view")
+

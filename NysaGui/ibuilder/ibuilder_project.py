@@ -62,8 +62,9 @@ class IBuilderProject(QObject):
             self.load_project()
         else:
             self.config_dict = copy.deepcopy(DEFAULT_CONFIG)
+            self.config_dict["BASE_DIR"] = os.path.join(utils.get_nysa_user_base(), "user_ibuilder_projects")
         self.config_dict["PROJECT_NAME"] = name
-        self.project_status = "unsaved"
+        self.project_status = "ready"
         self.controller = WishboneController(self.config_dict,
                                             self.project_view.get_designer_scene(),
                                             self.status)
@@ -82,7 +83,7 @@ class IBuilderProject(QObject):
         scene = self.project_view.get_designer_scene()
         self.project_actions.arbiter_selected.connect(scene.arbiter_master_selected)
         self.project_actions.arbiter_deselected.connect(scene.arbiter_master_deselected)
-        self.project_actions.arbiter_connect.connect(scene.connect_arbiter_master)
+        self.project_actions.arbiter_connect.connect(self.connect_arbiter_master)
         self.project_actions.arbiter_disconnect.connect(self.disconnect_arbiter_master)
 
         self.controller.initialize_constraint_editor(self.project_view.get_constraint_editor())
@@ -97,6 +98,7 @@ class IBuilderProject(QObject):
 
     def update_project(self):
         self.controller.initialize_configuration_editor(self.project_view.get_configuration_editor())
+        self.project_view.update_view()
 
     def load_project(self):
         self.config_dict = json.load(open(str(self.path), 'r'))
@@ -168,14 +170,18 @@ class IBuilderProject(QObject):
     def set_path(self, path):
         self.path = path
 
+    def new_change(self):
+        self.project_status = "unsaved"
+
     def save_project(self):
+        self.project_status = "saved"
         #self.status.Error("Save Project Not Implemented Yet")
         self.controller.model.commit_all_project_tags()
         project_tags = self.controller.get_config_dict()
         #print "project tags:"
         #utils.pretty_print_dict(project_tags)
         initial_dir = utils.get_nysa_user_base()
-        initial_dir = os.path.join(initial_dir, "user ibuilder projects")
+        initial_dir = os.path.join(initial_dir, "user_ibuilder_projects")
         print "user base: %s" % initial_dir
         path = os.path.join(initial_dir, project_tags["PROJECT_NAME"])
         file_path = path
@@ -206,8 +212,11 @@ class IBuilderProject(QObject):
 
         f.write(js)
         f.close()
+        self.controller.clean_project()
 
     def get_status(self):
+        if self.controller.is_project_dirty():
+            self.project_status = "unsaved"
         return self.project_status
 
     def get_status_color(self):
@@ -215,6 +224,13 @@ class IBuilderProject(QObject):
 
     def get_view(self):
         return self.project_view
+
+    def connect_arbiter_master(self, from_name, to_name, arbiter_name):
+        #if self.controller.is_arbiter_master_connected(from_name, arbiter_name):
+        #    print "arbiter is already connected, need to remove the previous connection"
+        #    old_to_name = self.controller.get_arbiter_master_connected(from_name, arbiter_name)
+        #    self.diconnect_arbiter_master(from_name, old_to_name, arbiter_name)
+        scene.connect_arbiter_master(from_name, to_name, arbiter_name)
 
     def disconnect_arbiter_master(self, from_module_name, to_module_name, arbiter_name):
         if len(to_module_name) == 0:
@@ -351,8 +367,6 @@ DEFAULT_CONFIG = {
         }
     },
     "internal_bind":{
-        "test_to":"test_from",
-        "test_to_2nd":"test_from_2nd"
     },
     "constraint_files":[
         ]

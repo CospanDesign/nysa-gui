@@ -329,7 +329,7 @@ class WishboneModel():
                 print (("name: %s" % str(name)))
             #if debug:
             #    print (("Projct tags: %s" % str(self.config_dict)))
-            if name == "DRT":
+            if str(name).lower() == "drt":
                 continue
             if name not in list(self.config_dict["SLAVES"].keys()):
                 self.config_dict["SLAVES"][name] = {}
@@ -537,6 +537,8 @@ class WishboneModel():
         self.gm.move_peripheral_slave(slave.slave_index, 0)
 
     def add_peripheral_slave(self, name, module_tags = {}, project_tags = None, index = -1):
+        if index == 0:
+            index = 1
         self.add_slave(name, SlaveType.PERIPHERAL, module_tags, project_tags, index)
 
     def add_memory_slave(self, name, module_tags = {}, project_tags = None, index = -1):
@@ -878,11 +880,17 @@ class WishboneModel():
         #bindings = cu.consolodate_constraints(bindings, debug = True)
         bindings = cu.consolodate_constraints(bindings)
         tags = self.get_node_project_tags(uname)
-        #print "old tags: "
-        #utils.pretty_print_dict(tags)
         tags["bind"] = bindings
-        #print "new tags: "
-        #utils.pretty_print_dict(tags)
+        if uname == "DRT_1_0":
+            return
+        #if "drt" in str(uname).lower():
+        #    
+        #    print "uname: %s" % uname
+        #    print "old tags: "
+        #    utils.pretty_print_dict(tags)
+        #    print "new tags: "
+        #    utils.pretty_print_dict(tags)
+
         if self.gm.get_node(uname).node_type == NodeType.HOST_INTERFACE:
             self.config_dict["INTERFACE"] = self.gm.get_node_project_tags(uname)
         elif self.gm.get_node(uname).node_type == NodeType.SLAVE:
@@ -892,6 +900,9 @@ class WishboneModel():
                 if "BUS" in project_tags:
                     for arbiter in project_tags["BUS"]:
                         arb_slave = self.get_connected_arbiter_slave(uname, arbiter)
+                        if arb_slave is None:
+                            project_tags["BUS"][arbiter] = ""
+                            continue
                         to_slave_name = self.gm.get_node_display_name(arb_slave)
                         project_tags["BUS"][arbiter] = to_slave_name
 

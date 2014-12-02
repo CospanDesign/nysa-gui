@@ -28,7 +28,7 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from utils import get_color_from_id
+from gui_utils import get_color_from_id
 from platform_tree.platform_tree import PlatformTree
 
 from tab_manager import TabManager
@@ -84,7 +84,6 @@ class HostView(QWidget):
         #Set the layout
         self.setLayout(layout)
         self.actions.platform_tree_changed_signal.connect(self.platform_tree_changed)
-
 
     def fit(self):
         self.fpga_image.scale_fit()

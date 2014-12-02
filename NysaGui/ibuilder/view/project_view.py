@@ -71,14 +71,16 @@ class ProjectView(QWidget):
     def set_controller(self, controller):
         self.designer.set_controller(controller)
         self.constraints.set_controller(controller)
+        self.builder.set_controller(controller)
         self.controller = controller
+        self.actions.update_view.emit()
         #controller.initialize_constraint_editor(self.constraints)
-        self.builder.set_project_name(self.controller.get_project_name())
-        self.builder.set_project_directory(self.controller.get_project_location())
-        self.builder.set_board_dict(self.controller.get_board_dict())
 
     def get_controller(self):
         return self.controller
+
+    def update_view(self):
+        self.actions.update_view.emit()
 
     def get_desigenr_scene(self):
         return self.designer.get_scene()

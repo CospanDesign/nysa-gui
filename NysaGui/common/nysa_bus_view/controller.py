@@ -29,10 +29,14 @@ Log
 import os
 import sys
 import copy
+import urllib2
 
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+
+from nysa.ibuilder.lib import ibuilder
+from nysa.ibuilder.lib import utils
 
 p = os.path.join(os.path.dirname(__file__),
                              os.pardir)
@@ -106,11 +110,7 @@ class DesignControlError(Exception):
     Error associated with:
         -bus/axi model not configured correclty
     """
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
+    pass
 
 
 class Controller (QObject):
@@ -119,10 +119,12 @@ class Controller (QObject):
         self.status = status
         QObject.__init__(self)
 
+        self.gen_project_path = None
         self.model = model
         self.canvas = None
         self.boxes = {}
         self.constraint_editor = None
+        self.project_dirty = False
         """
         Go through view and connect all relavent events
         """
@@ -131,8 +133,15 @@ class Controller (QObject):
         self.canvas = canvas
         self.canvas.set_controller(self)
 
+    def is_project_dirty(self):
+        return self.project_dirty
+
+    def clean_project(self):
+        self.project_dirty = False
+
     def remove_user_dir(self, user_dir):
         self.model.remove_user_path(user_dir)
+        self.project_dirty = True
 
     def drag_enter(self, event):
         """
@@ -220,6 +229,7 @@ class Controller (QObject):
     def set_board_name(self, board_name):
         self.model.set_board_name(board_name)
         self.model.initialize_graph(self)
+        self.project_dirty = True
 
     def get_board_name(self):
         return self.model.get_board_name()
@@ -229,7 +239,7 @@ class Controller (QObject):
         if board_name is "undefined":
             raise DesignControlError("Board is not defined")
         return utils.get_board_config(board_name)
-        
+
     def set_default_board_project(self, board_name):
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
@@ -237,8 +247,10 @@ class Controller (QObject):
 
         self.model.set_default_board_project(board_name)
         self.model.initialize_graph(self)
+        self.project_dirty = True
 
     def set_bus(self, bus):
+        self.project_dirty = True
         raise NotImplementedError("This function should be subclassed")
 
     def get_bus(self):
@@ -257,20 +269,21 @@ class Controller (QObject):
         self.add_link(m, bus, lt.bus, st.right)
 
     def set_project_name(self, name):
-        raise NotImplementedError("This function should be subclassed")
+        self.model.set_project_name(name)
+        self.project_dirty = True
 
     def get_project_name(self):
-        raise NotImplementedError("This function should be subclassed")
+        return self.model.get_project_name()
 
     def item_is_enabled(self, path):
         #print "VC: Path: %s" % path
         return True
 
+    '''
     def connect_signal(self, module_name, signal_name, direction, index, pin_name):
         #print "Connect"
         self.model.set_binding(module_name, signal_name, pin_name, index)
 
-    '''
     def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
         #Remove signal from model
         #print "Controller: Disconnect"
@@ -449,6 +462,7 @@ class Controller (QObject):
         #print "Connect"
         self.model.bind_port(module_name, signal_name, pin_name, index)
         self.refresh_constraint_editor()
+        self.project_dirty = True
 
     def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
         #Remove signal from model
@@ -458,6 +472,7 @@ class Controller (QObject):
         self.model.unbind_port(uname, signal_name, index)
         self.constraint_editor.remove_connection(module_name, signal_name, index)
         self.refresh_constraint_editor()
+        self.project_dirty = True
 
     def get_config_dict(self):
         return self.model.get_config_dict()
@@ -484,6 +499,7 @@ class Controller (QObject):
         """
         self.model.unbind_all()
         self.refresh_constraint_editor()
+        self.project_dirty = True
 
     def bind_internal_signal(self, to_signal, from_signal):
         """ bind to_signal to from_signal, this will create a line like this
@@ -510,6 +526,7 @@ class Controller (QObject):
         from_signal = str(from_signal)
         self.model.bind_internal_signal(to_signal, from_signal)
         self.initialize_configuration_editor(self.configuration_editor)
+        self.project_dirty = True
 
     def unbind_internal_signal(self, to_signal):
         """ unbind the signals that are connected to to_signal
@@ -531,23 +548,28 @@ class Controller (QObject):
     def add_constraint_file(self, constraint_fname):
         self.model.add_constraint_file(str(constraint_fname))
         self.initialize_configuration_editor(self.configuration_editor)
+        self.project_dirty = True
 
     def remove_constraint_file(self, constraint_fname):
         self.model.remove_constraint_file(constraint_fname)
         self.initialize_configuration_editor(self.configuration_editor)
+        self.project_dirty = True
 
     def add_default_board_constraint(self):
         self.model.add_default_board_constraint()
         self.initialize_configuration_editor(self.configuration_editor)
         self.refresh_constraint_editor()
+        self.project_dirty = True
 
     def remove_default_board_constraint(self):
         self.model.remove_default_board_constraint()
         self.initialize_configuration_editor(self.configuration_editor)
         self.refresh_constraint_editor()
+        self.project_dirty = True
 
     def commit_slave_parameters(self, name, param_dict):
         self.model.commit_slave_parameters(name, param_dict)
+        self.project_dirty = True
 
     #Arbiter Interface
     def is_arbiter_master(self, module_name):
@@ -631,6 +653,7 @@ class Controller (QObject):
         from_uname = self.model.get_unique_from_module_name(from_module_name)
         to_uname = self.model.get_unique_from_module_name(to_module_name)
         self.model.connect_arbiter(from_uname, arbiter_name, to_uname)
+        self.project_dirty = True
 
     def disconnect_arbiter_master(self, from_module_name, to_module_name = None, arbiter_name = None):
         """ Disconnect an arbiter originating from from_module to to_module using
@@ -658,6 +681,7 @@ class Controller (QObject):
         from_uname = self.model.get_unique_from_module_name(from_module_name)
         to_uname = self.model.get_unique_from_module_name(to_module_name)
         self.model.disconnect_arbiter(from_uname, to_uname, arbiter_name)
+        self.project_dirty = True
 
     def get_connected_arbiter_name(self, from_module_name, to_module_name):
         """ Return the name of the arbiter that is connected between from_module to
@@ -702,7 +726,7 @@ class Controller (QObject):
         if len(self.get_connected_arbiter_name(from_module_name, to_module_name)) == 0:
             return False
         return True
-            
+
     def get_arbiter_master_connected(self, from_module_name, arbiter_name):
         uname = self.model.get_unique_from_module_name(from_module_name)
         if uname is None:
@@ -718,5 +742,39 @@ class Controller (QObject):
             bus = "memory"
 
         return bus, to_name
+
+    #Controller
+    def get_generated_project_path(self):
+        return self.gen_project_path
+
+    def generate_image(self):
+        project_path = os.path.join(self.get_project_location(), self.get_project_name() + ".json")
+        output_path = self.gen_project_path
+        if self.gen_project_path is None:
+            output_path = os.path.dirname(project_path)
+            output_path = os.path.join(output_path, self.get_project_name())
+
+        self.gen_project_path = output_path
+        local_paths = utils.get_local_verilog_paths()
+        try:
+            #print "project path: %s" % project_path
+            #print "user paths: %s" % local_paths
+            #print "output directory: %s" % output_path
+            return ibuilder.generate_project( filename = project_path,
+                                              user_paths = local_paths,
+                                              output_directory = output_path,
+                                              status = self.status)
+
+        except urllib2.URLError as ex:
+            self.status.Fatal("URL Error: %s, Are you connected to the internet?" % str(ex))
+            return False
+
+        except IOError as ex:
+            self.status.Fatal("IOError Failed to generate project!: %s" % str(ex))
+            return False
+
+        #except:
+        #    self.status.Fatal("Unknown exception occured while generating project")
+        return False
 
 

@@ -142,12 +142,6 @@ class WishboneController (controller.Controller):
         self.s.Debug("WBC: updating slave view")
         mb.update_slaves(slave_list, editable)
 
-    def set_project_name(self, name):
-        self.model.set_project_name(name)
-
-    def get_project_name(self):
-        return self.model.get_project_name()
-
     def enable_editing(self):
         self.editable = True
         self.refresh_slaves()

@@ -34,9 +34,7 @@ import xml.etree.ElementTree as ET
 from xilinx_builder import XilinxBuilder
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
-                                os.pardir,
-                                os.pardir,
-                                "gui_utils"))
+                                os.pardir))
 
 from file_watcher import FileWatcher
 

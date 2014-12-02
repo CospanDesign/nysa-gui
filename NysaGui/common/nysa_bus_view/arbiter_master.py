@@ -211,6 +211,11 @@ class ArbiterMaster(Box):
         self.s.invalidate(self.s.sceneRect())
         '''
 
+    def remove_to_link(self):
+        for link in self.links:
+            self.s.removeItem(self.links[link])
+        self.links = {}
+
     def remove_from_link(self):
         if self.dbg: print "AM: remove_from_link()"
         if self.from_slave_link is not None:

@@ -115,6 +115,13 @@ class BuildFlowView(QWidget):
         self.builders = {}
         self.initialize_view()
 
+    def set_controller(self, controller):
+        self.controller = controller
+        self.actions.update_view.connect(self.update_view)
+
+    def update_view(self):
+        self.set_status(GEN_ID, BUILD_STATUS.ready)
+
     def initialize_view(self):
         #Add project generator box
         project_gen = BuildBox(self.scene,
@@ -178,7 +185,7 @@ class BuildFlowView(QWidget):
                             DOWNLOADER_DESC,
                             DOWNLOADER_RECT)
 
-                           
+
 
         #Add the trce box
         trce = BuildBox(self.scene,
@@ -192,7 +199,7 @@ class BuildFlowView(QWidget):
         #Add the link between generator and synthesis
         l = project_gen.add_link(synthesis, from_side = st.bottom, to_side = st.top)
         l.set_directed(True)
-        
+
         #Add the link between synthesis and translate
         l = synthesis.add_link(translate)
         l.set_directed(True)
@@ -223,7 +230,8 @@ class BuildFlowView(QWidget):
         self.builders[DOWNLOADER_ID] = downloader
 
     def reset_status(self):
-        self.builders[GEN_ID].set_status(BUILD_STATUS.unknown)
+        #self.builders[GEN_ID].set_status(BUILD_STATUS.unknown)
+        self.set_status(GEN_ID, BUILD_STATUS.ready)
         self.builders[SYNTHESIZER_ID].set_status(BUILD_STATUS.unknown)
         self.builders[TRANSLATOR_ID].set_status(BUILD_STATUS.unknown)
         self.builders[MAP_ID].set_status(BUILD_STATUS.unknown)
@@ -241,4 +249,5 @@ class BuildFlowView(QWidget):
     def set_build_callback(self, build_cb):
         for builder in self.builders:
             self.builders[builder].set_build_callback(build_cb)
+
 
