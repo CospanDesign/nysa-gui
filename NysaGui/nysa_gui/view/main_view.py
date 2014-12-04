@@ -33,9 +33,10 @@ IBUILDER = "ibuilder"
 CBUILDER = "cbuilder"
 
 class MainForm(QMainWindow):
-    def __init__(self, actions, status, host_view, ibuilder_view, cbuilder_view):
+    def __init__(self, actions, status, xmsgs, host_view, ibuilder_view, cbuilder_view):
         super (MainForm, self).__init__()
         self.status = status
+        self.xmsgs = xmsgs
         self.actions = actions
         self.host_view = host_view
         self.ibuilder_view = ibuilder_view
@@ -44,31 +45,47 @@ class MainForm(QMainWindow):
 
         #self.setDockOptions(QMainWindow.ForceTabbedDocks)
         self.host_widget  = QDockWidget("Host View")
+        #self.host_widget.setFeatures(   QDockWidget.DockWidgetMovable |
+        #                                QDockWidget.DockWidgetFloatable |
+        #                                QDockWidget.DockWidgetVerticalTitleBar)
         #self.dock_widget.setAllowedAreas(Qt.TopDockWidgetArea)
         self.host_widget.setWidget(self.host_view)
         self.addDockWidget(Qt.TopDockWidgetArea, self.host_widget)
 
         self.ibuilder_widget = QDockWidget("IBuilder View")
+        #self.ibuilder_widget.setFeatures(   QDockWidget.DockWidgetMovable |
+        #                                    QDockWidget.DockWidgetFloatable |
+        #                                    QDockWidget.DockWidgetVerticalTitleBar)
+
         self.ibuilder_widget.setWidget(self.ibuilder_view)
         self.addDockWidget(Qt.TopDockWidgetArea, self.ibuilder_widget)
 
         self.cbuilder_widget = QDockWidget("CBuilder View")
+        #self.cbuilder_widget.setFeatures(   QDockWidget.DockWidgetMovable |
+        #                                    QDockWidget.DockWidgetFloatable |
+        #                                    QDockWidget.DockWidgetVerticalTitleBar)
+
         self.cbuilder_widget.setWidget(self.cbuilder_view)
         self.addDockWidget(Qt.TopDockWidgetArea, self.cbuilder_widget)
  
         self.status_widget = QDockWidget("Status")
+        self.status_widget.setAllowedAreas(Qt.BottomDockWidgetArea)
         self.status_widget.setWidget(self.status)
+
+        self.xmsgs_widget = QDockWidget("Xilinx Builder Messages")
+        self.xmsgs_widget.setAllowedAreas(Qt.BottomDockWidgetArea)
+        self.xmsgs_widget.setWidget(self.xmsgs)
+
         self.addDockWidget(Qt.BottomDockWidgetArea, self.status_widget)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.xmsgs_widget)
+        self.tabifyDockWidget(self.status_widget, self.xmsgs_widget)
+        self.status_widget.raise_()
         self.current_perspective = "host"
         #self.setDocumentMode(True)
 
         self.setWindowTitle("Nysa")
-        #self.host_view = MainPanel(status, actions)
-        #self.main_panel = MainPanel(actions, status, host_view, ibuilder_view, cbuilder_view)
 
-        #self.setCentralWidget(self.main_panel)
         #### Actions
-        #Exit the application
         exit_action = QAction('&Exit', self)
         exit_action.setShortcut('Ctrl+Q')
         exit_action.triggered.connect(quit)
@@ -198,10 +215,12 @@ class MainForm(QMainWindow):
         quit()
 
     def toggle_status_view(self):
-        if self.status.isVisible():
-            self.status.setVisible(False)
+        if self.status_widget.isVisible():
+            self.status_widget.setVisible(False)
+            self.xmsgs_widget.setVisible(False)
         else:
-            self.status.setVisible(True)
+            self.status_widget.setVisible(True)
+            self.xmsgs_widget.setVisible(True)
 
     def save_clicked(self):
         self.status.Debug("Save Action!")

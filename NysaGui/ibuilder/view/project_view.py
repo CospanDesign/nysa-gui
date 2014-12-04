@@ -42,12 +42,11 @@ VIEWS = ("designer", "constraints", "configuration", "builder")
 
 class ProjectView(QWidget):
 
-    def __init__(self,
-                 actions,
-                 status):
+    def __init__(self, actions, status, xmsgs):
         super (ProjectView, self).__init__()
         self.actions = actions
         self.status = status
+        self.xmsgs = xmsgs
         self.tab_view = QTabWidget()
         self.tab_view.setTabPosition(QTabWidget.South)
         self.tab_view.setTabShape(QTabWidget.Triangular)
@@ -57,7 +56,7 @@ class ProjectView(QWidget):
         self.setLayout(layout)
 
         self.designer = Designer(actions, status)
-        self.builder = Builder(actions, status)
+        self.builder = Builder(actions, status, xmsgs)
         self.configuration = Configuration(actions, status)
         self.constraints = Constraints(actions, status)
 

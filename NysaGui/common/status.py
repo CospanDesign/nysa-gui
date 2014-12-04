@@ -238,7 +238,7 @@ class _Status(QWidget):
         self.mdl = StatusModel([[]], header, self)
         self.status_list.setModel(self.mdl)
         #self.setMinimumSize(400, 300)d
-        self.setMaximumHeight(200)
+        #self.setMaximumHeight(200)
        
         #Hide the grids
         self.status_list.setShowGrid(False)
@@ -257,7 +257,7 @@ class _Status(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.status_list)
         self.setLayout(layout)
-        self.show()
+        #self.show()
 
     def Verbose (self, text):
         if self.CheckLevel(StatusLevel.VERBOSE):

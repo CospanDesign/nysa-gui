@@ -29,15 +29,7 @@ from info_view import InfoView
 from build_flow_view import BuildFlowView
 from build_status import STATUS as BUILD_STATUS
 
-p = os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             "common",
-                             "xmsgs_tree_model")
-p = os.path.abspath(p)
-from xmsgs_tree_model import xmsgs_tree_model
-from xmsg_viewer import XmsgViewer
+from NysaGui.common.xmsgs.xmsgs_tree_model import XmsgsTreeModel
 
 
 from defines import GEN_ID
@@ -52,9 +44,13 @@ builders = [GEN_ID, SYNTHESIZER_ID, TRANSLATOR_ID, MAP_ID, PAR_ID, BITGEN_ID, TR
 
 class Builder(QWidget):
 
-    def __init__(self, actions, status):
+    def __init__(self, actions, status, xmsgs):
         super (Builder, self).__init__()
         self.status = status
+        self.xmsgs = xmsgs
+        self.xmsgs_tree_model = XmsgsTreeModel()
+        self.xmsgs.set_model(self.xmsgs_tree_model)
+
         self.actions = actions
         self.config = {}
 
@@ -62,13 +58,13 @@ class Builder(QWidget):
 
         self.info = InfoView(actions, status)
         self.bfv = BuildFlowView(actions, status)
-        self.xv = XmsgViewer(None, self.actions, self.status)
-        self.xv.hide()
+        #self.xv = XmsgViewer(None, self.actions, self.status)
+        #self.xv.hide()
 
         layout.addWidget(self.info)
         layout.addWidget(self.bfv)
         #layout.addWidget(self.tpv)
-        layout.addWidget(self.xv)
+        #layout.addWidget(self.xv)
         self.setLayout(layout)
 
         self.proc = QProcess()
@@ -78,14 +74,14 @@ class Builder(QWidget):
         self.proc.error.connect(self.process_error)
         self.proc.started.connect(self.process_started)
         #print "xmsgs tree model: %s" % str(dir(xmsgs_tree_model))
-        self.xmodel = xmsgs_tree_model.XmsgsTreeModel()
+        #self.xmodel = xmsgs_tree_model.XmsgsTreeModel()
         self.ibuilder_project_path = None
 
         self.builder_index = -1
         self.final_builder_index = -1
 
     def reset(self):
-        self.xv.set_model(None)
+        #self.xv.set_model(None)
         self.bfv.reset_status()
 
     def update(self):
@@ -210,6 +206,7 @@ class Builder(QWidget):
     def generate_project(self):
         result = self.controller.generate_image()
         self.ibuilder_project_path = self.controller.get_generated_project_path()
+        self.xmsgs_tree_model.set_path(os.path.join(self.ibuilder_project_path, "_xmsgs"))
         if result:
             self.bfv.set_status(GEN_ID, BUILD_STATUS.pass_build)
             self.bfv.set_status(SYNTHESIZER_ID, BUILD_STATUS.ready)

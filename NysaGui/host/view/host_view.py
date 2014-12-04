@@ -45,7 +45,6 @@ class HostView(QWidget):
         self.menu_actions = []
         self.setObjectName("host")
 
-
         #Refresh Platform Tree
         refresh_platform = QAction("Refresh &Platform Tree", self)
         refresh_platform.setShortcut('F2')
@@ -106,16 +105,6 @@ class HostView(QWidget):
 
     def add_tab(self, nysa_id, widget, name, removable = True):
         self.tm.add_tab(name, nysa_id, widget, False)
-
-        if widget is not self.fpga_image:
-            l = self.platform_tree.selectedIndexes()
-            if len(l) == 0:
-                return
-            index = l[0]
-            if index is None:
-                return
-            color = self.platform_tree.get_node_color(index)
-            self.tm.set_tab_color(self.fpga_image, color)
 
     def remove_tab(self, index):
         self.tab_view.removeTab(index)

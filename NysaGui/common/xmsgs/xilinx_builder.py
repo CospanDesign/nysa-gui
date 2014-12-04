@@ -61,6 +61,8 @@ class XilinxBuilder(object):
         return len(self.messges.getchildren())
 
     def get_messages(self, type_filters = [], only_new_messages = False):
+        if self.messages is None:
+            return []
         messages = self.messages.getchildren()
         type_messages = []
         new_messages = []

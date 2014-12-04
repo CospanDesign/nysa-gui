@@ -28,6 +28,7 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+'''
 p = os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
@@ -35,10 +36,11 @@ p = os.path.join(os.path.dirname(__file__),
 p = os.path.abspath(p)
 #print "Path: %s" % str(p)
 sys.path.append(p)
+'''
 
-from tree_table.tree_table import TreeTableModel
-from tree_table.tree_table import BranchNode
-from tree_table.tree_table import LeafNode
+from NysaGui.common.tree_table.tree_table import TreeTableModel
+from NysaGui.common.tree_table.tree_table import BranchNode
+from NysaGui.common.tree_table.tree_table import LeafNode
 
 from designer.designer import Designer
 from builder.builder import Builder
@@ -378,7 +380,7 @@ class ProjectTree(QTreeView):
 
     def select_first_item(self):
         self.status.Debug("Selecting First Item in ProjectTree")
-        self.status.Error("Not Implemented Yet!")
+        #self.status.Error("Not Implemented Yet!")
         self.setSelection(QRect(0, 0, self.m.columnCount(None), 1), QItemSelectionModel.Rows | QItemSelectionModel.Select)
 
     def add_project(self, project):

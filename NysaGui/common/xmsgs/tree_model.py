@@ -48,7 +48,6 @@ class Node(object):
         if self._parent is not None:
             return self._parent._children_list.index(self)
         return None
-            
 
 class RootNode(Node):
     def __init__(self):

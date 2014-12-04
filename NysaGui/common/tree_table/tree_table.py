@@ -66,6 +66,10 @@ class BranchNode(QObject):
         child.parent = self
         self.children.append([child.orderKey(), child])
 
+    def insertChildAt(self, pos, child):
+        child.parent = self
+        self.children.insert(pos, [child.orderKey(), child])
+
     def removeChild(self, child):
         #assert child in self.children[NODE]:
         self.children.remove(child)
@@ -74,6 +78,14 @@ class BranchNode(QObject):
         if not self.children:
             return False
         return isinstance(self.children[0], LeafNode)
+
+    def get_child_list(self):
+        children = []
+        for child in self.children:
+            print "child: %s" % str(child)
+            children.append(child[0])
+        return children
+            
 
 class RootNode(BranchNode):
 
@@ -230,4 +242,5 @@ class TreeTableModel(QAbstractItemModel):
     def clear(self):
         self.root = RootNode("")
         self.reset()
+
 

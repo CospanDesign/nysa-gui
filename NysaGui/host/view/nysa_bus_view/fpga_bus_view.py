@@ -51,6 +51,7 @@ class FPGABusView(GraphicsWidget):
 
     def update(self):
         super (FPGABusView, self).update()
+        self.scene.auto_update_all_links()
         self.view._scale_fit()
         #self.scene.update(self.scene.sceneRect())
         #self.scene.invalidate(self.scene.sceneRect())

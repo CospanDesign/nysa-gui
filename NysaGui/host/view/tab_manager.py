@@ -76,10 +76,8 @@ class TabManager(QObject):
         else: 
             color = get_color_from_id(nysa_id)
             pm = QPixmap(QSize(16, 16))
-            #pm.fill(color)
-            pm.fill()
+            pm.fill(color)
             icon = QIcon(pm)
-            
             self.tab_view.addTab(widget, icon, name)
 
         self.tabs.append([nysa_id, widget])

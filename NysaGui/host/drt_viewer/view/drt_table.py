@@ -28,21 +28,9 @@ from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QFont
 from PyQt4.QtGui import QColor
 
-p = os.path.join(os.path.dirname(__file__), 
-                 os.pardir,
-                 os.pardir,
-                 "common",
-                 "tree_table")
-
-#print "Path: %s" % os.path.abspath(p)
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             "common"))
-
-from tree_table.tree_table import TreeTableModel
-from tree_table.tree_table import BranchNode
-from tree_table.tree_table import LeafNode
+from NysaGui.common.tree_table.tree_table import TreeTableModel
+from NysaGui.common.tree_table.tree_table import BranchNode
+from NysaGui.common.tree_table.tree_table import LeafNode
 
 KEY, NODE = range(2)
 
@@ -54,8 +42,6 @@ class DRTValueNode(LeafNode):
     def field(self, column):
         if column == 3:
             return self.fields[0]
-
-
 
 class DRTDescriptionBranch(BranchNode):
     def __init__(self, parent, index, raw, description, dev_type):
@@ -82,7 +68,6 @@ class DRTDescriptionBranch(BranchNode):
         if index % 8 == 0:
             return True
         return False
-
 
     def field(self, column):
         assert 0 <= column <= len(self.fields)

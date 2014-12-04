@@ -80,4 +80,3 @@ class GraphicsView(gv):
         #print "resize event"
         self.s.auto_update_all_links()
         self.fit_in_view()
-

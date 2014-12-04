@@ -48,13 +48,14 @@ from NysaGui.common.nysa_bus_view.wishbone_controller import WishboneController
 
 class IBuilderProject(QObject):
 
-    def __init__(self, actions, status, name, path = None):
+    def __init__(self, actions, status, xmsgs, name, path = None):
         super(IBuilderProject, self).__init__()
         self.actions = actions
         self.status = status
+        self.xmsgs = xmsgs
         self.project_actions = IBuilderProjectActions()
 
-        self.project_view = ProjectView(self.project_actions, status)
+        self.project_view = ProjectView(self.project_actions, status, xmsgs)
 
         self.path = path
         self.config = None

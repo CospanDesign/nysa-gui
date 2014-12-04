@@ -40,9 +40,9 @@ KEY, NODE = range(2)
 #p = os.path.abspath(p)
 #print "Path: %s" % str(p)
 #sys.path.append(p)
-from tree_table.tree_table import TreeTableModel
-from tree_table.tree_table import BranchNode
-from tree_table.tree_table import LeafNode
+from NysaGui.common.tree_table.tree_table import TreeTableModel
+from NysaGui.common.tree_table.tree_table import BranchNode
+from NysaGui.common.tree_table.tree_table import LeafNode
 
 
 
@@ -178,7 +178,6 @@ class PlatformTreeTableModel(QAbstractItemModel):
         self.font = QFont("White Rabbit")
         self.font.setBold(True)
         self.status = status
-
 
     def flags (self, index):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable

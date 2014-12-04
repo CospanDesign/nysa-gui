@@ -82,7 +82,6 @@ class BuildStatus(QObject):
         self.connect(self, SIGNAL("status_update"), parent.status_update)
         self.up = True
 
-
     def setup_animation(self):
         self.total_animation_length = BUILD_STATUS_TIME_STEP * len(self.build_animation)
         self.animation_timer = QTimeLine(self.total_animation_length)
@@ -165,8 +164,6 @@ class BuildStatus(QObject):
         #if frame_index == self.total_animation_length - 1 and self.animation_timer.Direction == QTimeline.Forward:
         #    self.animation_timer.toggleDirection()
         #self.build_image = self.build_animation[frame_index]
-
-
 
     def paint(self, painter, option, widget):
         painter.drawPixmap(self.position, self.image)

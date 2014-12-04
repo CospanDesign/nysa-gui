@@ -35,26 +35,44 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from xilinx_xmsgs_parser import XilinxXmsgsParser
 from xilinx_xmsgs_parser import XilinxXmsgsParserError
 
-from tree_model import Node
-from tree_model import TreeModel
-from tree_model import RootNode
+from NysaGui.common.tree_table.tree_table import BranchNode
+from NysaGui.common.tree_table.tree_table import TreeTableModel
+from NysaGui.common.tree_table.tree_table import RootNode
 
 builder_names = ["xst", "ngdbuild", "map", "par", "bitgen", "trce"]
 
-class BuilderNode(Node):
+class BuilderNode(BranchNode):
     def __init__(self, name, xp, tree_model, parent):
         super(BuilderNode, self).__init__(name, parent)
         self.xp = xp
         self.tree_model = tree_model
-        self.messages = None
+        self.messages = []
         self.filter_type = "all"
         self.delta = "false"
 
+    def __len__(self):
+        return len(self.messages)
+
+    def childAtRow(self, row):
+        assert 0 <= row < len(self.messages)
+        return self.messages[row]
+
+    def rowOfChild(self, child):
+        return self.messages.indexOf(child)
+
+    def childWithKey(self, key):
+        return self.messages[key]
+
+    def insertChild(self, child):
+        assert 0
+
     def update(self, type_filter = [], new_items = False):
         #Update the count of messages
-        self._children = self.xp.get_messages(self.name(),
+        self.messages += self.xp.get_messages(self.name,
                                               type_filter,
                                               new_items)
+        #print "got all children: %s" % str(self.messages)
+
         if len(type_filter) == 0:
             self.filter_type = "all"
         else:
@@ -62,36 +80,27 @@ class BuilderNode(Node):
 
         #print "\tnumber of messages: %d" % len(self.messages)
         self.delta = str(new_items)
-        parent_index = self.tree_model.createIndex(self.row(), 0, self )
-        #self.tree_model.beginInsertRows(parent_index, 0, len(self._children) - 1) 
-        for index in range(len(self._children)):
-            #self.tree_model.insertRow(1, parent_index)
-            message = self._children[index]
-            #for message in self._children:
-            message.set("builder", self.name())
-            self.tree_model.createIndex(index, 0, message)
-        #self.tree_model.endInsertRows()
+        #parent_index = self.tree_model.createIndex(self.parent.rowOfChild(self), 0, self )
+        #print "\tparent index: %s" % str(parent_index)
 
-    #Override Node Default Functions
-    def child(self, row):
-        return self._children[row]
-
-    def child_count(self):
-        return len(self._children)
+        for m in self.messages:
+            m.set("builder", self.name)
 
     def field(self, column):
         if column == 0:
-            return self.name()
+            return self.name
         if column == 1:
             #return self.filter_type
-            return ""
+            return self.filter_type
         if column == 2:
-            #return self.delta
-            return ""
+            return str(len(self.messages))
+        #    #return self.delta
+        #    #return self.delta
+        #    return None
         return
 
     def message_field(self, row, column):
-        message = self._children[row]
+        message = self.messages[row]
         if column == 0:
             return message.get('type')
         if column == 1:
@@ -103,13 +112,17 @@ class BuilderNode(Node):
             return data
         return
 
-class XmsgsTreeModel(TreeModel):
+class XmsgsTreeModel(TreeTableModel):
+
     def __init__(self, parent = None):
         super (XmsgsTreeModel, self).__init__(parent)
         self.headers = ["Tool", "Level", "Message"]
         self.xp = XilinxXmsgsParser(self.changed_cb)
         self.path = ""
         self.ready = False
+        self.initialize(nesting = 1, headers = self.headers)
+
+
 
     def data(self, index, role):
         #Text Alignment Data
@@ -119,7 +132,7 @@ class XmsgsTreeModel(TreeModel):
         #Icons/Color
         if role == Qt.DecorationRole:
 
-            node = self.node_from_index(index)
+            node = self.nodeFromIndex(index)
             if node is None:
                 return None
 
@@ -127,105 +140,53 @@ class XmsgsTreeModel(TreeModel):
         if role != Qt.DisplayRole:
             return
 
-        node = self.node_from_index(index)
+        node = self.nodeFromIndex(index)
         assert node is not None
 
         if isinstance(node, RootNode):
+            print "root node!"
             return None
         if isinstance(node, BuilderNode):
             return node.field(index.column())
         if isinstance(node, ET.Element):
             name = node.get("builder")
-            builder = self.root.child(name = name)
+            builder = self.root.childWithKey(name)
             return builder.message_field(index.row(), index.column())
 
         print "Get Data for other type"
-
-    def hasChildren(self, index):
-        node = self.node_from_index(index)
-        if isinstance(node, RootNode):
-            return True
-        if isinstance(node, BuilderNode):
-            return True
-        return False
-
-    def rowCount(self, parent_index):
-        if parent_index.row() != -1:
-            print "Parent index: %d, %d" % (parent_index.row(), parent_index.column())
-        node = self.node_from_index(parent_index)
-        print "\trowCount Type: %s" % node.name()
-        if node is None:
-            return 0
-        print "Child Count: %d" % node.child_count()
-        return node.child_count()
-
-    def index(self, row, column, parent_index):
-        assert self.root
-
-        parent_node = self.node_from_index(parent_index)
-        if isinstance(parent_node, RootNode):
-            child = parent_node.child(row)
-            #print "Parent: %s, child: %s" % (parent_node.name(), child.name())
-            
-            return self.createIndex(row, column, child)
-        if isinstance(parent_node, BuilderNode):
-            #child = parent_node.child(row)
-            child = parent_node.child(row)
-            print "Parent: %s, child is message" % (parent_node.name())
-            return self.createIndex(row, column, child)
-        print "Unrecognized type"
-        #print "index: %d, %d: parent_index = %d, %d" % (row, column, parent_index.row(), parent_index.column())
-        #return self.createIndex(row, column, node)
-
-    def parent(self, child_index):
-        child = self.node_from_index(child_index)
-        if child is None:
-            print "parent: child is none"
-            return None
-        if isinstance(child, BuilderNode):
-            #print "Child name: %s" % child.name()
-            return self.createIndex(0, 0, self.root)
-        if isinstance(child, ET.Element):
-            name = child.get("builder")
-            builder = self.root.child(name = name)
-            return self.createIndex(builder.row(), 0, builder)
-        print "Unknown child: %s" % type(child)
-
-    def reset(self):
-        print "______RESET______"
-        QAbstractItemModel.reset(self)
 
     #Functions for use by non table interface
     def changed_cb(self, name):
         #Check if the specific builder exists in the root
         #If not add the specific builder to as a new builder node
-        builder = self.root.child(name)
+        name = QString(name)
+        print "changed_cb: %s Changed" % name
+        builder = self.root.childWithKey(name)
         if builder is None:
             builder = BuilderNode(name, self.xp, self, self.root)
             print "Insert %s into root" % name
-            bs = self.root._children_list
-            keys = []
-            for b in bs:
-                keys.append(b.name())
+            keys = self.root.get_child_list()
             if len(keys) == 0:
-                print "List is empty"
-                self.root.add_child(builder)
+                print "\tList is empty, add item to the beginning"
+                self.root.insertChild(builder)
+
             else:
                 #List is shorter than where we need to be put in
                 name_index = builder_names.index(name)
-                print "insert %s into list: %s" % (name, keys)
+                print "\tinsert %s into list: %s" % (name, keys)
                 print "\tname index: %d" % name_index
                 for key in keys:
                     key_index = builder_names.index(key)
 
                     if name_index < key_index:
                         print "%s is before %s" % (name, key)
-                        self.root.insert_child(row = keys.index(key), child=builder)
+                        self.root.insertChildAt(pos = keys.index(key), child = builder)
                         break
-
             #self.root.add_child(builder)
 
+        print "\tUpdate builder"
         builder.update()
+        print "reset"
         self.reset()
         #self.emit(SIGNAL("dataChanged()"))
 
@@ -265,8 +226,42 @@ class XmsgsTreeModel(TreeModel):
         try:
             self.xp.watch_path(path)
         except TypeError, err:
+            #print "Type Error: failed to set path: %s" % str(err)
             self.ready = False
         except XilinxXmsgsParserError, err:
+            #print "failed to set path"
             self.ready = False
         self.reset()
+
+
+    def parent(self, index): 
+        node = self.nodeFromIndex(index)
+        #print "node: %s" % str(node)
+        if node is None:
+            return QModelIndex()
+
+        parent = None
+
+        if isinstance(node, ET.Element):
+            parent_name = node.get("builder")
+            parent = self.root.childWithKey(parent_name)
+        if isinstance(node, BuilderNode):
+            return QModelIndex()
+        if isinstance(node, RootNode):
+            return QModelIndex()
+
+        if isinstance(node, tuple):
+            return QModelIndex()
+
+        if parent is None:
+            return QModelIndex()
+        grandparent = parent.parent
+        if grandparent is None:
+            return QModelIndex()
+
+        row = grandparent.rowOfChild(parent)
+        assert row != -1
+        return self.createIndex(row, 0, parent)
+
+
 

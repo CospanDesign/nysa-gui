@@ -43,10 +43,11 @@ from ibuilder_actions import Actions
 
 
 class IBuilderController(QObject):
-    def __init__(self, gui_actions, status):
+    def __init__(self, gui_actions, status, xmsgs):
         super(IBuilderController, self).__init__()
         self.gui_actions = gui_actions
         self.status = status
+        self.xmsgs = xmsgs
         self.actions = Actions()
         self.view = IBuilderView(self.gui_actions, self.actions, self.status)
         self.project_tree = self.view.get_project_tree()
@@ -96,7 +97,7 @@ class IBuilderController(QObject):
 
     def add_project(self, name, path = None):
         self.status.Debug("Add Project: %s" % name)
-        ibp = IBuilderProject(self.actions, self.status, name, path)
+        ibp = IBuilderProject(self.actions, self.status, self.xmsgs, name, path)
         self.view.add_project(ibp)
 
     def get_view(self):

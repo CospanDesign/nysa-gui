@@ -37,6 +37,7 @@ from nysa.host.platform_scanner import PlatformScanner
 
 from NysaGui.common.status import Status
 from NysaGui.common.status import StatusLevel
+from NysaGui.common.xmsgs.xmsgs import Xmsgs
 
 from NysaGui.host.host_controller import HostController
 from NysaGui.ibuilder.ibuilder_controller import IBuilderController
@@ -57,6 +58,8 @@ class NysaGui(QObject):
         app = QApplication(sys.argv)
         self.actions = Actions()
         self.status = Status()
+        self.xmsgs = Xmsgs(self.status)
+
         if debug:
             self.status.set_level(StatusLevel.VERBOSE)
 
@@ -64,14 +67,14 @@ class NysaGui(QObject):
         self.hc = HostController(self.actions, self.status)
         hv = self.hc.get_view()
         #Get Ibuilder Controller
-        self.ic = IBuilderController(self.actions, self.status)
+        self.ic = IBuilderController(self.actions, self.status, self.xmsgs)
         iv = self.ic.get_view()
         #Get CBuilder Controller
         #self.cc = CBuilderController(self.actions, self.status)
         self.cc = CBuilderController(self.actions, self.status)
         cv = self.cc.get_view()
             
-        self.mf = MainForm(self.actions, self.status, hv, iv, cv)
+        self.mf = MainForm(self.actions, self.status, self.xmsgs, hv, iv, cv)
 
         self.status.Debug( "Created main form!")
         QThread.currentThread().setObjectName("Nysa GUI Main")

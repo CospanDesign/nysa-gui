@@ -59,14 +59,10 @@ class XilinxXmsgsParserError(Exception):
         -parsing the file
         -requested builder is not in builder folders
     """
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return repr(self.value)
-
+    pass
 
 class XilinxXmsgsParser(object):
-    def __init__(self, changed_cb = None):
+    def __init__(self, changed_cb):
         super(XilinxXmsgsParser, self).__init__()
         self.path = ""
         self.tree = None
@@ -86,12 +82,18 @@ class XilinxXmsgsParser(object):
        
     def parse_files_in_directory(self):
         listings = os.listdir(self.path)
-        file_list = []
-        print "listings: %s" % str(listings)
-        for l in listings:
-            lpath = os.path.join(self.path, l)
+
+        print "parse files in directory:"
+        for listing in listings:
+            print "\t%s" % listing
+
+        for listing in listings:
+            print "listing: %s" % listing
+            lpath = os.path.join(self.path, listing)
+            print "path: %s" % lpath
             if os.path.isfile(lpath):
                 self.file_changed(lpath)
+            print "added file!"
 
     def get_builder_names(self):
         return self.builders.keys()
@@ -153,10 +155,19 @@ class XilinxXmsgsParser(object):
                     builder,
                     type_filters = [],
                     only_new_messages = False):
+        #print "getting messages"
+        #print "builder: %s" % builder
+        #print "builders: %s" % str(self.builders.keys())
+        builder = str(builder)
+
         if builder not in self.builders:
+            print "badd!!"
             raise XilinxXmsgsParserError("builder %s is not in builders" % builder)
+
+        #print "get_messages(): getting messages for: %s" % builder
         return self.builders[builder].get_messages(type_filters,
                                                    only_new_messages)
+
     def builder_exists(self, builder):
         if builder in self.builders:
             return True
@@ -171,7 +182,6 @@ class XilinxXmsgsParser(object):
         if len(messages) == 0:
             return None
         return messages
-
 
     def warnings(self, builder):
         '''Returns None if no warnings or the errors associated with the build'''

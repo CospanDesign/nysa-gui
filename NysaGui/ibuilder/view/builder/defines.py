@@ -33,6 +33,15 @@ from PyQt4.QtCore import *
 image_path = os.path.join(os.path.dirname(__file__),
                           "images")
 
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                          os.pardir,
+                          os.pardir,
+                          os.pardir,
+                          "common"))
+
+
+
 NO_BOARD_IMAGE = os.path.join(image_path, "noboardselected.png")
 GENERIC_BOARD_IMAGE = os.path.join(image_path, "genericboard.png")
 
@@ -46,44 +55,62 @@ GEN_DESC = "Generates code to create an FPGA image"
 SYNTHESIZER_COLOR = QColor("blue")
 SYNTHESIZER_POS = QPointF(-800, 0)
 SYNTHESIZER_RECT = QRectF(0, 0, 200, 100)
-SYNTHESIZER_NAME = "Synthesizer"
-SYNTHESIZER_ID = "xst"
-SYNTHESIZER_DESC = "Compile/Combine/Generate binary abstract model"
+from xmsgs.defines import SYNTHESIZER_NAME
+from xmsgs.defines import SYNTHESIZER_ID
+from xmsgs.defines import SYNTHESIZER_DESC
+#SYNTHESIZER_NAME = "Synthesizer"
+#SYNTHESIZER_ID = "xst"
+#SYNTHESIZER_DESC = "Compile/Combine/Generate binary abstract model"
 
 TRANSLATOR_COLOR = QColor("blue")
 TRANSLATOR_POS = QPointF(-400, 0)
 TRANSLATOR_RECT = QRectF(0, 0, 200, 100)
-TRANSLATOR_NAME = "Translator"
-TRANSLATOR_ID = "ngdbuild"
-TRANSLATOR_DESC = "Translate binary abstract HDL to Xilinx primitives"
+from xmsgs.defines import TRANSLATOR_NAME
+from xmsgs.defines import TRANSLATOR_ID
+from xmsgs.defines import TRANSLATOR_DESC
+#TRANSLATOR_NAME = "Translator"
+#TRANSLATOR_ID = "ngdbuild"
+#TRANSLATOR_DESC = "Translate binary abstract HDL to Xilinx primitives"
 
 MAP_COLOR = QColor("blue")
 MAP_POS = QPointF(0, 0)
 MAP_RECT = QRectF(0, 0, 200, 100)
-MAP_NAME = "Map"
-MAP_ID = "map"
-MAP_DESC = "Map Xilinx prmitives to the FPGA"
+from xmsgs.defines import MAP_NAME
+from xmsgs.defines import MAP_ID
+from xmsgs.defines import MAP_DESC
+#MAP_NAME = "Map"
+#MAP_ID = "map"
+#MAP_DESC = "Map Xilinx prmitives to the FPGA"
 
 PAR_COLOR = QColor("blue")
 PAR_POS = QPointF(400, 0)
 PAR_RECT = QRectF(0, 0, 200, 100)
-PAR_NAME = "PAR"
-PAR_ID = "par"
-PAR_DESC = "Place and route the design within the FPGA"
+from xmsgs.defines import PAR_NAME
+from xmsgs.defines import PAR_ID
+from xmsgs.defines import PAR_DESC
+#PAR_NAME = "PAR"
+#PAR_ID = "par"
+#PAR_DESC = "Place and route the design within the FPGA"
 
 BITGEN_COLOR = QColor("blue")
 BITGEN_POS = QPointF(800, 0)
 BITGEN_RECT = QRectF(0, 0, 200, 100)
-BITGEN_NAME = "Bitgen"
-BITGEN_ID = "bitgen"
-BITGEN_DESC = "Generate code that can be downloaded to the FPGA"
+from xmsgs.defines import BITGEN_NAME
+from xmsgs.defines import BITGEN_ID
+from xmsgs.defines import BITGEN_DESC
+#BITGEN_NAME = "Bitgen"
+#BITGEN_ID = "bitgen"
+#BITGEN_DESC = "Generate code that can be downloaded to the FPGA"
 
 TRACE_COLOR = QColor("blue")
 TRACE_POS = QPointF(800, -200)
 TRACE_RECT = QRectF(0, 0, 200, 100)
-TRACE_NAME = "Trace"
-TRACE_ID = "trce"
-TRACE_DESC = "Timig analysis"
+from xmsgs.defines import TRACE_NAME
+from xmsgs.defines import TRACE_ID
+from xmsgs.defines import TRACE_DESC
+#TRACE_NAME = "Trace"
+#TRACE_ID = "trce"
+#TRACE_DESC = "Timig analysis"
 
 DOWNLOADER_COLOR = QColor("blue")
 DOWNLOADER_POS = QPointF(1200, 0)

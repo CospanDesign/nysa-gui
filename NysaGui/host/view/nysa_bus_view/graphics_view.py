@@ -70,4 +70,6 @@ class GraphicsView(gv):
 
     def resizeEvent(self, event):
         super(GraphicsView, self).resizeEvent(event)
+        #print "resize event"
+        self.s.auto_update_all_links()
         self.fit_in_view()
