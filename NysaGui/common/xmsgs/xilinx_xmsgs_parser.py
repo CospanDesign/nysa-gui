@@ -37,6 +37,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                                 os.pardir))
 
 from file_watcher import FileWatcher
+from PyQt4.QtCore import *
 
 white = '\033[0m'
 gray = '\033[90m'
@@ -61,7 +62,7 @@ class XilinxXmsgsParserError(Exception):
     """
     pass
 
-class XilinxXmsgsParser(object):
+class XilinxXmsgsParser(QObject):
     def __init__(self, changed_cb):
         super(XilinxXmsgsParser, self).__init__()
         self.path = ""
@@ -78,7 +79,8 @@ class XilinxXmsgsParser(object):
         if not os.path.isdir(path):
             raise XilinxXmsgsParserError("Path %s is not a directory")
         self.path = path
-        self.parse_files_in_directory()
+        #self.parse_files_in_directory()
+        self.setup_file_watcher()
        
     def parse_files_in_directory(self):
         listings = os.listdir(self.path)
@@ -102,29 +104,29 @@ class XilinxXmsgsParser(object):
         """Setup a file watcher to track all the builders in a specific
             directory, this is designed to work with the _xmsgs generated
             during a build of a Xilinx FPGA image"""
-        self.fw.watch(self.path,
+        self.fw.watch([self.path],
                       aggressive = True,
                       directory_changed_cb = self.directory_changed,
                       file_changed_cb = self.file_changed,
                       file_added_cb = self.file_added)
 
     def directory_changed(self, path):
-        #print "Directory Changed"
-        pass
+        print "Directory Changed"
+        self.parse_files_in_directory()
 
     def file_changed(self, path):
         #print "File Changed"
         #call the iterparse function
         #for path in paths:
         #print "Path: %s" % path
-        name = os.path.split(path)[1]
+        name = os.path.split(str(path))[1]
         name = os.path.splitext(name)[0]
         file_reference = None
-        ftime = os.path.getctime(path)
+        ftime = os.path.getctime(str(path))
         data = ""
 
         if name not in self.builders.keys():
-            #print "Found: %s" % name
+            print "Found: %s" % name
             file_reference = open(path, "r")
             self.builders[name] = XilinxBuilder(name)
         else:
@@ -134,20 +136,20 @@ class XilinxXmsgsParser(object):
                 file_reference = open(path, "r")
             else:
                 #Continus, get the handle to the data
-                file_reference =self.builder[name].get_file_reference()
+                file_reference = self.builders[name].get_file_reference()
 
         data = file_reference.read()
-        self.builders[name].new_xmsgs_data(data, ftime, file_reference)
-        if self.builders[name].finished():
-            #print "%s is finished" % name
+        if not self.builders[name].new_xmsgs_data(data, ftime, file_reference):
+            return
+        else:
+            #if self.builders[name].finished():
             file_reference.close()
-        #print "Parsing: %s" % name
 
         if self.changed_cb:
             self.changed_cb(name)
 
     def file_added(self, paths):
-        #print "File Added"
+        print "File Added"
         for path in paths:
             self.file_changed(path)
         
@@ -155,13 +157,9 @@ class XilinxXmsgsParser(object):
                     builder,
                     type_filters = [],
                     only_new_messages = False):
-        #print "getting messages"
-        #print "builder: %s" % builder
-        #print "builders: %s" % str(self.builders.keys())
         builder = str(builder)
 
         if builder not in self.builders:
-            print "badd!!"
             raise XilinxXmsgsParserError("builder %s is not in builders" % builder)
 
         #print "get_messages(): getting messages for: %s" % builder

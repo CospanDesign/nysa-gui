@@ -132,12 +132,12 @@ class FileWatcher(QObject):
 
 
     def file_changed(self, path):
-        #print "File Changed: %s" % path
+        print "File Changed: %s" % path
         if self.file_changed_cb is not None:
             self.file_changed_cb(path)
 
     def directory_changed(self, path):
-        #print "Directory Changed: %s" % path
+        print "Directory Changed: %s" % path
         path = str(path)
         if self.directory_changed_cb is not None:
             self.directory_changed_cb(path)

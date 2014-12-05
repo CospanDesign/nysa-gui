@@ -91,7 +91,6 @@ class Xmsgs(QWidget):
     def set_model(self, model):
         self.xmsgs.setModel(model)
 
-
 class XmsgsTreeView(QTreeView):
     def __init__(self, parent, status):
         super (XmsgsTreeView, self).__init__(parent)

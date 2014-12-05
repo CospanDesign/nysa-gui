@@ -103,6 +103,7 @@ class Builder(QWidget):
         print "Finish execution: for %s: Exit Code: %d, Exit Status: %d" % (target, exit_code, exit_status)
         print "%s" % str(data)
         self.finished_build_request()
+        self.xmsgs_tree_model.manual_directory_update()
 
     def process_read_standard_output(self):
         data = self.proc.readAllStandardOutput()
