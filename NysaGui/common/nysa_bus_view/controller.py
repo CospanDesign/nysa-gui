@@ -794,12 +794,14 @@ class Controller (QObject):
         self.model.set_node_id(uname, module_id)
 
 
-    def program_board(self, file_path):
+    def program_board(self, serial, file_path):
         board_name = self.get_board_name()
         self.status.Warning("TODO: Add a way to specify the serial number of the board to upload")
-        serial_number = None
+        serial = None
         try:
-            upload_board.upload(board_name, serial_number, file_path, self.status)
+            upload_board.upload(board_name, serial, file_path, self.status)
+            self.status.Important("Uploaded %s to %s" % (file_path, board_name))
         except Exception as ex:
+            print "error"
             self.status.Error("Error uploading: %s" % str(ex))
 

@@ -50,7 +50,6 @@ class Builder(QWidget):
         self.xmsgs = xmsgs
         self.xmsgs_tree_model = XmsgsTreeModel()
         self.xmsgs.set_model(self.xmsgs_tree_model)
-
         self.actions = actions
         self.config = {}
 
@@ -126,6 +125,11 @@ class Builder(QWidget):
         self.controller = controller
         self.bfv.set_build_callback(self.build_callback)
 
+        self.uploader_thread = QThread()
+        self.uploader_thread.start()
+        self.uploader = Uploader(self, self.controller, self.status)
+        self.uploader.moveToThread(self.uploader_thread)
+
     def set_project_name(self, name):
         self.info.set_project_name(None, name)
 
@@ -151,6 +155,7 @@ class Builder(QWidget):
             else:
                 self.builder_index = BITGEN_ID
         elif self.builder_index == BITGEN_ID:
+            print "\t\tdownloader id"
             self.builder_index = DOWNLOADER_ID
         else:
             self.status.Fatal("finished_build_request(): Unknown build ID: %d" % self.builder_index)
@@ -185,6 +190,7 @@ class Builder(QWidget):
             self.external_build_tool("bitgen")
 
         elif self.builder_index == DOWNLOADER_ID:
+            print "\t\tdownload the image!" 
             self.download_image()
 
     def build_callback(self, builder_id):
@@ -193,11 +199,21 @@ class Builder(QWidget):
         self.process_build_request()
 
     def download_image(self):
+        print "download image!"
         self.status.Debug("Downloading Image")
         self.ibuilder_project_path = self.controller.get_generated_project_path()
         self.status.Warning("TODO: Setup a more generic download scheme that should be controlled by the board files")
         bin_path = os.path.join(self.ibuilder_project_path, "build", "bitgen", "top.bin")
-        bin_path = self.controller.program_board(bin_path)
+        #bin_path = self.controller.program_board(bin_path)
+
+        self.bfv.set_status(DOWNLOADER_ID, BUILD_STATUS.build)
+        serial = None
+        QMetaObject.invokeMethod(self.uploader,
+                                 "upload",
+                                 Qt.QueuedConnection,
+                                 Q_ARG(object, serial),
+                                 Q_ARG(str, bin_path))
+        #uploader.upload(bin_path)
 
     def external_build_tool(self, build_command):
         print "external build tool: %s" % build_command
@@ -206,7 +222,7 @@ class Builder(QWidget):
         self.proc.setProcessEnvironment(env)
         self.proc.closeWriteChannel()
         self.proc.start("scons", [build_command])
-        self.bfv.set_status(build_command, BUILD_STATUS.build)
+        self.bfv.set_status(self.builder_index, BUILD_STATUS.build)
 
     def generate_project(self):
         result = self.controller.generate_image()
@@ -228,3 +244,30 @@ class Builder(QWidget):
 
     def set_project_status(self, status):
         self.info.set_status(status)
+
+    @pyqtSlot(str)
+    def update_downloader_status(self, status):
+        if status == "fail":
+            self.bfv.set_status(DOWNLOADER_ID, BUILD_STATUS.fail)
+        if status == "pass":
+            self.bfv.set_status(DOWNLOADER_ID, BUILD_STATUS.pass_build)
+            
+
+class Uploader(QObject):
+
+    def __init__(self, builder, controller, status):
+        super (Uploader, self).__init__()
+        self.builder = builder
+        self.status = status
+        self.controller = controller
+
+    @pyqtSlot(object, str)
+    def upload(self, serial, file_path):
+        self.status.Debug("Download image to board")
+        self.controller.program_board(serial, file_path)
+        QMetaObject.invokeMethod(self.builder,
+                                 "update_downloader_status",
+                                 Qt.QueuedConnection,
+                                 Q_ARG(str, "pass"))
+
+        
