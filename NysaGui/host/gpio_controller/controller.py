@@ -162,7 +162,7 @@ class Controller(NysaBaseController):
         self.status = status
         app = QApplication (sys.argv)
         self._initialize(platform, device_index)
-        QtCore.QThread.currentThread().setObjectName("Main")
+        QtCore.QThread.currentThread().setObjectName("main")
         self.status.Verbose("Thread name: %s" % QtCore.QThread.currentThread().objectName())
         sys.exit(app.exec_())
 

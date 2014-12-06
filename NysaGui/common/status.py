@@ -224,9 +224,11 @@ class _Status(QWidget):
         return False
 
     def __init__(self):
-        QWidget.__init__(self)
+        super (_Status, self).__init__()
+        #QWidget.__init__(self)
         self.level = StatusLevel.INFO
         self.init_ui()
+        self.main_thread_name = QThread.currentThread().objectName()
        
         #self.Verbose("Hello World!")
 
@@ -294,20 +296,36 @@ class _Status(QWidget):
         self.status_output("Extra", self, text, fg="Black", bg="White")
 
     def status_output(self, level, text, fg = None, bg = None):
+        stack_info = inspect.stack()
+        if QThread.currentThread().objectName() != self.main_thread_name:
+            #Condition in which the status is updated from external thread
+            QMetaObject.invokeMethod(self,
+                                     "_status_output",
+                                     Qt.QueuedConnection,
+                                     Q_ARG(str, level),
+                                     Q_ARG(str, text),
+                                     Q_ARG(object, fg),
+                                     Q_ARG(object, bg),
+                                     Q_ARG(object, stack_info))
+            return
+        self._status_output(level, text, fg, bg, stack_info)
+        
+    @pyqtSlot(str, str, object, object, object)
+    def _status_output(self, level, text, fg = None, bg = None, stack_info = None):
         pos = self.mdl.rowCount()
         #print "Position: %d" % pos
         self.mdl.insertRows(pos, 1)
 
 
-        function_name = str(inspect.stack()[2][3])
+        function_name = str(stack_info[2][3])
         if function_name == "<module>":
-            function_name = str(inspect.stack()[2][1]).rpartition("./")[2] + ":main"
+            function_name = str(stack_info[2][1]).rpartition("./")[2] + ":main"
 
         class_name = None
 
         d = None
-        if "self" in inspect.stack()[2][0].f_locals.keys():
-            class_name = str(inspect.stack()[2][0].f_locals["self"])
+        if "self" in stack_info[2][0].f_locals.keys():
+            class_name = str(stack_info[2][0].f_locals["self"])
             while class_name.find(".") != -1:
                 class_name = class_name.partition(".")[2]
             class_name = class_name.partition(" ")[0]
@@ -320,7 +338,7 @@ class _Status(QWidget):
         else:
             d = "%s: " % (function_name)
 
-        f = str(inspect.stack()[2][3])
+        f = str(stack_info[2][3])
 
         self.mdl.set_line_data([str(pos), level, d, text, fg, bg])
         self.status_list.resizeColumnsToContents()
@@ -376,12 +394,11 @@ class _Status(QWidget):
                 self.level == StatusLevel.WARNING or \
                 self.level == StatusLevel.ERROR:
                 return True
- 
+
         return False
 
     def paint(self, event):
         self.QWidget.paint(self, event)
-
 
 class StatusModel(QAbstractTableModel):
     def __init__(self, data_in = [[]], header_data=[], parent=None, *args):

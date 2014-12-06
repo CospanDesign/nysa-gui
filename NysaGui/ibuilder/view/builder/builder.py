@@ -193,7 +193,11 @@ class Builder(QWidget):
         self.process_build_request()
 
     def download_image(self):
-        print "download image"
+        self.status.Debug("Downloading Image")
+        self.ibuilder_project_path = self.controller.get_generated_project_path()
+        self.status.Warning("TODO: Setup a more generic download scheme that should be controlled by the board files")
+        bin_path = os.path.join(self.ibuilder_project_path, "build", "bitgen", "top.bin")
+        bin_path = self.controller.program_board(bin_path)
 
     def external_build_tool(self, build_command):
         print "external build tool: %s" % build_command

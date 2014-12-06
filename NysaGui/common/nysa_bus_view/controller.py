@@ -46,6 +46,7 @@ sys.path.append(p)
 
 
 from pvg.visual_graph.box import Box
+from nysa.tools import upload_board
 
 def enum(*sequential, **named):
   enums = dict(zip(sequential, range(len(sequential))), **named)
@@ -791,4 +792,14 @@ class Controller (QObject):
     def set_module_id(self, name, module_id):
         uname = self.model.get_unique_from_module_name(name)
         self.model.set_node_id(uname, module_id)
+
+
+    def program_board(self, file_path):
+        board_name = self.get_board_name()
+        self.status.Warning("TODO: Add a way to specify the serial number of the board to upload")
+        serial_number = None
+        try:
+            upload_board.upload(board_name, serial_number, file_path, self.status)
+        except Exception as ex:
+            self.status.Error("Error uploading: %s" % str(ex))
 

@@ -56,6 +56,7 @@ class NysaGui(QObject):
         super (NysaGui, self).__init__()
 
         app = QApplication(sys.argv)
+        QThread.currentThread().setObjectName("main")
         self.actions = Actions()
         self.status = Status()
         self.xmsgs = Xmsgs(self.status)
@@ -77,7 +78,6 @@ class NysaGui(QObject):
         self.mf = MainForm(self.actions, self.status, self.xmsgs, hv, iv, cv)
 
         self.status.Debug( "Created main form!")
-        QThread.currentThread().setObjectName("Nysa GUI Main")
         self.hc.refresh_platform_tree()
         #sys.exit(app.exec_())
         app.exec_()
