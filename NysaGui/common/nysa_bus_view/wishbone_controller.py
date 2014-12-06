@@ -496,6 +496,11 @@ class WishboneController (controller.Controller):
 
         self.dbg = True
 
+
+    def initialize_configuration_editor(self, configuration_editor):
+        super (WishboneController, self).initialize_configuration_editor(configuration_editor)
+        configuration_editor.set_bus_template("wishbone")
+
     #Arbiter
     def add_arbiter_link(self, arb_master, slave):
         self.add_link(arb_master, slave, lt.arbiter, st.right)

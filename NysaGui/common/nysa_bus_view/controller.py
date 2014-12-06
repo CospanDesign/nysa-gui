@@ -310,6 +310,7 @@ class Controller (QObject):
         self.configuration_editor.populate_connected_signals(self.model.get_internal_bindings())
         self.configuration_editor.populate_available_signals(self.model.get_available_internal_bind_signals())
         self.configuration_editor.populate_constraints_file_list(self.model.get_constraint_filenames())
+        self.configuration_editor.set_image_id(self.model.get_image_id())
 
     def get_project_location(self):
         return self.model.get_project_location()
@@ -777,4 +778,11 @@ class Controller (QObject):
         #    self.status.Fatal("Unknown exception occured while generating project")
         return False
 
+
+
+    def get_image_id(self):
+        return self.model.get_image_id()
+
+    def set_image_id(self, image_id):
+        self.model.set_image_id(image_id)
 

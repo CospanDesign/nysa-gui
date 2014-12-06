@@ -80,6 +80,7 @@ class IBuilderProject(QObject):
         self.project_actions.internal_bind_connect.connect(self.controller.bind_internal_signal)
         self.project_actions.internal_bind_disconnect.connect(self.controller.unbind_internal_signal)
         self.project_actions.update_board.connect(self.update_board)
+        self.project_actions.update_image_id.connect(self.controller.set_image_id)
 
         scene = self.project_view.get_designer_scene()
         self.project_actions.arbiter_selected.connect(scene.arbiter_master_selected)

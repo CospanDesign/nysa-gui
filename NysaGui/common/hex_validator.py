@@ -28,7 +28,6 @@ class HexValidator(QValidator):
             return False
         return True
 
-
     def validate(self, s, i):
         value = 0
         try:

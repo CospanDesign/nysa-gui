@@ -212,6 +212,14 @@ class WishboneModel():
     def set_board_name(self, board_name):
         self.config_dict["board"] = board_name
 
+    def set_image_id(self, image_id):
+        self.config_dict["IMAGE_ID"] = image_id
+
+    def get_image_id(self):
+        if "IMAGE_ID" not in self.config_dict:
+            self.config_dict["IMAGE_ID"] = 0
+        return self.config_dict["IMAGE_ID"]
+
     def get_board_name(self):
         if "board" in list(self.config_dict.keys()):
             return self.config_dict["board"]

@@ -48,10 +48,15 @@ class Configuration(QWidget):
         image_id_layout = QHBoxLayout()
         self.image_id_line = QLineEdit()
         self.image_id_line.setText("0")
-        update_image_id = QPushbButton("Update Image ID")
+        v = QIntValidator()
+        v.setBottom(0)
+        v.setTop(65535)
+        self.image_id_line.setValidator(v)
+        update_image_id = QPushButton("Update Image ID")
         update_image_id.clicked.connect(self.update_image_id)
         image_id_layout.addWidget(self.image_id_line)
-        image_id_layout.addWidget(self.update_image_id)
+        image_id_layout.addWidget(update_image_id)
+        
 
         #Board Layout
         board_layout = QHBoxLayout()
@@ -261,6 +266,10 @@ class Configuration(QWidget):
         self.current_board_name = board
         self.board_list.setCurrentIndex(index)
 
+    def set_bus_template(self, template):
+        index = self.bus_templates.findText(template)
+        self.bus_templates.setCurrentIndex(index)
+        
     def populate_bus_templates(self):
         self.bus_templates.clear()
         self.status.Important("TODO: find a better way to populate bus template")
@@ -280,6 +289,7 @@ class Configuration(QWidget):
 
     def update_image_id(self):
         image_id = int(self.image_id_line.text())
+        self.status.Debug("Changing Image ID to: %d" % image_id)
         self.actions.update_image_id.emit(image_id)
 
 class InternalBindModel(QAbstractTableModel):
