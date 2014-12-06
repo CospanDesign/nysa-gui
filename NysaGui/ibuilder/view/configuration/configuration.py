@@ -43,6 +43,7 @@ class Configuration(QWidget):
         name_layout.addWidget(self.project_name_line)
         name_layout.addWidget(update_project_name_button)
 
+        #Board Layout
         board_layout = QHBoxLayout()
         self.board_list = QComboBox()
         self.current_board_name = ""
@@ -51,6 +52,17 @@ class Configuration(QWidget):
         board_layout.addWidget(self.board_list)
         board_layout.addWidget(update_board_button)
 
+        #Bus Template
+        bus_template_layout= QHBoxLayout()
+        self.bus_templates = QComboBox()
+        self.populate_bus_templates()
+        self.current_template = ""
+        update_bus_template_button = QPushButton("Update Board Template")
+        update_bus_template_button.clicked.connect(self.update_bus_template)
+        bus_template_layout.addWidget(self.bus_templates)
+        bus_template_layout.addWidget(update_bus_template_button)
+
+        #Internal Constraints
         constraints_layout = QHBoxLayout()
         constraints_button_layout = QVBoxLayout()
         self.constraints_list = QListWidget()
@@ -72,6 +84,7 @@ class Configuration(QWidget):
 
         layout.addRow("project name", name_layout)
         layout.addRow("board select", board_layout)
+        layout.addRow("bus type", bus_template_layout)
         layout.addRow("internal bindings", self.setup_internal_bind_widget())
         layout.addRow("constraint files", constraints_layout)
 
@@ -109,6 +122,11 @@ class Configuration(QWidget):
         layout.addWidget(self.unbind_button)
         return layout
 
+    def update_bus_template(self):
+        bus_template = self.bus_templates.currentText()
+        self.status.Error("Bus Template Update Not Implemented Yet!")
+        self.bus_templates.setCurrentIndex(0)
+        
     def update_board_clicked(self):
         board_name = self.board_list.currentText()
         if board_name == self.current_board_name:
@@ -230,6 +248,12 @@ class Configuration(QWidget):
         index = self.board_list.findText(board, Qt.MatchExactly)
         self.current_board_name = board
         self.board_list.setCurrentIndex(index)
+
+    def populate_bus_templates(self):
+        self.bus_templates.clear()
+        self.status.Important("TODO: find a better way to populate bus template")
+        self.bus_templates.addItems(["wishbone", "axi4", "generic"])
+        self.bus_templates.setCurrentIndex(0)
 
     def populate_board_list(self, boards):
         self.board_list.clear()
