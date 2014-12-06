@@ -778,11 +778,17 @@ class Controller (QObject):
         #    self.status.Fatal("Unknown exception occured while generating project")
         return False
 
-
-
     def get_image_id(self):
         return self.model.get_image_id()
 
     def set_image_id(self, image_id):
         self.model.set_image_id(image_id)
+
+    def get_module_id(self, name):
+        uname = self.model.get_unique_from_module_name(name)
+        return self.model.get_node_id(uname)
+
+    def set_module_id(self, name, module_id):
+        uname = self.model.get_unique_from_module_name(name)
+        self.model.set_node_id(uname, module_id)
 

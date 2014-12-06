@@ -25,6 +25,8 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from functools import partial
+
 sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
                               os.pardir,
@@ -104,6 +106,7 @@ class Designer(QWidget):
     def slave_selected(self, slave_name, bus_name):
         #print "%s-%s selected" % (bus_name, slave_name)
         parameters = {}
+        unique_id = None
         if str(slave_name).lower() == "drt":
             self.clear_param_table()
             self.populate_param_table(slave_name, parameters)
@@ -111,6 +114,7 @@ class Designer(QWidget):
 
         tags = self.controller.get_slave_tags(bus_name, slave_name)
         project_tags = self.controller.get_module_project_tags(slave_name)
+        unique_id = self.controller.get_module_id(slave_name)
         pfound = False
         if "parameters" in tags:
             for parameter in tags["parameters"]:
@@ -130,6 +134,14 @@ class Designer(QWidget):
         self.populate_param_table(slave_name, parameters)
 
         #Does this slave have a arbiter master?
+        self.slave_id_line.setDisabled(False)
+        self.slave_id_button.setDisabled(False)
+        if unique_id is None:
+            self.slave_id_line.setText("")
+        else:
+            self.slave_id_line.setText(str(unique_id))
+
+
 
     def slave_deselected(self, slave_name, bus_name):
         #print "%s-%s deselected" % (bus_name, slave_name)
@@ -155,12 +167,44 @@ class Designer(QWidget):
         self.param_table.resizeColumnsToContents()
         self.commit_params_button.setEnabled(True)
 
+    def update_slave_image_id(self):
+        slave_name = self.sel_slave_name.text()
+        unique_id = 0
+        if len(slave_name) == 0:
+            return
+        try:
+            unique_id = int(self.slave_id_line.text())
+        except ValueError:
+            return
+
+        self.status.Debug ("Update Slave :%s with iD: %d" % (slave_name, unique_id))
+        if unique_id > 0:
+            self.controller.set_module_id(slave_name, unique_id)
+
     def create_parameters_table(self):
         pt = QWidget(self)
         pt.setMaximumWidth(300)
+
+        unique_id_layout = QHBoxLayout()
+        self.slave_id_line = QLineEdit("")
+        v = QIntValidator()
+        v.setBottom(0)
+        v.setTop(256)
+        self.slave_id_line.setValidator(v)
+        self.slave_id_line.setDisabled(True)
+        self.slave_id_button = QPushButton("Set Unique Slave ID")
+        self.slave_id_button.clicked.connect(self.update_slave_image_id)
+        self.slave_id_button.setDisabled(True)
+        unique_id_layout.addWidget(QLabel("Unique Slave ID"))
+        unique_id_layout.addWidget(self.slave_id_line)
+        unique_id_layout.addWidget(self.slave_id_button)
+
         self.sel_slave_name = QLabel(NO_MODULE_SEL)
         layout = QVBoxLayout()
+
         layout.addWidget(self.sel_slave_name)
+        layout.addLayout(unique_id_layout)
+
         self.param_table = QTableWidget()
         self.param_table.setColumnCount(2)
         self.param_table.setRowCount(1)
@@ -191,6 +235,9 @@ class Designer(QWidget):
 
     def clear_param_table(self):
         self.sel_slave_name.setText(NO_MODULE_SEL)
+        self.slave_id_line.setText("")
+        self.slave_id_line.setDisabled(True)
+        self.slave_id_button.setDisabled(True)
         self.param_table.clear()
         self.param_table.setRowCount(0)
         self.param_table.setHorizontalHeaderLabels(["Name", "Value"])

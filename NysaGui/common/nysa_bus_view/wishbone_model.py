@@ -865,6 +865,17 @@ class WishboneModel():
     def get_node_bindings(self, uname):
         return self.gm.get_node_bindings(uname)
 
+    def get_node_id(self, uname):
+        pt = self.get_node_project_tags(uname)
+        if "unique_id" not in pt:
+            pt["unique_id"] = "0"
+        return pt["unique_id"]
+
+    def set_node_id(self, uname, unique_id):
+        pt = self.get_node_project_tags(uname)
+        pt["unique_id"] = unique_id
+        self.set_node_project_tags(uname, pt)
+
     def set_node_project_tags(self, uname, tags):
         self.gm.set_node_project_tags(uname, tags)
 
