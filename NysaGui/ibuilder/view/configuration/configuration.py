@@ -35,6 +35,7 @@ class Configuration(QWidget):
         self.actions = actions
         layout = QFormLayout()
 
+        #Project Name
         name_layout = QHBoxLayout()
         self.project_name_line = QLineEdit()
         self.current_project_name = ""
@@ -42,6 +43,15 @@ class Configuration(QWidget):
         update_project_name_button.clicked.connect(self.update_project_name_button)
         name_layout.addWidget(self.project_name_line)
         name_layout.addWidget(update_project_name_button)
+
+        #Unique Identification Number
+        image_id_layout = QHBoxLayout()
+        self.image_id_line = QLineEdit()
+        self.image_id_line.setText("0")
+        update_image_id = QPushbButton("Update Image ID")
+        update_image_id.clicked.connect(self.update_image_id)
+        image_id_layout.addWidget(self.image_id_line)
+        image_id_layout.addWidget(self.update_image_id)
 
         #Board Layout
         board_layout = QHBoxLayout()
@@ -83,6 +93,7 @@ class Configuration(QWidget):
         constraints_layout.addLayout(constraints_button_layout)
 
         layout.addRow("project name", name_layout)
+        layout.addRow("unique image ID", image_id_layout)
         layout.addRow("board select", board_layout)
         layout.addRow("bus type", bus_template_layout)
         layout.addRow("internal bindings", self.setup_internal_bind_widget())
@@ -126,6 +137,7 @@ class Configuration(QWidget):
         bus_template = self.bus_templates.currentText()
         self.status.Error("Bus Template Update Not Implemented Yet!")
         self.bus_templates.setCurrentIndex(0)
+        self.actions.update_bus.emit(bus_template)
         
     def update_board_clicked(self):
         board_name = self.board_list.currentText()
@@ -262,6 +274,13 @@ class Configuration(QWidget):
     def update_project_name_button(self):
         project_name = self.project_name_line.text()
         self.actions.update_project_name.emit(self.current_project_name, project_name)
+
+    def set_image_id(self, image_id):
+        self.image_id_line.setText(str(image_id))
+
+    def update_image_id(self):
+        image_id = int(self.image_id_line.text())
+        self.actions.update_image_id.emit(image_id)
 
 class InternalBindModel(QAbstractTableModel):
     def __init__(self, header_data=["Signal To", "Signal From"], parent=None, *args):

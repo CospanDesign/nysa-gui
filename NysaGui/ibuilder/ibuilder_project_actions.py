@@ -28,7 +28,9 @@ class IBuilderProjectActions(QtCore.QObject):
 
     #Configuration options
     update_project_name = QtCore.pyqtSignal(str, str, name = "ibuilder_configuration_update_name")
+    update_image_id = QtCore.pyqtSignal(int, name = "ibuilder_configuration_update_image_id")
     update_board = QtCore.pyqtSignal(str, name = "ibuilder_configuration_update_board")
+    update_bus = QtCore.pyqtSignal(str, name = "ibuilder_configuration_update_bus")
 
     add_constraint_file = QtCore.pyqtSignal(str, name = "ibuilder_configuration_add_const")
     remove_constraint_file = QtCore.pyqtSignal(str, name = "ibuilder_configuration_remove_const")
