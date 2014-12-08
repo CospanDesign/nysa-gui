@@ -121,7 +121,7 @@ class IBuilderController(QObject):
 
     def open(self):
         self.status.Important("Open a project")
-        initial_dir = gui_utils.get_nysa_user_base()
+        initial_dir = utils.get_nysa_user_base()
         initial_dir = os.path.join(initial_dir, "user_ibuilder_projects")
         path = initial_dir
         file_path = QFileDialog.getOpenFileName(None,

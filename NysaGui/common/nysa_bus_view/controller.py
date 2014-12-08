@@ -787,10 +787,11 @@ class Controller (QObject):
 
     def get_module_id(self, name):
         uname = self.model.get_unique_from_module_name(name)
-        return self.model.get_node_id(uname)
+        return QString(self.model.get_node_id(uname))
 
     def set_module_id(self, name, module_id):
         uname = self.model.get_unique_from_module_name(name)
+        module_id = int(module_id)
         self.model.set_node_id(uname, module_id)
 
 

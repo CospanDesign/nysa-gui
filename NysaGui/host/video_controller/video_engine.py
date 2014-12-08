@@ -95,7 +95,6 @@ class VideoEngine(QObject):
         self.s.Debug("Initialize the LCD Screen")
         #Initialize the LCD Controller
 
-
     def start(self):
         print "Engine Start"
         self.s.Debug("Starting")

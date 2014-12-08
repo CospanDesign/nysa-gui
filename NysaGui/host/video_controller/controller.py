@@ -35,8 +35,8 @@ from PyQt4 import QtCore
 from PyQt4 import QtGui
 
 from nysa.host.nysa import Nysa
-#from nysa.host.driver.lcd_SSD1963 import LCDSD1963
-from nysa.host.driver.lcd_ST7781R import LCDST7781R
+from nysa.host.driver.lcd_SSD1963 import LCDSSD1963
+#from nysa.host.driver.lcd_ST7781R import LCDST7781R
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -91,11 +91,11 @@ class Controller(NysaBaseController):
         self.v = View(self.actions, self.status)
         self.platform_name = platform[0]
         self.status.Verbose("Platform Name: %s" % self.platform_name)
-        self.lcd = LCDST7781R(platform[2], device_index, debug = True)
+        self.lcd = LCDSSD1963(platform[2], device_index, debug = True)
 
         if self.platform_name != "sim":
             self.lcd.setup()
-        
+            self.v.set_lcd(self.lcd)
 
     def color_test(self):
         if self.platform_name == "sim":
@@ -104,52 +104,40 @@ class Controller(NysaBaseController):
             
         width = self.lcd.get_image_width()
         height = self.lcd.get_image_height()
-        width = 320
-        height = 240
-        size = width * height * 4
+        #width = 480
+        #height = 272
+        #size = width * height * 2
+        size = width * height
         print "Image Width: %d" % width
         print "Image Height: %d" % height
         print "Total Size: %d" % size
         print "Total Size: 0x%08X" % size
         #Write a color to memory
-        red = 0x00FF0000
-        green = 0x0000FF00
-        blue = 0x000000FF
-        cyan = 0x0000FFF0
-        purple = 0x00F000FF
-        orange = 0x00FFF000
-        pink = 0x00FF7070
+        red    = 0xFF000000
+        green  = 0x00FF0000
+        blue   = 0x0000FF00
+        cyan   = 0x00FFF000
+        purple = 0xF000FF00
+        orange = 0xFFF00000
+        pink   = 0xFF707000
+        white  = 0xFFFFFFFF
 
-        color = purple
+        #color = white
+        color = 0x00000000
         image0 = Array('B')
-        for i in range(size / 2):
+        for i in range(size):
+            if (i % 480) == 0:
+                if (i / 480 / 256) > 0:
+                    color = 0
+                else: 
+                    color += 0x000100 << 8
             image0.append((color >> 24) & 0xFF)
             image0.append((color >> 16) & 0xFF)
             image0.append((color >> 8) & 0xFF)
             image0.append(color & 0xFF)
 
 
-        pos = 0x020
-        data = self.lcd.read_command(pos, 2)
-        print "PRE: Data: %s" % data
-        self.lcd.write_command(pos, Array('B', [0x00, 120]))
-        data = self.lcd.read_command(pos, 2)
-        print "Set position: Data: %s" % data
-        image0 = Array('B')
-        for i in range(size / 2):
-            image0.append((color >> 24) & 0xFF)
-            image0.append((color >> 16) & 0xFF)
-            image0.append((color >> 8) & 0xFF)
-            image0.append(color & 0xFF)
-
-        print "After Write"
-        data = self.lcd.read_command(pos, 2)
-        print "Data: %s" % data
-
-
-        return
-
-        color = purple
+        color = pink
         image1 = Array('B')
         for i in range(size):
             image1.append((color >> 24) & 0xFF)
@@ -157,18 +145,15 @@ class Controller(NysaBaseController):
             image1.append((color >> 8) & 0xFF)
             image1.append(color & 0xFF)
 
-
-        
-        color = pink
+        color = purple
         image2 = Array('B')
         for i in range(size):
             image2.append((color >> 24) & 0xFF)
             image2.append((color >> 16) & 0xFF)
             image2.append((color >> 8) & 0xFF)
             image2.append(color & 0xFF)
-
-
-        color = orange
+        
+        color = red
         image3 = Array('B')
         for i in range(size):
             image3.append((color >> 24) & 0xFF)
@@ -177,32 +162,26 @@ class Controller(NysaBaseController):
             image3.append(color & 0xFF)
 
 
+        color = orange
+        image4 = Array('B')
+        for i in range(size):
+            image4.append((color >> 24) & 0xFF)
+            image4.append((color >> 16) & 0xFF)
+            image4.append((color >> 8) & 0xFF)
+            image4.append(color & 0xFF)
+
+        print "Writing first image..."
         self.lcd.dma_writer.write(image0)
+        '''
+        #print "Wrote first image"
         self.lcd.dma_writer.write(image1)
+        #print "Wrote second image"
         self.lcd.dma_writer.write(image2)
+        #print "Wrote third image"
         self.lcd.dma_writer.write(image3)
-
-        #print "Read Command Register"
-        #command_register = self.lcd.read_command(0x01, 2)
-
-        #print "Command Register: ",
-        #for v in command_register:
-        #    print "0x%02X" % v,
-
-        #print ""
-
-        #print "Write Command Register"
-        #self.lcd.write_command(0x01, Array('B', [0x01, 0x00]))
-
-
-        #command_register = self.lcd.read_command(0x01, 2)
-
-        #print "Command Register: ",
-        #for v in command_register:
-        #    print "0x%02X" % v,
-
-        #print ""
-
+        #print "Wrote forth image"
+        self.lcd.dma_writer.write(image4)
+        '''
 
     def start_standalone_app(self, platform, device_index, status, debug = False):
         app = QApplication (sys.argv)
@@ -237,12 +216,11 @@ class Controller(NysaBaseController):
 
     @staticmethod
     def get_device_sub_id():
-        return 3
+        return 1
 
     @staticmethod
     def get_device_unique_id():
         return None
-
 
 def main(argv):
     #Parse out the commandline arguments
