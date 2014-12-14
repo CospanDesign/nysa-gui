@@ -97,7 +97,7 @@ class Controller(NysaBaseController):
 
     def _initialize(self, platform):
         self.v = CameraWidget(self.status, self.actions)
-        self.camera = SFCamera(platform[2], camera_id = 2, i2c_id = 1)
+        self.camera = SFCamera(platform[2], camera_id = 0, i2c_id = 1)
         #self.camera_util = CameraUtils(self.camera, self.actions, self.status)
         self.engine = camera_engine.CameraEngine(self.camera, self.actions, self.status)
         #self.camera_util.setup_camera()
@@ -105,16 +105,12 @@ class Controller(NysaBaseController):
     def start_standalone_app(self, platform, debug = False):
         app = QApplication (sys.argv)
         self.status = status.Status()
-        if debug:
-            self.status.set_level(status.StatusLevel.VERBOSE)
-        else:
-            self.status.set_level(status.StatusLevel.INFO)
-
         self._initialize(platform)
         sys.exit(app.exec_())
 
     def start_tab_view(self, platform, status):
         self.status = status
+        self.status.Verbose("Starting Sparkfun Video")
         self._initialize(platform)
 
     def get_view(self):

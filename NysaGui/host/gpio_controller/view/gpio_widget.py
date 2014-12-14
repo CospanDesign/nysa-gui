@@ -146,7 +146,7 @@ class GPIOWidget(QWidget):
         layout.addWidget(self.cv, 0, STATUS_POS, count, 1)
         self.setLayout(layout)
 
-        self.show()
+        
 
     def direction_clicked(self, index):
         self.direction_changed(index)
@@ -202,7 +202,6 @@ class GPIOWidget(QWidget):
             btn.setText("/")
         else:
             btn.setText("\\")
-
 
     def add_register(self, index, name, initial_value = 0):
         self.cv.add_register(index, name, initial_value)

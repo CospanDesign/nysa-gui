@@ -86,7 +86,7 @@ class StepperMotorWidget(QWidget):
         l.addWidget(self.view)
         self.setLayout(l)
 
-        self.show()
+        
         self.actions.stepper_update_actual_angle.connect(self.update_actual_angle)
 
     def update_actual_angle(self, angle):

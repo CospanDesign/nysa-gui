@@ -86,7 +86,7 @@ class View(QWidget):
         interface_layout.addWidget(self.side_pane)
 
         self.setLayout(layout)
-        self.show()
+        
 
     def load_callback(self):
         print "Loading file: %s" % self.sl.get_filename()

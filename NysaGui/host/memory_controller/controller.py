@@ -82,6 +82,9 @@ class ReaderThread(QtCore.QThread):
         #Perform Memory Test
         self.mutex.lock()
         result = "Error"
+        result = self.func()
+        self.mutex.unlock()
+        '''
         try:
             result = self.func()
         except TypeError as ex:
@@ -94,6 +97,8 @@ class ReaderThread(QtCore.QThread):
             print "Error while executing memory test: %s" % sys.exc_info()[0]
         finally:
             self.mutex.unlock()
+        '''
+
         self.memory_actions.memory_read_finished.emit(result)
         print "Finished with thread"
 

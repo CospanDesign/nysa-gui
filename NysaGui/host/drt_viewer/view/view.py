@@ -69,7 +69,7 @@ class View(QWidget):
 
         #self.setLayout(layout)
         self.setLayout(main_layout)
-        #self.show()
+        #
 
     def append_text(self, text):
         self.text += text

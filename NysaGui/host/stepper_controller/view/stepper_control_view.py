@@ -152,5 +152,5 @@ class StepWidget(QWidget):
         layout.addWidget(label)
         layout.addWidget(self.forward_step)
         self.setLayout(layout)
-        self.show()
+        
 

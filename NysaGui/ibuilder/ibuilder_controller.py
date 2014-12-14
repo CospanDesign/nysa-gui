@@ -36,6 +36,7 @@ from PyQt4.QtCore import *
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)))
 
 from nysa.ibuilder.lib import utils
+from nysa.common import site_manager
 from NysaGui.common.gui_utils import create_hash
 from ibuilder_project import IBuilderProject
 from view.ibuilder_view import IBuilderView
@@ -121,8 +122,9 @@ class IBuilderController(QObject):
 
     def open(self):
         self.status.Important("Open a project")
-        initial_dir = utils.get_nysa_user_base()
-        initial_dir = os.path.join(initial_dir, "user_ibuilder_projects")
+        initial_dir = utils.get_user_ibuilder_project_dir()
+        #initial_dir = utils.get_nysa_user_base()
+        #initial_dir = os.path.join(initial_dir, "user_ibuilder_projects")
         path = initial_dir
         file_path = QFileDialog.getOpenFileName(None,
                                         caption = "Select a project to open",

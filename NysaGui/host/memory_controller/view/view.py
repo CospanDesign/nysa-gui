@@ -53,7 +53,7 @@ class View(QWidget):
         layout.addWidget(btn)
 
         self.setLayout(layout)
-        self.show()
+        
 
     def add_test(self, name, default_enabled, func):
         self.mtw.add_row(name, default_enabled, func)

@@ -134,7 +134,7 @@ class I2CWidget(QWidget):
         layout.addWidget(self.control_view)
 
         self.setLayout(layout)
-        self.show()
+        
 
         self.actions.i2c_update_read_view.connect(self.update_read_view)
         self.init_read_data = None

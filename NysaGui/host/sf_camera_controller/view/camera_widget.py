@@ -38,7 +38,4 @@ class CameraWidget(QWidget):
         layout.addWidget(SFCameraControlView(status, actions))
 
         self.setLayout(layout)
-        self.show()
-
-
 

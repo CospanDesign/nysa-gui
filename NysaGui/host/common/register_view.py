@@ -90,7 +90,7 @@ class RegisterView(QWidget):
         self.pos = 0
 
         self.setLayout(layout)
-        self.show()
+        
 
     def add_register(self, index, name, initial_value = 0):
         r = self._create_register_controller()

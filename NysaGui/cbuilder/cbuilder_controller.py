@@ -26,27 +26,26 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
-import collections
 
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
 
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)))
-
-from NysaGui.common.gui_utils import create_hash
 from view.cbuilder_view import CBuilderView
+from cbuilder_actions import Actions
+from core_wizard import CoreWizard
+from nysa.cbuilder.scripts.cbuilder_factory import CBuilderFactory
 
 class CBuilderController(QObject):
     def __init__(self, actions, status):
         super(CBuilderController, self).__init__()
         self.nysa_gui_actions = actions
-        self.actions = actions
-        #self.actions = Actions()
+        self.actions = Actions()
         self.status = status
         self.view = CBuilderView(self.actions, self.status)
         self.nysa_gui_actions.cbuilder_save.connect(self.save)
         self.nysa_gui_actions.cbuilder_open.connect(self.open)
+        self.actions.cbuilder_new_core.connect(self.new_core_wizard)
+        self.wizard = None
 
     def get_view(self):
         return self.view
@@ -56,3 +55,29 @@ class CBuilderController(QObject):
 
     def open(self):
         print "cbuilder open"
+
+    def new_core_wizard(self):
+        
+        self.wizard = CoreWizard(self.actions, self.status)
+        self.wizard.accepted.connect(self.wizard_accepted)
+        self.wizard.go()
+
+    def wizard_accepted(self):
+        cb = {}
+        cb["name"] = self.wizard.get_core_name()
+        cb["drt_id"] = self.wizard.get_slave_id()
+        cb["drt_sub_id"] = self.wizard.get_slave_sub_id()
+        cb["drt_flags"] = 1
+        cb["drt_size"] = 0
+        cb["type"] = self.wizard.get_bus_type()
+        cb["bus_type"] = "slave"
+        cb["type"] = "wishbone"
+        cb["subtype"] = "peripheral"
+        output_dir = self.wizard.get_output_dir()
+        cb["base"] = os.path.abspath(output_dir)
+        dma_reader = self.wizard.is_dma_reader()
+        dma_writer = self.wizard.is_dma_writer()
+        self.status.Important("Generating Slave!")
+        cbuilder = CBuilderFactory(cb)
+        self.status.Important("Generated Slave at: %s" % cb["base"])
+

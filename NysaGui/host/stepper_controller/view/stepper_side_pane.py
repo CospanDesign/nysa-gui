@@ -96,7 +96,7 @@ class StepperSidePane(QWidget):
         layout.addWidget(self.rv, 1, 0, 1, 2)
 
         self.setLayout(layout)
-        self.show()
+        
         self.actions.stepper_update_register.connect(self.update_register)
 
 

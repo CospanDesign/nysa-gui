@@ -19,7 +19,7 @@
 """ nysa interface
 """
 
-__author__ = 'email@example.com (name)'
+__author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
@@ -125,15 +125,12 @@ class View(QWidget):
 
         open = QtGui.QAction("&Open", self)
         self.connect(open, QtCore.SIGNAL("triggered()"), self.OpenFile)
-        exit = QtGui.QAction("&Exit", self)
-        self.connect(exit, QtCore.SIGNAL("triggered()"), sys.exit)
 
         menubar = QtGui.QMenuBar()
         menubar.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
         filemenu = menubar.addMenu("&File")
         filemenu.addAction(open)
         filemenu.addSeparator()
-        filemenu.addAction(exit)
         self.label = QLabel("")
         self.label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Maximum)
         
@@ -156,7 +153,6 @@ class View(QWidget):
     def camera_play(self):
         print "play the camera"
         self.videoframe.camera_go()
-
 
     def PlayPause(self):
         """Toggle play/pause status
@@ -254,36 +250,24 @@ class VideoWorker(QObject):
 
         self.stop = False
 
-
-
     @QtCore.pyqtSlot(float)
     def process(self, timer):
-        print "process"
+
         self.stop = False
-        
-        print "timer: %f" % timer
         while (not self.stop):
-            #print "next image"
-            #time.sleep(timer)
-            #QtCore.QMetaObject.invokeMethod(self.video_display,
-            #                                "repaint",
-            #                                QtCore.Qt.QueuedConnection)
             ret, frame = self.video_capture.read()
-            frame  = cv2.resize(frame, dsize=(WIDTH, HEIGHT))  
             if ret == False:
                 self.stop = True
                 break
+            frame  = cv2.resize(frame, dsize=(WIDTH, HEIGHT))  
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGRA)
             if self.lcd is not None:
-                #frame3 = cv2.cvtColor(frame, cv2.COLOR_RGB2RGBA)
-                frame3 = cv2.cvtColor(frame, cv2.COLOR_RGB2BGRA)
-                data = Array('B', frame3.tostring())
+                data = Array('B', frame.tostring())
                 self.lcd.dma_writer.write(data)
             QtCore.QMetaObject.invokeMethod(self.video_display,
                                             "update_paint",
                                             QtCore.Qt.QueuedConnection,
                                             Q_ARG(object, frame))
-
-        self.stop = False
 
 class VideoDisplay(QWidget):
     def __init__(self):

@@ -45,7 +45,7 @@ class UARTWidget(QWidget):
         layout.addWidget(self.te)
         layout.addWidget(self.ucv)
         self.setLayout(layout)
-        self.show()
+        
 
     def append_text(self, text):
         #self.te.append(text)

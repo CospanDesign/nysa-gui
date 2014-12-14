@@ -154,7 +154,7 @@ class I2CControlView(QWidget):
         layout.addLayout(buttons_layout,              3, 0, 1, 2)
         self.actions.i2c_execute_status_update.connect(self.status_update)
         self.setLayout(layout)
-        self.show()
+        
 
     def status_update(self, status):
         self.execute_status.setText(status)

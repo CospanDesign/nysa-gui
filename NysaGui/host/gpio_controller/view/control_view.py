@@ -135,7 +135,7 @@ class ControlView(QWidget):
 
         #Set the layout
         self.setLayout(layout)
-        self.show()
+        
 
     def int_poll_clicked(self):
         if self.int_poll_btn.isChecked():

@@ -91,7 +91,7 @@ class Controller(NysaBaseController):
         self.v = View(self.actions, self.status)
         self.platform_name = platform[0]
         self.status.Verbose("Platform Name: %s" % self.platform_name)
-        self.lcd = LCDSSD1963(platform[2], device_index, debug = True)
+        self.lcd = LCDSSD1963(platform[2], device_index, debug = False)
 
         if self.platform_name != "sim":
             self.lcd.setup()

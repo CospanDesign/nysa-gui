@@ -70,14 +70,14 @@ class CameraEngineWorker(QObject):
                     width,
                     height):
 
-        print "Initialize camera_engine_worker"
+        #print "Initialize camera_engine_worker"
         self.camera = camera
         self.actions = actions
         self.width = width
         self.height = height
         self.image_format = None
         self.status = clstatus.Status()
-        self.status.set_level(clstatus.StatusLevel.VERBOSE)
+        #self.status.set_level(clstatus.StatusLevel.VERBOSE)
         #Connect to the interrupt of device
         #self.camera.register_interrupt_callback(self.process)
 
@@ -92,7 +92,7 @@ class CameraEngineWorker(QObject):
             self.image_format = QImage.Format_RGB16
 
         data = self.camera.dma_reader.async_read()
-        print "Length of data: %d" % len(data)
+        #print "Length of data: %d" % len(data)
 
         qimage = QImage(data, self.width, self.height, self.image_format)
         self.actions.sf_camera_read_ready.emit(qimage)
@@ -123,8 +123,8 @@ class CameraEngine(QObject):
                                         QtCore.Q_ARG(int, self.camera.get_height()));
         #self.setup_camera()
         #self.set_size(self.camera.get_width(), self.camera.get_height())
-        print "Height: %d" % self.camera.get_height()
-        print "Width : %d" % self.camera.get_width()
+        self.status.Debug("Height: %d" % self.camera.get_height())
+        self.status.Debug("Width : %d" % self.camera.get_width())
 
     def setup_camera(self):
         self.status.Debug("Initialize the camera")
@@ -142,7 +142,7 @@ class CameraEngine(QObject):
         #self.status.Debug("Width : %d" % width)
 
     def start(self):
-        print "Engine start!"
+        #print "Engine start!"
         self.status.Debug("Starting")
         #Reset any interrupts
         self.camera.enable_camera(True)
@@ -177,7 +177,7 @@ class CameraEngine(QObject):
 
     '''
     def dma_reader_callback(self):
-        print "camera engine callback"
+        #print "camera engine callback"
         QtCore.QMetaObject.invokeMethod(self.engine_worker,
                                         "process",
                                         QtCore.Qt.QueuedConnection)

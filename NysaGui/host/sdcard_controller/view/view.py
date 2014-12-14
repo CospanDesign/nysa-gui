@@ -45,7 +45,7 @@ class View(QWidget):
         #DEMO WIDGET END
 
         self.setLayout(layout)
-        self.show()
+        
 
     #DEMO WIDGET START
     def append_text(self, text):

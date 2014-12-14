@@ -29,6 +29,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 class CBuilderView(QWidget):
+
     def __init__(self, actions, status):
         super (CBuilderView, self).__init__()
         layout = QVBoxLayout()
@@ -36,6 +37,10 @@ class CBuilderView(QWidget):
         self.status = status
         self.actions = actions
         self.menu_actions = []
+        #Menu Actions
+        self.new_core_action = QAction("New Core Wizard", self)
+        self.new_core_action.triggered.connect(self.actions.cbuilder_new_core)
+        self.menu_actions.append(self.new_core_action)
 
         #Place Holder
         l = QLabel("CBuilder")
