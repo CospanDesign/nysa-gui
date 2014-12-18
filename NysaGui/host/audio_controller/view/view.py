@@ -93,6 +93,7 @@ class View(QWidget):
         box_layout.addWidget(self.test_1khz_button)
 
         layout.addLayout(name_layout)
+        layout.addWidget(QLabel("Converting to raw progress..."))
         layout.addWidget(self.convert_progress)
         layout.addWidget(self.position_slider)
         layout.addLayout(box_layout)
@@ -145,5 +146,8 @@ class View(QWidget):
         position = position * 1.0
         max_position = (self.position_slider.maximum() * 1.0)
         position = int(position * max_position)
-        self.position_slider.setValue(position * 1000)
+        print "Max Position: %d" % max_position
+        print "Position: %d" % position
+        #self.position_slider.setValue(position * 100)
+        self.position_slider.setValue(position)
 

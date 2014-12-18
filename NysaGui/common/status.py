@@ -75,7 +75,7 @@ class _ClStatus(object):
         return True
 
     def __init__(self):
-        super(_Status, self).__init__()
+        super(_ClStatus, self).__init__()
         self.level = StatusLevel.INFO
 
     def Verbose (self, text):

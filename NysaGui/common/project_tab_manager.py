@@ -66,7 +66,6 @@ class ProjectTabManager(QObject):
         self.tab_view.addTab(widget, icon, name)
         self.tabs.append([name, widget])
 
-
     def remove_tab(self, name):
         t = None
         for i in range(self.tab_view.count()):

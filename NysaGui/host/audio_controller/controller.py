@@ -29,6 +29,7 @@ import sys
 import wave
 import struct
 import argparse
+import time
 from Queue import Queue
 
 from array import array as Array
@@ -52,16 +53,16 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
+from common import status as sts 
+
 from nysa_base_controller import NysaBaseController
 from audio_actions import AudioActions
 from view.view import View
 
 
 from nysa.common import site_manager
-from nysa.common import status
 from nysa.host import platform_scanner
 from nysa.host.platform_scanner import PlatformScanner
-import status
 
 #Module Defines
 n = str(os.path.split(__file__)[1])
@@ -114,17 +115,20 @@ class Controller(NysaBaseController):
                                  Q_ARG(object, self.actions))
 
         self.actions.set_audio_file.connect(self.set_audio_file)
+        self.i2s.enable_i2s(True)
+        self.i2s.enable_interrupt(True)
         self.set_audio_file("/home/cospan/sandbox/wave_file.wav")
 
     def start_standalone_app(self, platform, device_index, status, debug = False):
         app = QApplication (sys.argv)
         main = QMainWindow()
 
-        self.status = status.Status()
+        #self.status = status.Status()
+        self.status = status
         if debug:
-            self.status.set_level(status.StatusLevel.VERBOSE)
+            self.status.set_level(sts.StatusLevel.VERBOSE)
         else:
-            self.status.set_level(status.StatusLevel.INFO)
+            self.status.set_level(sts.StatusLevel.INFO)
         self.status.Verbose("Starting Standalone Application")
         self._initialize(platform, device_index)
         main.setCentralWidget(self.v)
@@ -195,7 +199,6 @@ class Controller(NysaBaseController):
                                  Qt.QueuedConnection,
                                  Q_ARG(position))
 
-
     @pyqtSlot(float)
     def update_audio(self, position):
         print "Updating audio"
@@ -233,6 +236,7 @@ class AudioProcessor(QObject):
         sample_width = wf.getsampwidth()
 
         divisor = 8
+        #divisor = 100
         self.i2s.set_clock_divisor(divisor)
         self.status.Verbose("Setting divisor: %d" % self.i2s.get_clock_divisor())
         wf.close()
@@ -306,14 +310,17 @@ class AudioProcessor(QObject):
                     pos = int(100 * (1.0 * i) / (1.0 * total_size))
                     self.actions.convert_audio_update.emit(pos)
                     #self.status.Debug("converted %d%%" % pos)
+                    self.status.Debug("Thread Name: %s" % self.thread().objectName())
+                    #time.sleep(.1)
                     audio_data = Array('B')
+                lr = not lr
 
         if chunk_pos > 0:
             self.queue.put(audio_data)
             self.status.Debug("Processed and sent chunk 100%")
         self.actions.convert_audio_update.emit(100)
 
-
+#Audio Worker
 class AudioWorker(QObject):
     def __init__(self):
         super(AudioWorker, self).__init__()
@@ -324,12 +331,18 @@ class AudioWorker(QObject):
         self.pause = False
         self.controller = controller
         self.status = status
+        self.thread().setObjectName("Worker thread")
         self.audio_queue = Queue()
         self.audio_data = []
         self.status.Info("Intialize audio worker thread")
         self.i2s = i2s
         self.actions = actions
+        self.processing_thread = QThread()
+        self.processing_thread.setObjectName("Processor thread")
+        self.processing_thread.start()
         self.audio_processor = AudioProcessor(self, self.status, i2s, self.audio_queue, actions)
+        self.audio_processor.moveToThread(self.processing_thread)
+
         self.actions.update_total_chunk_count.connect(self.update_total_chunk_count)
         self.actions.convert_audio_update.connect(self.convert_audio_update)
         self.chunk_count = 0
@@ -343,8 +356,8 @@ class AudioWorker(QObject):
                                  "initiate_process",
                                  Qt.QueuedConnection,
                                  Q_ARG(object, filename))
-        self.i2s.enable_i2s(True)
-        self.i2s.enable_interrupt(True)
+        #self.i2s.enable_i2s(True)
+        #self.i2s.enable_interrupt(True)
 
     def update_total_chunk_count(self, chunk_count):
         self.position = 0
@@ -352,9 +365,11 @@ class AudioWorker(QObject):
         self.status.Debug("Updated chunk count to: %d" % self.total_chunk_count)
 
     def convert_audio_update(self, pos):
-        audio_data = self.audio_queue.get()
-        self.status.Verbose("Adding chunk with length: 0x%08X" % len(audio_data))
-        self.audio_data.append(audio_data)
+        #audio_data = self.audio_queue.get()
+        #self.status.Verbose("Adding chunk with length: 0x%08X" % len(audio_data))
+        #self.status.Verbose("Adding chunk with length: 0x%08X" % len(self.audio_queue))
+        self.status.Verbose("Adding chunk with length")
+        #self.audio_data.append(audio_data)
 
     @pyqtSlot(object)
     def set_i2s(self, i2s):
@@ -387,6 +402,7 @@ class AudioWorker(QObject):
     @pyqtSlot()
     def play_audio(self):
         print "playing audio!"
+        self.status.Debug("Thread Name: %s" % self.thread().objectName())
         self.stop = False
         if self.total_chunk_count == 0:
             self.status.Error("No data to send")
@@ -394,13 +410,15 @@ class AudioWorker(QObject):
             return
 
         if self.position >= self.total_chunk_count:
-            self.stop = True
             self.status.Info("Finished playing music")
+            self.stop = True
             return
 
         if self.pause:
+            print "pause!"
             return
 
+        '''
         if self.position > len(self.audio_data):
             self.status.Warning("Position requested is greater than avaialble data")
             p = int(100 * (1.0 * self.position) / (1.0 * self.total_chunk_count))
@@ -411,13 +429,19 @@ class AudioWorker(QObject):
             self.position = len(self.audio_data) - 1
             self.status.Warning("\t%d > %d")
             self.status.Warning("\tSetting position to the last block")
+        '''
 
         while self.position < self.total_chunk_count:
+            self.status.Debug("Writing Position: %d" % self.position)
             if self.stop:
                 return
-            self.i2s.write_audio_data(self.audio_data[self.position])
+            #self.i2s.write_audio_data(self.audio_data[self.position])
+            self.i2s.write_audio_data(self.audio_queue.get())
+            #self.i2s.write_audio_data(self.audio_data)
             val = ((1.0 * self.position) / (1.0 * self.total_chunk_count))
+            print "value: %f" % val
             self.controller.update_audio(val)
+            self.position = self.position + 1
 
         '''
         mb = self.i2s.get_available_memory_blocks()
@@ -460,8 +484,9 @@ class AudioWorker(QObject):
 
 def main(argv):
     #Parse out the commandline arguments
-    s = status.Status()
-    s.set_level(status.StatusLevel.INFO)
+    #s = status.Status()
+    s = sts.ClStatus()
+    s.set_level(sts.StatusLevel.INFO)
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
             description = DESCRIPTION,
@@ -485,7 +510,7 @@ def main(argv):
     plat = ["", None, None]
 
     if args.debug:
-        s.set_level(status.StatusLevel.VERBOSE)
+        s.set_level(sts.StatusLevel.VERBOSE)
         s.Debug("Debug Enabled")
         debug = True
 
@@ -546,7 +571,7 @@ def main(argv):
     if dev_index is None:
         sys.exit("Failed to find an I2S Device")
 
-    c.start_standalone_app(plat, dev_index, status, debug)
+    c.start_standalone_app(plat, dev_index, s, debug)
 
 if __name__ == "__main__":
     main(sys.argv)

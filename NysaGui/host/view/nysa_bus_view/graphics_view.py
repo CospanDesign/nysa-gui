@@ -43,7 +43,7 @@ p = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                             os.pardir))
 
 p = os.path.abspath(p)
-print "Visual Graph Path: %s" % p
+#print "Visual Graph Path: %s" % p
 sys.path.append(p)
 from NysaGui.common.pvg.visual_graph.graphics_view import GraphicsView as gv
 

@@ -75,6 +75,7 @@ class ScriptManager(QObject):
         from NysaGui.host.uart_console.controller import Controller as uart_controller
         from NysaGui.host.stepper_controller.controller import Controller as stepper_controller
         from NysaGui.host.video_controller.controller import Controller as video_controller
+        from NysaGui.host.audio_controller.controller import Controller as audio_controller
         #print "DIR: %s" % (str(dir(self)))
         #self.status.Debug("Directory: %s" % str(dir(self)))
 
@@ -85,7 +86,6 @@ class ScriptManager(QObject):
             #print "Adding: %s" % str(script)
             self.status.Important("Adding: %s" % str(script))
             self.insert_script(script)
-
 
     def insert_script(self, script):
         #Go through the script to see what it interfaces with

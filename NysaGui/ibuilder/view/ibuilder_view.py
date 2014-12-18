@@ -25,8 +25,8 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from project_tree import ProjectTree
-from project_tab_manager import ProjectTabManager
+from NysaGui.common.project_tree import ProjectTree
+from NysaGui.common.project_tab_manager import ProjectTabManager
 
 class IBuilderView(QWidget):
     def __init__(self, gui_actions, actions, status):
@@ -67,7 +67,7 @@ class IBuilderView(QWidget):
         layout.addWidget(self.main_splitter)
         self.setLayout(layout)
         #self.setFocusPolicy(Qt.WheelFocus)
-        self.show()
+        #self.show()
 
     def get_menu_actions(self):
         return self.menu_actions

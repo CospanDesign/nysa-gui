@@ -42,10 +42,13 @@ from NysaGui.common.tree_table.tree_table import TreeTableModel
 from NysaGui.common.tree_table.tree_table import BranchNode
 from NysaGui.common.tree_table.tree_table import LeafNode
 
+
+'''
 from designer.designer import Designer
 from builder.builder import Builder
 from constraints.constraints import Constraints
 from configuration.configuration import Configuration
+'''
 
 CONFIG_STATUS_DICT = {
     "ready":QColor(0xFF, 0xFF, 0xFF),

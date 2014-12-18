@@ -28,6 +28,9 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from NysaGui.common.project_tree import ProjectTree
+from NysaGui.common.project_tab_manager import ProjectTabManager
+
 class CBuilderView(QWidget):
 
     def __init__(self, actions, status):
@@ -42,14 +45,28 @@ class CBuilderView(QWidget):
         self.new_core_action.triggered.connect(self.actions.cbuilder_new_core)
         self.menu_actions.append(self.new_core_action)
 
-        #Place Holder
-        l = QLabel("CBuilder")
-        l.setObjectName("cbuilder")
-        layout.addWidget(l)
-        #Set the layout of the widget
+        self.project_tree = ProjectTree(self.actions, self.status)
+        self.tab_view = QTabWidget()
+        self.tab_view.setSizePolicy(QSizePolicy.Preferred,
+                                    QSizePolicy.Preferred)
+
+        self.tm = ProjectTabManager(self.tab_view, self.actions, self.status)
+
+
+
+        self.main_splitter = QSplitter(Qt.Horizontal)
+        self.main_splitter.addWidget(self.project_tree)
+        self.main_splitter.addWidget(self.tab_view)
+
+        self.main_splitter.setStretchFactor(1, 0)
+        self.main_splitter.setSizePolicy(QSizePolicy.Preferred,
+                                         QSizePolicy.MinimumExpanding)
+
+        layout.addWidget(self.main_splitter)
         self.setLayout(layout)
 
     def get_menu_actions(self):
         return self.menu_actions
 
-
+    def add_project(self, project):
+        self.project_tree.add_project(project)

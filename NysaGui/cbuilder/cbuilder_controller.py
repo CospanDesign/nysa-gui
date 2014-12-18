@@ -34,6 +34,9 @@ from view.cbuilder_view import CBuilderView
 from cbuilder_actions import Actions
 from core_wizard import CoreWizard
 from nysa.cbuilder.scripts.cbuilder_factory import CBuilderFactory
+from nysa.ibuilder.lib import utils
+
+from cbuilder_project import CBuilderProject
 
 class CBuilderController(QObject):
     def __init__(self, actions, status):
@@ -46,6 +49,7 @@ class CBuilderController(QObject):
         self.nysa_gui_actions.cbuilder_open.connect(self.open)
         self.actions.cbuilder_new_core.connect(self.new_core_wizard)
         self.wizard = None
+        self.search_for_projects()
 
     def get_view(self):
         return self.view
@@ -81,3 +85,23 @@ class CBuilderController(QObject):
         cbuilder = CBuilderFactory(cb)
         self.status.Important("Generated Slave at: %s" % cb["base"])
 
+    def search_for_projects(self):
+        path = utils.get_user_cbuilder_project_dir()
+        self.status.Info("Searching for projects...")
+        dirs = self._search_for_projects(path)
+        for d in dirs:
+            self.status.Info("Found: %s" % d)
+            name = os.path.split(d)[-1]
+            cp = CBuilderProject(self.actions, self.status, name, d)
+            self.view.add_project(cp)
+
+    def _search_for_projects(self, base_dir):
+        command_file = "command_file.txt"
+        found_dirs = []
+        for root, dirs, names in os.walk(base_dir):
+            if command_file in names:
+                found_dirs.append(os.path.abspath(root))
+            for d in dirs:
+                found_dirs.extend(self._search_for_projects(d))
+        return found_dirs
+                
