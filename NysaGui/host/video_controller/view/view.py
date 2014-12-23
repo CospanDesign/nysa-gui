@@ -40,7 +40,7 @@ try:
     import numpy as np
     import cv2
     CV2_FOUND = True
-except ModuleNotFound:
+except Exception:
     CV2_FOUND = False
 
 
