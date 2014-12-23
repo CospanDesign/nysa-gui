@@ -21,19 +21,14 @@
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
-
 import sys
 import os
-import argparse
-import collections
 
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)))
-
-from nysa.host.platform_scanner import PlatformScanner
 
 from NysaGui.common.status import Status
 from NysaGui.common.status import StatusLevel
@@ -46,15 +41,10 @@ from NysaGui.cbuilder.cbuilder_controller import CBuilderController
 from view.main_view import MainForm
 from actions import Actions
 
-from NysaGui.common.gui_utils import create_hash
-
-debug = False
 
 class NysaGui(QObject):
-
-    def __init__(self, debug = False):
-        super (NysaGui, self).__init__()
-
+    def __init__(self, debug=False):
+        super(NysaGui, self).__init__()
         app = QApplication(sys.argv)
         QThread.currentThread().setObjectName("main")
         self.actions = Actions()
@@ -64,7 +54,7 @@ class NysaGui(QObject):
         if debug:
             self.status.set_level(StatusLevel.VERBOSE)
 
-        #Get Host Controller
+        # Get Host Controller
         self.hc = HostController(self.actions, self.status)
         hv = self.hc.get_view()
         #Get Ibuilder Controller
@@ -74,16 +64,18 @@ class NysaGui(QObject):
         #self.cc = CBuilderController(self.actions, self.status)
         self.cc = CBuilderController(self.actions, self.status)
         cv = self.cc.get_view()
-            
+
         self.mf = MainForm(self.actions, self.status, self.xmsgs, hv, iv, cv)
 
-        self.status.Debug( "Created main form!")
+        self.status.Debug("Created main form!")
         self.hc.refresh_platform_tree()
         #sys.exit(app.exec_())
         app.exec_()
 
-def main(argv = None):
-    n = NysaGui(debug = True)
+
+def main(argv=None):
+    n = NysaGui(debug=True)
+
 
 if __name__ == "__main__":
     main(sys.argv)

@@ -38,7 +38,6 @@ p = os.path.abspath(p)
 sys.path.append(p)
 '''
 
-from NysaGui.common.tree_table.tree_table import TreeTableModel
 from NysaGui.common.tree_table.tree_table import BranchNode
 from NysaGui.common.tree_table.tree_table import LeafNode
 
@@ -51,11 +50,11 @@ from configuration.configuration import Configuration
 '''
 
 CONFIG_STATUS_DICT = {
-    "ready":QColor(0xFF, 0xFF, 0xFF),
+    "ready": QColor(0xFF, 0xFF, 0xFF),
     "edit me": QColor(0xFF, 0x99, 0x00),
     "error": QColor(0xFF, 0x00, 0x00),
-    "warning":QColor(0xFF, 0x99, 0x00),
-    "busy":QColor(0xFF, 0x00, 0xFF)
+    "warning": QColor(0xFF, 0x99, 0x00),
+    "busy": QColor(0xFF, 0x00, 0xFF)
 }
 
 def enum(*sequential, **named):
