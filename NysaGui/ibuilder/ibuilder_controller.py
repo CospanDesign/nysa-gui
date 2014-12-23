@@ -28,6 +28,8 @@ import sys
 import os
 import json
 import collections
+from os import listdir
+from os.path import isfile
 
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
@@ -54,13 +56,24 @@ class IBuilderController(QObject):
         self.project_tree = self.view.get_project_tree()
 
         #XXX: Demo Stuff!
-        self.new_project()
+        ps = self.scan_for_projects()
+        if len(ps) == 0:
+            self.new_project()
+        for p in ps:
+            proj = json.load(open(p, 'r'))
+            name = proj["PROJECT_NAME"]
+            print "project path: %s" % p
+            print "project name: %s" % name
+            
+            self.add_project(name, p)
+
         self.project_tree.select_first_item()
         #XXX: End Demo Stuff!
         self.actions.ibuilder_new_project.connect(self.new_project)
         self.gui_actions.ibuilder_save.connect(self.save)
         self.gui_actions.ibuilder_open.connect(self.open)
         self.actions.update_project_name.connect(self.update_project_name)
+        #print "projects: %s" % str(p)
 
     def update_project_name(self, from_name, to_name):
         print "Update project %s to %s" % (from_name, to_name)
@@ -92,6 +105,16 @@ class IBuilderController(QObject):
                 continue
         #Create a populated new project
         self.add_project(new_project_name)
+
+    def scan_for_projects(self):
+        path = utils.get_user_ibuilder_project_dir()
+        self.status.Info("Searching for ibuilder projects...")
+        fs = []
+        for f in listdir(path):
+            if isfile(os.path.join(path, f)):
+                if f.endswith(".json"):
+                    fs.append(os.path.join(path, f))
+        return fs
 
     def get_project_names(self):
         return self.project_tree.get_project_names()

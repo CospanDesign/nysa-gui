@@ -79,5 +79,5 @@ class XmsgViewer(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.table)
         self.setLayout(layout)
-        self.show()
+        #self.show()
 

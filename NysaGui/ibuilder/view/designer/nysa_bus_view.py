@@ -37,7 +37,7 @@ class NysaBusView(GraphicsWidget):
         super (NysaBusView, self).__init__(self.view, self.scene)
         self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Preferred)
         self.boxes = {}
-        self.show()
+        #self.show()
         self.fi = parent
 
     def fit_in_view(self):
