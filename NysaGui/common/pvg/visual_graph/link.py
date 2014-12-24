@@ -32,7 +32,7 @@ Log
 __author__ = "Dave McCoy dave.mccoy@cospandesign.com"
 
 
-from PyQt4.QtCore import *
+import PyQt4.QtCore
 from PyQt4.QtGui import *
 
 
@@ -69,7 +69,7 @@ class Link (QGraphicsItem):
 
     def __init__(self, from_box, to_box):
         super(Link, self).__init__(parent = None, scene = from_box.scene())
-        self.rect = QRectF(0, 0, 0, 0)
+        self.rect = PyQt4.QtCore.QRectF(0, 0, 0, 0)
         self.from_box = from_box
         self.to_box = to_box
         self.scene().set_link_ref(self)
@@ -80,18 +80,18 @@ class Link (QGraphicsItem):
         self.from_side = side_type.right
         self.to_side = side_type.left
 
-        style = Qt.SolidLine
+        style = PyQt4.QtCore.Qt.SolidLine
         pen = QPen(style)
         pen.setColor(QColor("black"))
         self.pen = pen
         self.path = QPainterPath()
         self.track_nodes()
         self.bezier_en = BEZIER_CONNECTION
-        self.start = QPointF(0.0, 0.0)
-        self.end = QPointF(0.0, 0.0)
-        self.start_offset = QLineF(0.0, 0.0, 0.0, 0.0)
-        self.end_offset = QLineF(0.0, 0.0, 0.0, 0.0)
-        self.line = QLineF(self.start, self.end)
+        self.start = PyQt4.QtCore.QPointF(0.0, 0.0)
+        self.end = PyQt4.QtCore.QPointF(0.0, 0.0)
+        self.start_offset = PyQt4.QtCore.QLineF(0.0, 0.0, 0.0, 0.0)
+        self.end_offset = PyQt4.QtCore.QLineF(0.0, 0.0, 0.0, 0.0)
+        self.line = PyQt4.QtCore.QLineF(self.start, self.end)
         self.dbg = False
         self.center_track = True
         self.directed = False
@@ -134,14 +134,14 @@ class Link (QGraphicsItem):
         self.start = start
         self.end = end
 
-        s_offset_point = QPointF(self.start.x() + 15, self.start.y())
-        e_offset_point = QPointF(self.end.x() - 15, self.end.y())
+        s_offset_point = PyQt4.QtCore.QPointF(self.start.x() + 15, self.start.y())
+        e_offset_point = PyQt4.QtCore.QPointF(self.end.x() - 15, self.end.y())
         
 
-        self.start_offset = QLineF(self.start, s_offset_point)
-        self.end_offset = QLineF(self.end, e_offset_point)
+        self.start_offset = PyQt4.QtCore.QLineF(self.start, s_offset_point)
+        self.end_offset = PyQt4.QtCore.QLineF(self.end, e_offset_point)
 
-        self.line = QLineF(self.start, self.end)
+        self.line = PyQt4.QtCore.QLineF(self.start, self.end)
 
     def auto_update_center(self):
         #print "Auto update!"
@@ -151,10 +151,10 @@ class Link (QGraphicsItem):
         self.end = self.mapFromItem(self.to_box, self.from_box.side_coordinates(self.to_side))
 
 
-        self.start_offset = QLineF(self.start, QPointF(self.start.x() + 15, self.start.y()))
-        self.end_offset = QLineF(self.end, QPointF(self.end.x() - 15, self.end.y()))
+        self.start_offset = PyQt4.QtCore.QLineF(self.start, PyQt4.QtCore.QPointF(self.start.x() + 15, self.start.y()))
+        self.end_offset = PyQt4.QtCore.QLineF(self.end, PyQt4.QtCore.QPointF(self.end.x() - 15, self.end.y()))
 
-        self.line = QLineF(self.start, self.end)
+        self.line = PyQt4.QtCore.QLineF(self.start, self.end)
 
     def update_direct(self, from_coordinate, to_coordinate):
         self.prepareGeometryChange()
@@ -163,16 +163,16 @@ class Link (QGraphicsItem):
         self.end = self.mapFromItem(self.to_box, to_coordinate)
 
 
-        self.start_offset = QLineF(self.start, QPointF(self.start.x() + 15, self.start.y()))
-        self.end_offset = QLineF(self.end, QPointF(self.end.x() - 15, self.end.y()))
+        self.start_offset = PyQt4.QtCore.QLineF(self.start, PyQt4.QtCore.QPointF(self.start.x() + 15, self.start.y()))
+        self.end_offset = PyQt4.QtCore.QLineF(self.end, PyQt4.QtCore.QPointF(self.end.x() - 15, self.end.y()))
 
 
-        self.line = QLineF(self.start, self.end)
+        self.line = PyQt4.QtCore.QLineF(self.start, self.end)
 
     def boundingRect(self):
         extra = (self.pen.width() * 64) / 2
-        return QRectF(self.line.p1(),
-                QSizeF( self.line.p2().x() - self.line.p1().x(),
+        return PyQt4.QtCore.QRectF(self.line.p1(),
+                PyQt4.QtCore.QSizeF( self.line.p2().x() - self.line.p1().x(),
                         self.line.p2().y() - self.line.p1().y())).normalized().adjusted(-extra, 
                                                                                         -extra, 
                                                                                         extra, 
@@ -182,9 +182,9 @@ class Link (QGraphicsItem):
         return QPainterPath(self.path)
 
     def paint_direct_connect(self, painter, width, color):
-        center_point = QLineF(self.start, self.end).pointAt(0.5)
+        center_point = PyQt4.QtCore.QLineF(self.start, self.end).pointAt(0.5)
         pen = self.pen
-        pen.setJoinStyle(Qt.RoundJoin)
+        pen.setJoinStyle(PyQt4.QtCore.Qt.RoundJoin)
         pen.setColor(color)
         pen.setWidth(width)
         painter.setPen(pen)
@@ -194,7 +194,7 @@ class Link (QGraphicsItem):
         pstart = self.start_offset.p1()
         pend = self.end_offset.p1()
 
-        pstart = QPointF(pstart.x(), pend.y())
+        pstart = PyQt4.QtCore.QPointF(pstart.x(), pend.y())
         path.moveTo(pstart)
         path.lineTo(pend)
 
@@ -206,19 +206,19 @@ class Link (QGraphicsItem):
             pa = None
             pb = None
             if self.to_side == side_type.left:
-                pa = QPointF(end_pad.x(), end_pad.y() + (height / 2))
-                pb = QPointF(end_pad.x(), end_pad.y() - (height / 2))
+                pa = PyQt4.QtCore.QPointF(end_pad.x(), end_pad.y() + (height / 2))
+                pb = PyQt4.QtCore.QPointF(end_pad.x(), end_pad.y() - (height / 2))
             if self.to_side == side_type.right:
-                pa = QPointF(end_pad.x(), end_pad.y() + (height / 2))
-                pb = QPointF(end_pad.x(), end_pad.y() - (height / 2))
+                pa = PyQt4.QtCore.QPointF(end_pad.x(), end_pad.y() + (height / 2))
+                pb = PyQt4.QtCore.QPointF(end_pad.x(), end_pad.y() - (height / 2))
          
             if self.to_side == side_type.top:
-                pa = QPointF(end_pad.x() + height / 2, end_pad.y())
-                pb = QPointF(end_pad.x() - height / 2, end_pad.y())
+                pa = PyQt4.QtCore.QPointF(end_pad.x() + height / 2, end_pad.y())
+                pb = PyQt4.QtCore.QPointF(end_pad.x() - height / 2, end_pad.y())
          
             if self.to_side == side_type.bottom:
-                pa = QPointF(end_pad.x() + height / 2, end_pad.y())
-                pb = QPointF(end_pad.x() - height / 2, end_pad.y())
+                pa = PyQt4.QtCore.QPointF(end_pad.x() + height / 2, end_pad.y())
+                pb = PyQt4.QtCore.QPointF(end_pad.x() - height / 2, end_pad.y())
          
             arrow_head = QPolygonF([pa, pb, pend])
             painter.drawPolygon(arrow_head)
@@ -226,9 +226,9 @@ class Link (QGraphicsItem):
 
 
     def paint_normal_connect(self, painter, width, color):
-        center_point = QLineF(self.start, self.end).pointAt(0.5)
+        center_point = PyQt4.QtCore.QLineF(self.start, self.end).pointAt(0.5)
         pen = self.pen
-        pen.setJoinStyle(Qt.RoundJoin)
+        pen.setJoinStyle(PyQt4.QtCore.Qt.RoundJoin)
         pen.setColor(color)
         pen.setWidth(width)
         painter.setPen(pen)
@@ -238,12 +238,12 @@ class Link (QGraphicsItem):
         pstart = self.start_offset.p1()
         pend = self.end_offset.p1()
 
-        start_pad = QPointF(pstart.x() + self.padding, pstart.y())
-        end_pad = QPointF(pend.x() -  self.padding, pend.y())
-        center = QLineF(pstart, pend).pointAt(0.5)
+        start_pad = PyQt4.QtCore.QPointF(pstart.x() + self.padding, pstart.y())
+        end_pad = PyQt4.QtCore.QPointF(pend.x() -  self.padding, pend.y())
+        center = PyQt4.QtCore.QLineF(pstart, pend).pointAt(0.5)
 
-        one = (QPointF(pend.x(), pstart.y()) + pstart) / 2
-        two = (QPointF(pstart.x(), pend.y()) + pend) / 2
+        one = (PyQt4.QtCore.QPointF(pend.x(), pstart.y()) + pstart) / 2
+        two = (PyQt4.QtCore.QPointF(pstart.x(), pend.y()) + pend) / 2
                                 
         path.moveTo(pstart)
 
@@ -260,28 +260,28 @@ class Link (QGraphicsItem):
                 start_pad = 0
                 end_pad = 0
                 if self.from_side == side_type.left:
-                    start_pad = QPointF(pstart.x() - self.padding, pstart.y())
+                    start_pad = PyQt4.QtCore.QPointF(pstart.x() - self.padding, pstart.y())
                 if self.from_side == side_type.right:
-                    start_pad = QPointF(pstart.x() + self.padding, pstart.y())
+                    start_pad = PyQt4.QtCore.QPointF(pstart.x() + self.padding, pstart.y())
                 if self.from_side == side_type.top:
-                    start_pad = QPointF(pstart.x(), pstart.y() - self.padding)
+                    start_pad = PyQt4.QtCore.QPointF(pstart.x(), pstart.y() - self.padding)
                 if self.from_side == side_type.bottom:
-                    start_pad = QPointF(pstart.x(), pstart.y() + self.padding)
+                    start_pad = PyQt4.QtCore.QPointF(pstart.x(), pstart.y() + self.padding)
 
 
                 if self.to_side == side_type.left:
-                    end_pad = QPointF(pend.x() - self.padding, pend.y())
+                    end_pad = PyQt4.QtCore.QPointF(pend.x() - self.padding, pend.y())
                 if self.to_side == side_type.right:
-                    end_pad = QPointF(pend.x() + self.padding, pend.y())
+                    end_pad = PyQt4.QtCore.QPointF(pend.x() + self.padding, pend.y())
                 if self.to_side == side_type.top:
-                    end_pad = QPointF(pend.x(), pend.y() - self.padding)
+                    end_pad = PyQt4.QtCore.QPointF(pend.x(), pend.y() - self.padding)
                 if self.to_side == side_type.bottom:
-                    end_pad = QPointF(pend.x(), pend.y() + self.padding)
+                    end_pad = PyQt4.QtCore.QPointF(pend.x(), pend.y() + self.padding)
 
 
-                center = QLineF(pstart, pend).pointAt(0.5)
-                one = (QPointF(start_pad.x(), center.y()))
-                two = (QPointF(end_pad.x(), center.y()))
+                center = PyQt4.QtCore.QLineF(pstart, pend).pointAt(0.5)
+                one = (PyQt4.QtCore.QPointF(start_pad.x(), center.y()))
+                two = (PyQt4.QtCore.QPointF(end_pad.x(), center.y()))
                 path.lineTo(start_pad)
                 path.lineTo(one)
                 path.lineTo(two)
@@ -296,19 +296,19 @@ class Link (QGraphicsItem):
             pa = None
             pb = None
             if self.to_side == side_type.left:
-                pa = QPointF(end_pad.x(), end_pad.y() + (height / 2))
-                pb = QPointF(end_pad.x(), end_pad.y() - (height / 2))
+                pa = PyQt4.QtCore.QPointF(end_pad.x(), end_pad.y() + (height / 2))
+                pb = PyQt4.QtCore.QPointF(end_pad.x(), end_pad.y() - (height / 2))
             if self.to_side == side_type.right:
-                pa = QPointF(end_pad.x(), end_pad.y() + (height / 2))
-                pb = QPointF(end_pad.x(), end_pad.y() - (height / 2))
+                pa = PyQt4.QtCore.QPointF(end_pad.x(), end_pad.y() + (height / 2))
+                pb = PyQt4.QtCore.QPointF(end_pad.x(), end_pad.y() - (height / 2))
          
             if self.to_side == side_type.top:
-                pa = QPointF(end_pad.x() + height / 2, end_pad.y())
-                pb = QPointF(end_pad.x() - height / 2, end_pad.y())
+                pa = PyQt4.QtCore.QPointF(end_pad.x() + height / 2, end_pad.y())
+                pb = PyQt4.QtCore.QPointF(end_pad.x() - height / 2, end_pad.y())
          
             if self.to_side == side_type.bottom:
-                pa = QPointF(end_pad.x() + height / 2, end_pad.y())
-                pb = QPointF(end_pad.x() - height / 2, end_pad.y())
+                pa = PyQt4.QtCore.QPointF(end_pad.x() + height / 2, end_pad.y())
+                pb = PyQt4.QtCore.QPointF(end_pad.x() - height / 2, end_pad.y())
          
             arrow_head = QPolygonF([pa, pb, pend])
             painter.drawPolygon(arrow_head)

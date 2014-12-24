@@ -5,19 +5,9 @@ Log
 
 __author__ = "Dave McCoy dave.mccoy@cospandesign.com"
 
-import sys
-
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-
-from defines import direc
-
-from link import Link
-from link import side_type as st
-
 from box import Box
-from port import Port
-
 
 class PortBox(Box):
 

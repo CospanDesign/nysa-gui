@@ -1,7 +1,4 @@
-import os
-import sys
-from PyQt4.Qt import *
-from PyQt4.QtCore import *
+import PyQt4.QtCore
 from PyQt4.QtGui import *
 
 from graphics_view import GraphicsView as GV
@@ -9,6 +6,7 @@ from graphics_scene import GraphicsScene as GS
 from box import Box
 
 class GraphicsWidget (QWidget):
+
 
     def __init__(self, view = None, scene = None):
         QWidget.__init__(self, None)
@@ -22,7 +20,7 @@ class GraphicsWidget (QWidget):
         else:
             self.scene = scene
         self.view.setScene(self.scene)
-        self.prevPoint = QPoint()
+        self.prevPoint = PyQt4.QtCore.QPoint()
         layout = QHBoxLayout()
         layout.addWidget(self.view)
         self.setLayout(layout)
@@ -31,7 +29,7 @@ class GraphicsWidget (QWidget):
     def fit_view(self):
         self.view._scale_fit()
 
-    def add_box(self, name, color = "black", position = QPointF(0, 0)):
+    def add_box(self, name, color = "black", position = PyQt4.QtCore.QPointF(0, 0)):
         b = Box(position = position,
             scene = self.scene,
             name = name,

@@ -49,7 +49,7 @@ class Port (Box):
             self.color = input_color
         elif direction == direc.output:
             self.color = output_color
-        elif direction == direct.inout:
+        elif direction == direc.inout:
             self.color = inout_color
 
         self.box_name = name
@@ -77,7 +77,6 @@ class Port (Box):
 
         self.y_pos = y_pos
         self.dbg = False
-
 
     def mousePressEvent(self, event):
         if self.dbg: print "Port: mousePressEvent()"
