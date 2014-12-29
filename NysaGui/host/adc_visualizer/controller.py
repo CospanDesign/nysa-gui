@@ -82,18 +82,21 @@ class Controller(NysaBaseController):
     def __init__(self):
         super (Controller, self).__init__()
         self.i2c = None
+        self.platform_name = None
 
     @staticmethod
     def get_name():
         #Change this for your app
-        return "app_template"
+        return "adc visualizer"
 
     def _initialize(self, platform, device_index):
         self.v = View(self.status, self.actions)
+        self.platform_name = platform[0]
         #Setup I2C
         #self.i2c = I2C(platform[2], device_index, self.status)
         self.i2c = I2C(platform[2], device_index)
-        self.adc_init()
+        if self.platform_name != "sim":
+            self.adc_init()
 
         #Initialize I2C Loop
         self.t = QtCore.QTimer()
@@ -112,13 +115,17 @@ class Controller(NysaBaseController):
     def update(self):
         #val = np.random.randint(100)
         #print "updating [%d, %d]" % (self.pos, val)
-        #max_val = self.v.get_time_window()
-        #max_val = (max_val * 1.0) / 1.5
-        #val = (np.sin(2 * np.pi / max_val * (self.pos % int(max_val))) * (max_val / 2)) + (max_val / 2)
-        val = self.i2c.read_from_i2c(ADC_ADDR, [], 2)
-        channel_id = (val[0] >> 4) & 0xFF
-        value = (((val[0]) & 0x0F) << 8) + (val[1]) * 1.0
-        value = value / 4096.0 * 100.0
+        max_val = self.v.get_time_window()
+        max_val = (max_val * 1.0) / 1.5
+        value = 0
+        if self.platform_name != "sim":
+            val = self.i2c.read_from_i2c(ADC_ADDR, [], 2)
+            channel_id = (val[0] >> 4) & 0xFF
+            value = (((val[0]) & 0x0F) << 8) + (val[1]) * 1.0
+            value = value / 4096.0 * 100.0
+        else:
+            value = (np.sin(2 * np.pi / max_val * (self.pos % int(max_val))) * (max_val / 2)) + (max_val / 2)
+
 
         #print "val: %s" % str(val)
         #print "address: %d" % channel_id
@@ -152,35 +159,18 @@ class Controller(NysaBaseController):
 
     @staticmethod
     def get_unique_image_id():
-        """
-        If this ia controller for an entire image return the associated unique
-        image ID here
-        """
         return None
 
     @staticmethod
     def get_device_id():
-        """
-        If this is a controller for an individual device (GPIO, I2C, UART,
-        etc...) return the associted device ID here (notes for the device are in
-        /nysa/cbuilder/drt/drt.json
-        """
-        return None
+        return 3
 
     @staticmethod
     def get_device_sub_id():
-        """
-        If this is a controller for an individual device with that has a
-        specific implementation (Cospan Design's version of a GPIO controller
-        as apposed to just a generic GPIO controller) return the sub ID here
-        """
         return None
 
     @staticmethod
     def get_device_unique_id():
-        """
-        Used to differentiate devices with the same device/sub ids.
-        """
         return None
 
 
