@@ -207,7 +207,6 @@ class I2CController(object):
         self.config_name = "?"
         self.config_description = "Not Set"
 
-
         usr = os.path.expanduser("~")
         self.file_location = os.path.join(usr, "Projects", "nysa_projects", "i2c_configs")
         settings = QSettings("Cospan Design", "nysa")
@@ -299,8 +298,6 @@ class I2CController(object):
         d = self.get_all_loop_transactions()
         #print "Dict: %s" % str(d)
         self.actions.i2c_update_view.emit(True, d)
-
-
 
     def add_transaction(self, loop):
         self.status.Important( "Adding a transaction")
@@ -410,7 +407,6 @@ class I2CController(object):
         d = self.get_all_loop_transactions()
         self.actions.i2c_update_view.emit(True, d)
 
-
     def token_changed(self, loop, row, column, d):
         tokens = None
         if not loop:
@@ -471,7 +467,6 @@ class I2CController(object):
         if len(tokens) < row + 1:
             raise I2CException("Attempting to access an out of range index: %d, size is: %d" % row, len(self.tokens))
         tokens[row].set_require_ack(column, require_ack)
-
 
     #Token Add/Remove/Change
     def add_init_token(self):
