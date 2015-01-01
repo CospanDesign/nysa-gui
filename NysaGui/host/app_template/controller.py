@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-# Copyright (c) 2014 name (email@example.com)
+# Copyright (c) 2015 name (email@example.com)
 
 # This file is part of Nysa (wiki.cospandesign.com/index.php?title=Nysa).
 #
@@ -38,28 +38,23 @@ from nysa.host.nysa import Nysa
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
-                             os.pardir))
-
-#Platform Scanner
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
                              os.pardir,
                              "common"))
 
 from nysa_base_controller import NysaBaseController
 from view.view import View
 
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             "common"))
 
-from nysa.common import site_manager
-from nysa.common import status
-from nysa.host import platform_scanner
-from nysa.host.platform_scanner import PlatformScanner
-import status
+from standalone_controller import standalone_controller
 
+# Put your device name (GPIO, SPI, I2C, etc...)
+DEVICE_NAME = "???"
+#DEVICE_NAME = "EXPERIMENTAL"
 #Module Defines
 n = str(os.path.split(__file__)[1])
-
-
 
 DESCRIPTION = "\n" \
 "\n"\
@@ -125,7 +120,7 @@ class Controller(NysaBaseController):
         etc...) return the associted device ID here (notes for the device are in
         /nysa/cbuilder/drt/drt.json
         """
-        return None
+        return Nysa.get_id_from_name(DEVICE_NAME)
 
     @staticmethod
     def get_device_sub_id():
@@ -145,95 +140,12 @@ class Controller(NysaBaseController):
 
 
 def main(argv):
-    #Parse out the commandline arguments
-    s = status.Status()
-    s.set_level(status.StatusLevel.INFO)
-    parser = argparse.ArgumentParser(
-            formatter_class = argparse.RawDescriptionHelpFormatter,
-            description = DESCRIPTION,
-            epilog = EPILOG
-    )
-    debug = False
-
-    parser.add_argument("-d", "--debug",
-                        action = "store_true",
-                        help = "Enable Debug Messages")
-    parser.add_argument("-l", "--list",
-                        action = "store_true",
-                        help = "List the available devices from a platform scan")
-    parser.add_argument("platform",
-                        type = str,
-                        nargs='?',
-                        default=["first"],
-                        help="Specify the platform to use")
- 
-    args = parser.parse_args()
-    plat = ["", None, None]
-
-    if args.debug:
-        s.set_level(status.StatusLevel.VERBOSE)
-        s.Debug("Debug Enabled")
-        debug = True
-
-    pscanner = PlatformScanner()
-    platform_dict = pscanner.get_platforms()
-    platform_names = platform_dict.keys()
-    if "sim" in platform_names:
-        #If sim is in the platforms, move it to the end
-        platform_names.remove("sim")
-        platform_names.append("sim")
-    dev_index = None
-    for platform_name in platform_dict:
-        s.Verbose("Platform: %s" % str(platform_name))
-        s.Verbose("Type: %s" % str(platform_dict[platform_name]))
-
-        platform_instance = platform_dict[platform_name](s)
-        s.Verbose("Platform Instance: %s" % str(platform_instance))
-
-
-        instances_dict = platform_instance.scan()
-        if plat[1] is not None:
-            break
-        
-        for name in instances_dict:
-
-            #s.Verbose("Found Platform Item: %s" % str(platform_item))
-            n = instances_dict[name]
-            plat = ["", None, None]
-            
-            if n is not None:
-                s.Verbose("Found a nysa instance: %s" % name)
-                n.read_drt()
-                #XXX: Put your device name here!
-                dev_index = n.find_device(Nysa.get_id_from_name("???"))
-                if dev_index is not None:
-                    s.Important("Found a device at %d" % dev_index)
-                    plat = [platform_name, name, n]
-                    break
-                continue
-
-            if platform_name == args.platform and plat[0] != args.platform:
-                #Found a match for a platfom to use
-                plat = [platform_name, name, n]
-                continue
-
-            s.Verbose("\t%s" % psi)
-
-    if args.list:
-        s.Verbose("Listed all platforms, exiting")
-        sys.exit(0)
-
-    if plat is not None:
-        s.Important("Using: %s" % plat)
-    else:
-        s.Fatal("Didn't find a platform to use!")
-
+    platform, dev_index, status, debug = standalone_controller(argv, DEVICE_NAME)
 
     c = Controller()
     if dev_index is None:
-        sys.exit("Failed to find an LCD Device")
-
-    c.start_standalone_app(plat, dev_index, status, debug)
+        sys.exit("Failed to find a %s device", DEVICE_NAME)
+    c.start_standalone_app(platform, dev_index, status, debug)
 
 if __name__ == "__main__":
     main(sys.argv)
