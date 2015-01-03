@@ -62,8 +62,8 @@ class IBuilderController(QObject):
         for p in ps:
             proj = json.load(open(p, 'r'))
             name = proj["PROJECT_NAME"]
-            print "project path: %s" % p
-            print "project name: %s" % name
+            #print "project path: %s" % p
+            #print "project name: %s" % name
             
             self.add_project(name, p)
 

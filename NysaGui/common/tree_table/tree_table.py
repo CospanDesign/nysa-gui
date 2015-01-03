@@ -82,7 +82,7 @@ class BranchNode(QObject):
     def get_child_list(self):
         children = []
         for child in self.children:
-            print "child: %s" % str(child)
+            #print "child: %s" % str(child)
             children.append(child[0])
         return children
             

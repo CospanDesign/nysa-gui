@@ -48,7 +48,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
-from standalone_controller import standalone_controller
+from standalone_controller import find_device
 
 # Put your device name (GPIO, SPI, I2C, etc...)
 DEVICE_NAME = "???"
@@ -140,11 +140,11 @@ class Controller(NysaBaseController):
 
 
 def main(argv):
-    platform, dev_index, status, debug = standalone_controller(argv, DEVICE_NAME)
+    platform, dev_index, status, debug = find_device(argv, DEVICE_NAME)
 
     c = Controller()
     if dev_index is None:
-        sys.exit("Failed to find a %s device", DEVICE_NAME)
+        sys.exit("Failed to find %s", DEVICE_NAME)
     c.start_standalone_app(platform, dev_index, status, debug)
 
 if __name__ == "__main__":

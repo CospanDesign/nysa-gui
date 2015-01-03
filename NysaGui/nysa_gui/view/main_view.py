@@ -85,7 +85,7 @@ class MainForm(QMainWindow):
 
         self.setWindowTitle("Nysa")
 
-        #### Actions
+        ## Actions
         exit_action = QAction('&Exit', self)
         exit_action.setShortcut('Ctrl+Q')
         exit_action.triggered.connect(quit)
@@ -231,14 +231,14 @@ class MainForm(QMainWindow):
 
         #print "Focus Widget: %s" % str(app.focusWidget())
         if app.focusWidget is None:
-            print "Nothing focused"
+            #print "Nothing focused"
             return
         #print "parse widget: %s" % parse_string[1]
         name = parse_string[1]
         #count = 0;
         #parent = w.nativeParentWidget()
         #while (parent is not None) and count < 10:
-        #    print "parent name: %s" % parent.objectName()
+        #    #print "parent name: %s" % parent.objectName()
         #    parent = w.nativeParentWidget()
         #    count += 1
 
@@ -246,11 +246,11 @@ class MainForm(QMainWindow):
         #print "host windows state: 0x%08X" % self.ibuilder_view.windowState()
         #print "host windows state: 0x%08X" % self.cbuilder_view.windowState()
         #if self.host_view.hasFocus():
-        #    print "Host has focus"
+        #    #print "Host has focus"
         #if self.ibuilder_view.hasFocus():
-        #    print "ibuilder has focus"
+        #    #print "ibuilder has focus"
         #if self.cbuilder_view.hasFocus():
-        #    print "cbuilder has focus"
+        #    #print "cbuilder has focus"
         if name == "host":
             self.actions.host_save.emit()
         elif name == "ibuilder":
@@ -258,7 +258,8 @@ class MainForm(QMainWindow):
         elif name == "cbuilder":
             self.actions.cbuilder_save.emit()
         else:
-            print "Unknown save location"
+            #print "Unknown save location"
+            pass
 
     def open_clicked(self):
         self.status.Debug("Open Action!")
@@ -277,5 +278,6 @@ class MainForm(QMainWindow):
             self.actions.cbuilder_open.emit()
 
         else:
-            print "Unknown open location"
+            #print "Unknown open location"
+            pass
 
