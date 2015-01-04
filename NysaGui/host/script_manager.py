@@ -77,6 +77,7 @@ class ScriptManager(QObject):
         from NysaGui.host.video_controller.controller import Controller as video_controller
         from NysaGui.host.audio_controller.controller import Controller as audio_controller
         from NysaGui.host.adc_visualizer.controller import Controller as adc_controller
+        from NysaGui.host.spi_oled_controller.controller import Controller as oled_controller
         #print "DIR: %s" % (str(dir(self)))
         #self.status.Debug("Directory: %s" % str(dir(self)))
 

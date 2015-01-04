@@ -186,8 +186,8 @@ class Controller(NysaBaseController):
     def _initialize(self, platform):
         #Get a reference to GPIO
         n = platform[2]
-        #self.set_bitmap_image(CD_IMAGE)
-        self.set_bitmap_image(FOR_RENT_IMAGE)
+        self.set_bitmap_image(CD_IMAGE)
+        #self.set_bitmap_image(FOR_RENT_IMAGE)
         #self.oled_write_buffer()
         #Setup View
         self.v = View(self.status, self.actions)
@@ -210,10 +210,10 @@ class Controller(NysaBaseController):
         main.show()
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform, device_index, status):
+    def start_tab_view(self, platform, status):
         self.status = status
         self.status.Verbose("Starting Template Application")
-        self._initialize(platform, device_index)
+        self._initialize(platform)
 
     def get_view(self):
         return self.v
