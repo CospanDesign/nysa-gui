@@ -334,6 +334,7 @@ class WishboneController (controller.Controller):
             #Add connected peripheral signals to the bottom view
             for key in bindings:
                 if not bindings[key]["range"]:
+                    #print "bindings[%s]: %s" % (key, str(bindings[key]))
                     self.constraint_editor.add_connection(color = PS_COLOR,
                                                           module_name = name,
                                                           port = key,
