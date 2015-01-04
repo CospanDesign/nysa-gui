@@ -82,6 +82,7 @@ class ControlView(QWidget):
         info.setWordWrap(True)
         info.setAlignment(Qt.AlignTop)
 
+        '''
         #Interrupt/Polling
         int_poll = QLabel("Interrupt/Polling")
 
@@ -109,6 +110,7 @@ class ControlView(QWidget):
         self.en_reading_btn.setStyleSheet(STYLE)
         self.en_reading_btn.setCheckable(True)
         self.en_reading_btn.clicked.connect(self.en_reading_clicked)
+        '''
 
         #Whitespace Killer!
         space = QLabel("Control/Status")
@@ -123,19 +125,18 @@ class ControlView(QWidget):
 
         #Add Widgets to layout
         layout.addWidget(info,                   0, 0, 1, 3)
-        layout.addWidget(int_poll,               1, 0, 1, 1)
-        layout.addWidget(self.int_poll_btn,      1, 1, 1, 2)
+        #layout.addWidget(int_poll,               1, 0, 1, 1)
+        #layout.addWidget(self.int_poll_btn,      1, 1, 1, 2)
 
-        layout.addWidget(int_poll_timeout_label, 2, 0, 1, 1)
-        layout.addWidget(self.int_poll_te,       2, 1, 1, 2)
+        #layout.addWidget(int_poll_timeout_label, 2, 0, 1, 1)
+        #layout.addWidget(self.int_poll_te,       2, 1, 1, 2)
 
-        layout.addWidget(self.en_reading_btn,    3, 0, 1, 3)
+        #layout.addWidget(self.en_reading_btn,    3, 0, 1, 3)
         layout.addWidget(space,                  4, 0, 1, 3)
         layout.addWidget(self.rv,                5, 0, 1, 3)
 
         #Set the layout
         self.setLayout(layout)
-        
 
     def int_poll_clicked(self):
         if self.int_poll_btn.isChecked():
@@ -177,7 +178,6 @@ class ControlView(QWidget):
 
         print "te changed to: %f (seconds)" % timeout_float
         self.gpio_actions.read_rate_change(timeout_float)
-
 
     def add_register(self, index, name, initial_value = 0):
         self.rv.add_register(index, name, initial_value)
