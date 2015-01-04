@@ -90,6 +90,7 @@ class Controller(NysaBaseController):
         self.gpio_actions.direction_changed.connect(self.direction_changed)
         self.gpio_actions.interrupt_en_changed.connect(self.interrupt_en_changed)
         self.gpio_actions.interrupt_edge_changed.connect(self.interrupt_edge_changed)
+        self.gpio_actions.interrupt_both_edge_changed.connect(self.interrupt_both_edge_changed)
 
         self.gpio_actions.read_start_stop.connect(self.read_start_stop)
         self.gpio_actions.gpio_input_changed.connect(self.gpio_input_changed)
@@ -179,7 +180,7 @@ class Controller(NysaBaseController):
         return None
 
     def read_start_stop(self, start_stop, rate):
-        print "Enter Read/startstop"
+        self.status.Verbose("Enter Read/startstop")
         '''
         if start_stop:
             #Start
@@ -198,39 +199,42 @@ class Controller(NysaBaseController):
         '''
 
     def gpio_input_changed(self, value):
-        print "Input Changed"
+        self.status.Verbose("Input Changed")
         #Input Changed
         self.v.set_register(0, value)
 
     def register_get_pressed(self, index):
-        print "Register Get Pressed: %d" % index
+        self.status.Verbose("Register Get Pressed: %d" % index)
         value = self.n.read_register(self.dev_index, index)
         self.v.set_register(index, value)
 
     def register_set_pressed(self, index, value):
-        print "Register Set Pressed: %d: %d" % (index, value)
+        self.status.Verbose("Register Set Pressed: %d: %d" % (index, value))
         self.n.write_register(self.dev_index, index, value)
 
     def gpio_out_changed(self, index, val):
-        print "GPIO Out: %d : %s" % (index, str(val))
+        self.status.Verbose( "GPIO Out: %d : %s" % (index, str(val)))
         self.gpio.set_bit_value(index, val)
 
     def direction_changed(self, index, val):
-        print "GPIO Direction: %d : %s" % (index, str(val))
+        self.status.Verbose( "GPIO Direction: %d : %s" % (index, str(val)))
         self.n.enable_register_bit(self.dev_index, 1, index, val)
 
     def interrupt_en_changed(self, index, val):
-        print "Interrupt En Changed: %d : %s" % (index, str(val))
+        self.status.Verbose("Interrupt En Changed: %d : %s" % (index, str(val)))
         self.n.enable_register_bit(self.dev_index, 3, index, val)
 
     def interrupt_edge_changed(self, index, val):
-        print "Interrupt Edge Changed: %d : %s" % (index, str(val))
+        self.status.Verbose("Interrupt Edge Changed %d : %s" % (index, str(val)))
         self.n.enable_register_bit(self.dev_index, 4, index, val)
+
+    def interrupt_both_edge_changed(self, index, val):
+        self.status.Verbose("Interrupt Both Edges Changed %d: %s" % (index, str(val)))
+        self.n.enable_register_bit(self.dev_index, 5, index, val)
 
     #@pyqtSlot()
     def process_interrupts(self):
-        print "Process interrupts"
-        print ".",
+        self.status.Verbose("Process interrupts")
         #print "Current thread ID: %s" % QThread.currentThread().objectName()
         value = self.gpio.get_port_raw()
         interrupts = self.gpio.get_interrupts()
@@ -247,10 +251,9 @@ class Controller(NysaBaseController):
         self.gpio_actions.gpio_input_changed.emit(value)
 
     def interrupt_callback(self):
-        print "Received interrupt callback"
+        self.status.Verbose("Received interrupt callback")
         #print "self type: %s" % str(type(self))
         self.gpio_actions.gpio_interrupt.emit()
-        print "Emitted signal"
         '''
         try:
             QMetaObject.invokeMethod(self,

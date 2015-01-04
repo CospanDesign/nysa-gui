@@ -26,6 +26,7 @@ class _GPIOActions(QtCore.QObject):
     direction_changed = QtCore.pyqtSignal(int, bool, name = "direction_changed")
     interrupt_en_changed = QtCore.pyqtSignal(int, bool, name = "interrupt_en_changed")
     interrupt_edge_changed = QtCore.pyqtSignal(int, bool, name = "interrupt_edge_changed")
+    interrupt_both_edge_changed = QtCore.pyqtSignal(int, bool, name = "interrupt_both_edge_changed")
 
     gpio_interrupt = QtCore.pyqtSignal(name = "gpio_interrupt")
 

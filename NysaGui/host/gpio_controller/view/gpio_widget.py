@@ -121,7 +121,7 @@ class GPIOWidget(QWidget):
             int_edge_btn.setObjectName("interrupt_edge_button")
             self.interrupt_edges.append(int_edge_btn)
             int_edge_btn.setStyleSheet(style)
-            int_edge_btn.setCheckable(True)
+            #int_edge_btn.setCheckable(True)
 
             #Connect callbacks
             dir_btn.clicked.connect(partial(self.direction_clicked, i))
@@ -145,8 +145,6 @@ class GPIOWidget(QWidget):
 
         layout.addWidget(self.cv, 0, STATUS_POS, count, 1)
         self.setLayout(layout)
-
-        
 
     def direction_clicked(self, index):
         self.direction_changed(index)
@@ -194,12 +192,22 @@ class GPIOWidget(QWidget):
     def int_edge_clicked(self, index):
         self.int_edge_changed(index)
         btn = self.interrupt_edges[index]
-        self.gpio_actions.interrupt_edge_changed.emit(index, btn.isChecked())
+        if btn.text() == "X":
+            self.gpio_actions.interrupt_both_edge_changed.emit(index, True)
+        else:
+            self.gpio_actions.interrupt_both_edge_changed.emit(index, False)
+            if btn.text() == "\\":
+                self.gpio_actions.interrupt_edge_changed.emit(index, False)
+            else:
+                self.gpio_actions.interrupt_edge_changed.emit(index, True)
 
     def int_edge_changed(self, index):
         btn = self.interrupt_edges[index]
-        if btn.isChecked():
+        if btn.text() == "\\":
+        #if btn.isChecked():
             btn.setText("/")
+        elif btn.text() == "/":
+            btn.setText("X")
         else:
             btn.setText("\\")
 
