@@ -179,7 +179,7 @@ def main(argv):
                         nargs='?',
                         default=["first"],
                         help="Specify the platform to use")
- 
+
     args = parser.parse_args()
     plat = None
 
