@@ -26,19 +26,19 @@ import sys
 import argparse
 
 
-from nysa.cbuilder.drt import drt as drt_controller
+from nysa.cbuilder.sdb import sdb as sdb_controller
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
-drt_description = []
-drt_description.append("Version (2 Bytes)/DRT ID (2 Bytes)")
-drt_description.append("Number of Devices (4 Bytes)")
-drt_description.append("String Data Address (4 Bytes)")
-drt_description.append("Board ID (4 Bytes)")
-drt_description.append("Image ID (4 Bytes)")
-drt_description.append("Reserved (2 Bytes)/Flags (2 Bytes)")
-drt_description.append("Reserved (4 Bytes)")
-drt_description.append("Reserved (4 Bytes)")
+sdb_description = []
+sdb_description.append("Version (2 Bytes)/DRT ID (2 Bytes)")
+sdb_description.append("Number of Devices (4 Bytes)")
+sdb_description.append("String Data Address (4 Bytes)")
+sdb_description.append("Board ID (4 Bytes)")
+sdb_description.append("Image ID (4 Bytes)")
+sdb_description.append("Reserved (2 Bytes)/Flags (2 Bytes)")
+sdb_description.append("Reserved (4 Bytes)")
+sdb_description.append("Reserved (4 Bytes)")
 
 device_description = []
 device_description.append("Device Sub ID (2 Bytes)/Device ID (2 Bytes)")
@@ -58,17 +58,17 @@ class AppModel(object):
     def setup_model(self, controller, n):
         self.n = n
         self.controller = controller
-        self.drt = self.n.read_drt()
-        self.drt_string = ""
-        self.num_of_devices = drt_controller.get_number_of_devices(self.drt)
+        self.sdb = self.n.read_sdb()
+        self.sdb_string = ""
+        self.num_of_devices = sdb_controller.get_number_of_devices(self.sdb)
         display_len = 8 + self.num_of_devices * 8
         for i in range (0, display_len):
-            self.drt_string += "%02X%02X%02X%02X\n"% (self.drt[i * 4],
-                                                      self.drt[i * 4 + 1],
-                                                      self.drt[i * 4 + 2],
-                                                      self.drt[i * 4 + 3])
- 
-        self.drt_lines = self.drt_string.splitlines()
+            self.sdb_string += "%02X%02X%02X%02X\n"% (self.sdb[i * 4],
+                                                      self.sdb[i * 4 + 1],
+                                                      self.sdb[i * 4 + 2],
+                                                      self.sdb[i * 4 + 3])
+
+        self.sdb_lines = self.sdb_string.splitlines()
 
     #ADD FUNCTIONS HERE TO CONTROL NYSA DEVICE/IMAGE
     def get_row_height(self, row):
@@ -87,7 +87,7 @@ class AppModel(object):
         return 0
 
     def get_row_count (self):
-        return len(self.drt_lines)
+        return len(self.sdb_lines)
 
     def get_row_data(self, row):
         """
@@ -104,7 +104,7 @@ class AppModel(object):
 
         """
         row_data = []
-        row_data.append(self.drt_lines[row])
+        row_data.append(self.sdb_lines[row])
         row_data.append(self.get_row_description(row))
         row_data.append(self.get_row_device_type(row))
         row_data.append(self._get_row_data(row))
@@ -120,27 +120,27 @@ class AppModel(object):
 
     def get_row_description(self, row):
         if row < 8:
-            return drt_description[row]
+            return sdb_description[row]
         else:
             offset = row % 8
             return device_description[offset]
-            
+
     def _get_row_data(self, row):
         row_data = []
         if row < 8:
             if row == 0:
-                version = int(self.drt_lines[0][0:4], 16)
-                drt_id = int(self.drt_lines[0][4:8], 16)
+                version = int(self.sdb_lines[0][0:4], 16)
+                sdb_id = int(self.sdb_lines[0][4:8], 16)
                 row_data.append("Version: 0x%04X" % version)
-                row_data.append("DRT ID: 0x%04X" % drt_id)
+                row_data.append("DRT ID: 0x%04X" % sdb_id)
                 return row_data
 
             elif row == 1:
-                row_data.append("Number of Devices: %d" % int(self.drt_lines[1], 16))
+                row_data.append("Number of Devices: %d" % int(self.sdb_lines[1], 16))
                 return row_data
 
             elif row == 2:
-                string_offset = int(self.drt_lines[2], 16)
+                string_offset = int(self.sdb_lines[2], 16)
                 if string_offset == 0:
                     row_data.append("No String Data")
                 else:
@@ -148,23 +148,23 @@ class AppModel(object):
                 return row_data
 
             elif row == 3:
-                board_id = int(self.drt_lines[3], 16)
-                board_name = drt_controller.get_board_list()[board_id]
-                #board_name = str(drt_controller.get_board_list())
-                row_data.append("Board ID: 0x%08X" % int(self.drt_lines[3], 16))
+                board_id = int(self.sdb_lines[3], 16)
+                board_name = sdb_controller.get_board_list()[board_id]
+                #board_name = str(sdb_controller.get_board_list())
+                row_data.append("Board ID: 0x%08X" % int(self.sdb_lines[3], 16))
                 row_data.append("Board Name: %s" % board_name)
                 return row_data
 
             elif row == 4:
-                image_id = int(self.drt_lines[4], 16)
+                image_id = int(self.sdb_lines[4], 16)
                 if image_id == 0:
                     row_data.append("No Image ID")
                 else:
-                    row_data.append("Image ID: 0x%08X" % int(self.drt_lines[4], 16))
+                    row_data.append("Image ID: 0x%08X" % int(self.sdb_lines[4], 16))
                 return row_data
-           
+
             elif row == 5:
-                flags_data = (0x03 & int (self.drt_lines[5], 16))
+                flags_data = (0x03 & int (self.sdb_lines[5], 16))
                 if flags_data == 0:
                     row_data.append("Bus Flags (Addr [1:0]) == 0: Wishbone")
                 elif flags_data == 1:
@@ -186,19 +186,19 @@ class AppModel(object):
         else:
             offset = row % 8
             if offset == 0:
-                dev_id = ((int(self.drt_lines[row], 16)) & 0xFFFF)
-                dev = devices = drt_controller.get_device_list()[dev_id]
+                dev_id = ((int(self.sdb_lines[row], 16)) & 0xFFFF)
+                dev = devices = sdb_controller.get_device_list()[dev_id]
                 #print "%s" % str(dev)
-                
-                row_data.append("Device ID: 0x%04X" % (int (self.drt_lines[row], 16) & 0xFFFF))
-                row_data.append("Device Sub ID: 0x%04X" % (((int (self.drt_lines[row], 16)) >> 16) & 0xFFFF))
+
+                row_data.append("Device ID: 0x%04X" % (int (self.sdb_lines[row], 16) & 0xFFFF))
+                row_data.append("Device Sub ID: 0x%04X" % (((int (self.sdb_lines[row], 16)) >> 16) & 0xFFFF))
                 row_data.append("%s: %s" % (dev["name"], dev["description"]))
                 return row_data
 
             if offset == 1:
                 row_data.append("Device Flags:")
 
-                flags = int (self.drt_lines[row], 16)
+                flags = int (self.sdb_lines[row], 16)
                 if (flags & 0x00000002) == 0:
                     row_data.append("Addr [1] == 0: Peripheral Slave")
                 if (flags & 0x00000002) > 0:
@@ -211,8 +211,8 @@ class AppModel(object):
                 return row_data
 
             if offset == 2:
-                flags = int (self.drt_lines[row - 1], 16)
-                addr = int (self.drt_lines[row], 16)
+                flags = int (self.sdb_lines[row - 1], 16)
+                addr = int (self.sdb_lines[row], 16)
                 if (flags & 0x00000002) == 0:
                     row_data.append ("Address of Peripheral on Peripheral Bus: 0x%08X" % addr)
                     row_data.append("Peripheral Device Index: 0x%02X" % ((addr >> 24) & 0xFF))
@@ -222,16 +222,16 @@ class AppModel(object):
                 return row_data
 
             if offset == 3:
-                flags = int (self.drt_lines[row - 2], 16)
+                flags = int (self.sdb_lines[row - 2], 16)
                 if (flags & 0x00000002) > 0:
-                    row_data.append("Memory Size (32-Bit Values): 0x%08X" % int(self.drt_lines[row], 16))
-                    row_data.append("Memory Size (8-Bit Values): 0x%08X" % (4 * int(self.drt_lines[row], 16)))
+                    row_data.append("Memory Size (32-Bit Values): 0x%08X" % int(self.sdb_lines[row], 16))
+                    row_data.append("Memory Size (8-Bit Values): 0x%08X" % (4 * int(self.sdb_lines[row], 16)))
                 else:
-                    row_data.append("Number of Peripheral Slave Registers: 0x%08X" % int (self.drt_lines[row], 16))
+                    row_data.append("Number of Peripheral Slave Registers: 0x%08X" % int (self.sdb_lines[row], 16))
                 return row_data
 
             if offset == 4:
-                user_id = int (self.drt_lines[row], 16)
+                user_id = int (self.sdb_lines[row], 16)
                 if user_id == 0:
                     row_data.append("Device has no unique ID")
                 else:
