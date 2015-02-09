@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-# Copyright (c) 2014 name (email@example.com)
+# Copyright (c) 2014 Dave McCoy (dave.mccoy@cospandesign.com)
 
 # This file is part of Nysa (wiki.cospandesign.com/index.php?title=Nysa).
 #
@@ -19,51 +19,49 @@
 
 
 """
-app template controller
+Stepper Motor Controller
 """
 
-__author__ = 'email@example.com (name)'
+__author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import os
 import sys
 import argparse
 
-from PyQt4.Qt import QApplication
-from PyQt4 import QtCore
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.Qt import *
+
+from nysa.common import status
+from nysa.host import platform_scanner
 
 from nysa.host.driver.stepper import Stepper
 
-from view.view import View
-
-#Platform Scanner
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
                              "common"))
 
 
-from platform_scanner import PlatformScanner
 from nysa_base_controller import NysaBaseController
 
-#App Template
+DRIVER = Stepper
+APP_NAME = "Stepper Motor Controller"
 
 
-#Module Defines
 n = str(os.path.split(__file__)[1])
 
 from stepper_actions import StepperActions
-
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
+from view.view import View
 from protocol_utils.stepper.stepper_engine import StepperEngine
-
-
 
 DESCRIPTION = "\n" \
 "\n"\
-"A template app\n"
+"%s\n" % APP_NAME
 
 EPILOG = "\n" \
 "\n"\
@@ -79,131 +77,70 @@ class Controller(NysaBaseController):
         super (Controller, self).__init__()
         self.actions = StepperActions()
 
-    @staticmethod
-    def get_name():
-        return "Manual Stepper Controller"
-
-    def _initialize(self, platform, device_index):
-        self.stepper = Stepper(platform[2], device_index, self.status)
+    def _initialize(self, platform, nui):
+        self.stepper = Stepper(platform, nui, self.status)
         self.v = View(self.status, self.actions)
         self.engine = StepperEngine(self.stepper, self.status, self.actions)
         self.engine.update_configuration(self.v.get_configuration())
 
-    def start_standalone_app(self, platform, device_index, status, debug = False):
-        app = QApplication (sys.argv)
-        self.status = status
-        if debug:
-            self.status.set_level(status.StatusLevel.VERBOSE)
-        else:
-            self.status.set_level(status.StatusLevel.INFO)
-        self.status.Verbose( "Starting Standalone Application")
-        self._initialize(platform, device_index)
-        sys.exit(app.exec_())
-
-    def start_tab_view(self, platform, device_index, status):
+    def start_tab_view(self, platform, nui, status):
         self.status = status
         self.status.Verbose( "Starting Template Application")
-        self._initialize(platform, device_index)
+        self._initialize(platform, nui)
 
     def get_view(self):
         return self.v
 
-    @staticmethod
-    def get_unique_image_id():
-        return None
-
-    @staticmethod
-    def get_device_id():
-        return Stepper.get_core_id();
-
-    @staticmethod
-    def get_device_sub_id():
-        return None
-
-    @staticmethod
-    def get_device_unique_id():
-        return None
-
-
-def main(argv):
+def main():
     #Parse out the commandline arguments
-    s = status.ClStatus()
-    s.set_level(status.StatusLevel.INFO)
+    s = status.Status()
+    s.set_level("info")
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
             description = DESCRIPTION,
             epilog = EPILOG
     )
-    debug = False
-
     parser.add_argument("-d", "--debug",
                         action = "store_true",
                         help = "Enable Debug Messages")
-    parser.add_argument("-l", "--list",
-                        action = "store_true",
-                        help = "List the available devices from a platform scan")
     parser.add_argument("platform",
                         type = str,
                         nargs='?',
                         default=["first"],
                         help="Specify the platform to use")
- 
+
     args = parser.parse_args()
-    plat = None
 
     if args.debug:
-        s.set_level(status.StatusLevel.VERBOSE)
-        s.Debug(None, "Debug Enabled")
-        debug = True
+        s.set_level("verbose")
+        s.Debug("Debug Enabled")
 
-    pscanner = PlatformScanner()
-    ps = pscanner.get_platforms()
-    dev_index = None
-    for p in ps:
-        s.Verbose(None, p)
-        for psi in ps[p]:
-            if plat is None:
-                s.Verbose(None, "Found a platform: %s" % p)
-                n = ps[p][psi]
-                n.read_drt()
-                dev_index = n.find_device(Stepper.get_core_id())
-                if dev_index is not None:
-                    print "Dev Index: %d" % dev_index
-                    plat = [p, psi, ps[p][psi]]
-                    break
-                continue
-            if p == args.platform and plat[0] != args.platform:
-                #Found a match for a platfom to use
-                plat = [p, psi, ps[p][psi]]
-                continue
-            if p == psi:
-                #Found a match for a name!
-                #See if we can find a device
+    s.Verbose("platform scanner: %s" % str(dir(platform_scanner)))
+    platforms = platform_scanner.get_platforms_with_device(DRIVER, s)
 
-                dev_index = n.find_device(Stepper.get_core_id())
-                print "Dev Index: %d" % dev_index
-                if dev_index is not None:
-                    plat = [p, psi, ps[p][psi]]
-                    break
+    if len(platforms) == 0:
+        sys.exit("Didn't find any platforms with device: %s" % str(DRIVER))
 
-            s.Verbose(None, "\t%s" % psi)
+    platform = platforms[0]
+    urn = platform.find_device(DRIVER)[0]
+    s.Important("Using: %s" % platform.get_board_name())
 
-    if args.list:
-        s.Verbose(None, "Listed all platforms, exiting")
-        sys.exit(0)
-
-    if plat is not None:
-        s.Important(None, "Using: %s" % plat)
-    else:
-        s.Fatal(None, "Didn't find a platform to use!")
-
-
+    #Get a reference to the controller
     c = Controller()
-    if dev_index is None:
-        sys.exit("Failed to find an Device")
 
-    c.start_standalone_app(plat, dev_index, status, debug)
+    #Initialize the application
+    app = QApplication(sys.argv)
+    main = QMainWindow()
+
+    #Tell the controller to set things up
+    c.start_tab_view(platform, urn, s)
+    QThread.currentThread().setObjectName("main")
+    s.Verbose("Thread name: %s" % QThread.currentThread().objectName())
+    #Pass in the view to the main widget
+    main.setCentralWidget(c.get_view())
+    main.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
 

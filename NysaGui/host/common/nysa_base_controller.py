@@ -49,13 +49,18 @@ class NysaBaseController:
 
     __metaclass__ = ScriptPlugin
 
+    @staticmethod
+    def get_name():
+        return APP_NAME
+
+    @staticmethod
+    def get_driver():
+        return DRIVER
+
     def __init__(self):
         self.actions = None
         self.status = None
         super(NysaBaseController, self).__init__()
-
-    def start_standalone_app(self):
-        raise NotImplemented("Start standalone app not implemented!")
 
     def _initialize(self, platform, device_index):
         raise NotImplemented("_initialize Not Implemented")
@@ -69,24 +74,4 @@ class NysaBaseController:
 
     def get_view(self):
         raise NotImplemented("get_view Not Implemented")
-
-    @staticmethod
-    def get_name():
-        raise NotImplemented("get_name is not implemented")
-
-    @staticmethod
-    def get_unique_image_id():
-        raise NotImplemented("get_unique_image_id is not implemented! if not using return None")
-
-    @staticmethod
-    def get_device_id():
-        raise NotImplemented("get_device_id is not implemented! if not using return None")
-
-    @staticmethod
-    def get_device_sub_id():
-        raise NotImplemented("get_device_sub_id is not implemented! if not using return None")
-
-    @staticmethod
-    def get_device_unique_id():
-        raise NotImplemented("get_device_unique_id is not implemented! If not using return None")
 

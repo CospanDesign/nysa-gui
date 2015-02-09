@@ -27,16 +27,16 @@ import sys
 import argparse
 import time
 import string
+from array import array as Array
 
 import importlib
 
-from array import array as Array
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.Qt import *
 
-from PyQt4.Qt import QApplication
-from PyQt4 import QtCore
-
-
-from nysa.host.platform_scanner import PlatformScanner
+from nysa.common import status
+from nysa.host import platform_scanner
 
 from uart_actions import UARTActions
 
@@ -50,27 +50,22 @@ from nysa_base_controller import NysaBaseController
 
 #Nysa Imports
 from nysa.host.driver.uart import UART
-from nysa.host.platform_scanner import PlatformScanner
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
-#from protocol_utils.uart.uart_engine import UARTEngine
-
-
 from view.uart_widget import UARTWidget
+
+DRIVER = UART
+APP_NAME = "UART Console"
 
 #Module Defines
 script_name = str(os.path.split(__file__)[1])
 
-import status
-
-
-
 DESCRIPTION = "\n" \
 "\n"\
-"A template app\n"
+"%s\n" % APP_NAME
 
 EPILOG = "\n" \
 "\n"\
@@ -78,7 +73,6 @@ EPILOG = "\n" \
 "\tSomething\n" \
 "\t\t%s Something\n"\
 "\n" % script_name
-
 
 class Controller(NysaBaseController):
 
@@ -91,12 +85,8 @@ class Controller(NysaBaseController):
         self.actions.uart_data_out.connect(self.uart_data_out)
         self.actions.uart_read_data.connect(self.uart_read_data)
 
-    @staticmethod
-    def get_name():
-        return "UART Console"
-
-    def _initialize(self, platform, device_index):
-        self.uart = UART(platform[2], device_index, status)
+    def _initialize(self, platform, urn):
+        self.uart = UART(platform, urn, status)
         self.v = UARTWidget(self.status, self.actions)
 
         #Setup the UART
@@ -112,45 +102,16 @@ class Controller(NysaBaseController):
 
         self.uart.enable_read_interrupt()
 
-    @QtCore.pyqtSlot()
+    @pyqtSlot()
     def interrupt_callback(self):
         self.actions.uart_read_data.emit()
 
-    def start_standalone_app(self, platform, device_index, status, debug = False):
-        app = QApplication (sys.argv)
-        self.status = status.ClStatus()
-        if debug:
-            self.status.set_level(status.StatusLevel.VERBOSE)
-        else:
-            self.status.set_level(status.StatusLevel.INFO)
-
-        self._initialize(platform, device_index)
-        self.status.Verbose( "Starting UART Application")
-        sys.exit(app.exec_())
-
-    def start_tab_view(self, platform, device_index, status):
+    def start_tab_view(self, platform, urn, status):
         self.status = status
-        self._initialize(platform, device_index)
+        self._initialize(platform, urn)
 
     def get_view(self):
         return self.v
-
-    @staticmethod
-    def get_unique_image_id():
-        return None
-
-    @staticmethod
-    def get_device_id():
-        return UART.get_core_id()
-
-    @staticmethod
-    def get_device_sub_id():
-        #return UART.get_core_sub_id()
-        return None
-
-    @staticmethod
-    def get_device_unique_id():
-        return None
 
     def uart_data_out(self, data):
         if self.uart is None:
@@ -189,84 +150,56 @@ class Controller(NysaBaseController):
 
         self.uart.enable_hard_flowcontrol()
 
-def main(argv):
+def main():
     #Parse out the commandline arguments
-    s = status.ClStatus()
-    s.set_level(status.StatusLevel.INFO)
+    s = status.Status()
+    s.set_level("info")
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
             description = DESCRIPTION,
             epilog = EPILOG
     )
-    debug = False
-
     parser.add_argument("-d", "--debug",
                         action = "store_true",
                         help = "Enable Debug Messages")
-    parser.add_argument("-l", "--list",
-                        action = "store_true",
-                        help = "List the available devices from a platform scan")
     parser.add_argument("platform",
                         type = str,
                         nargs='?',
                         default=["first"],
                         help="Specify the platform to use")
- 
+
     args = parser.parse_args()
-    plat = None
 
     if args.debug:
-        s.set_level(status.StatusLevel.VERBOSE)
-        s.Debug(None, "Debug Enabled")
-        debug = True
+        s.set_level("verbose")
+        s.Debug("Debug Enabled")
 
-    pscanner = PlatformScanner()
-    ps = pscanner.get_platforms()
-    dev_index = None
-    for p in ps:
-        s.Verbose(None, p)
-        for psi in ps[p]:
-            if plat is None:
-                s.Verbose(None, "Found a platform: %s" % p)
-                n = ps[p][psi]
-                n.read_drt()
-                dev_index = n.find_device(UART.get_core_id())
-                if dev_index is not None:
-                    print "Dev Index: %d" % dev_index
-                    plat = [p, psi, ps[p][psi]]
-                    break
-                continue
-            if p == args.platform and plat[0] != args.platform:
-                #Found a match for a platfom to use
-                plat = [p, psi, ps[p][psi]]
-                continue
-            if p == psi:
-                #Found a match for a name!
-                #See if we can find a GPIO device: 0
-                dev_index = n.find_device(UART.get_core_id())
-                print "Dev Index: %d" % dev_index
-                if dev_index is not None:
-                    plat = [p, psi, ps[p][psi]]
-                    break
+    s.Verbose("platform scanner: %s" % str(dir(platform_scanner)))
+    platforms = platform_scanner.get_platforms_with_device(DRIVER, s)
 
-            s.Verbose(None, "\t%s" % psi)
+    if len(platforms) == 0:
+        sys.exit("Didn't find any platforms with device: %s" % str(DRIVER))
 
-    if args.list:
-        s.Verbose(None, "Listed all platforms, exiting")
-        sys.exit(0)
+    platform = platforms[0]
+    urn = platform.find_device(DRIVER)[0]
+    s.Important("Using: %s" % platform.get_board_name())
 
-    if plat is not None:
-        s.Important(None, "Using: %s" % plat)
-    else:
-        s.Fatal(None, "Didn't find a platform to use!")
-
-
+    #Get a reference to the controller
     c = Controller()
-    if dev_index is None:
-        sys.exit("Failed to find an I2C Device")
 
-    c.start_standalone_app(plat, dev_index, status, debug)
+    #Initialize the application
+    app = QApplication(sys.argv)
+    main = QMainWindow()
+
+    #Tell the controller to set things up
+    c.start_tab_view(platform, urn, s)
+    QThread.currentThread().setObjectName("main")
+    s.Verbose("Thread name: %s" % QThread.currentThread().objectName())
+    #Pass in the view to the main widget
+    main.setCentralWidget(c.get_view())
+    main.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
 

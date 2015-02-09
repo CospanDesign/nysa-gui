@@ -28,13 +28,12 @@ import os
 import sys
 import argparse
 
-from array import array as Array
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.Qt import *
 
-from PyQt4.Qt import QApplication
-from PyQt4 import QtCore
-from PyQt4 import QtGui
-
-from nysa.host.nysa import Nysa
+from nysa.common import status
+from nysa.host import platform_scanner
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -48,17 +47,17 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
-from standalone_controller import find_device
 
 # Put your device name (GPIO, SPI, I2C, etc...)
-DEVICE_NAME = "???"
-#DEVICE_NAME = "EXPERIMENTAL"
+DRIVER = NAME_OF_DRIVER
+APP_NAME = "Application Template"
+
 #Module Defines
 n = str(os.path.split(__file__)[1])
 
 DESCRIPTION = "\n" \
 "\n"\
-"A template app\n"
+"%s\n" % APP_NAME
 
 EPILOG = "\n" \
 "\n"\
@@ -73,80 +72,68 @@ class Controller(NysaBaseController):
     def __init__(self):
         super (Controller, self).__init__()
 
-    @staticmethod
-    def get_name():
-        #Change this for your app
-        return "app_template"
-
-    def _initialize(self, platform, device_index):
+    def _initialize(self, platform, urn):
         self.v = View(self.status, self.actions)
         self.v.setup_simple_text_output_view()
 
-    def start_standalone_app(self, platform, device_index, status, debug = False):
-        app = QApplication (sys.argv)
-        main = QtGui.QMainWindow()
-
-        self.status = status.Status()
-        if debug:
-            self.status.set_level(status.StatusLevel.VERBOSE)
-        else:
-            self.status.set_level(status.StatusLevel.INFO)
-        self.status.Verbose("Starting Standalone Application")
-        self._initialize(platform, device_index)
-        main.setCentralWidget(self.v)
-        main.show()
-        sys.exit(app.exec_())
-
-    def start_tab_view(self, platform, device_index, status):
+    def start_tab_view(self, platform, urn, status):
         self.status = status
         self.status.Verbose( "Starting Template Application")
-        self._initialize(platform, device_index)
+        self._initialize(platform, urn)
 
     def get_view(self):
         return self.v
 
-    @staticmethod
-    def get_unique_image_id():
-        """
-        If this ia controller for an entire image return the associated unique
-        image ID here
-        """
-        return None
+def main():
+    #Parse out the commandline arguments
+    s = status.Status()
+    s.set_level("info")
+    parser = argparse.ArgumentParser(
+            formatter_class = argparse.RawDescriptionHelpFormatter,
+            description = DESCRIPTION,
+            epilog = EPILOG
+    )
+    parser.add_argument("-d", "--debug",
+                        action = "store_true",
+                        help = "Enable Debug Messages")
+    parser.add_argument("platform",
+                        type = str,
+                        nargs='?',
+                        default=["first"],
+                        help="Specify the platform to use")
 
-    @staticmethod
-    def get_device_id():
-        """
-        If this is a controller for an individual device (GPIO, I2C, UART,
-        etc...) return the associted device ID here (notes for the device are in
-        /nysa/cbuilder/drt/drt.json
-        """
-        return Nysa.get_id_from_name(DEVICE_NAME)
+    args = parser.parse_args()
 
-    @staticmethod
-    def get_device_sub_id():
-        """
-        If this is a controller for an individual device with that has a
-        specific implementation (Cospan Design's version of a GPIO controller
-        as apposed to just a generic GPIO controller) return the sub ID here
-        """
-        return None
+    if args.debug:
+        s.set_level("verbose")
+        s.Debug("Debug Enabled")
 
-    @staticmethod
-    def get_device_unique_id():
-        """
-        Used to differentiate devices with the same device/sub ids.
-        """
-        return None
+    s.Verbose("platform scanner: %s" % str(dir(platform_scanner)))
+    platforms = platform_scanner.get_platforms_with_device(DRIVER, s)
 
+    if len(platforms) == 0:
+        sys.exit("Didn't find any platforms with device: %s" % str(DRIVER))
 
-def main(argv):
-    platform, dev_index, status, debug = find_device(argv, DEVICE_NAME)
+    platform = platforms[0]
+    urn = platform.find_device(DRIVER)[0]
+    s.Important("Using: %s" % platform.get_board_name())
 
+    #Get a reference to the controller
     c = Controller()
-    if dev_index is None:
-        sys.exit("Failed to find %s", DEVICE_NAME)
-    c.start_standalone_app(platform, dev_index, status, debug)
+
+    #Initialize the application
+    app = QApplication(sys.argv)
+    main = QMainWindow()
+
+    #Tell the controller to set things up
+    c.start_tab_view(platform, urn, s)
+    QThread.currentThread().setObjectName("main")
+    s.Verbose("Thread name: %s" % QThread.currentThread().objectName())
+    #Pass in the view to the main widget
+    main.setCentralWidget(c.get_view())
+    main.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
 

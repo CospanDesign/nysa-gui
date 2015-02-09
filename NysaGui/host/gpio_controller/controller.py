@@ -33,13 +33,11 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
 
-
-
-
 from nysa.common import status
 from nysa.host.nysa import Nysa
 from nysa.host.driver.gpio import GPIO
-from nysa.host.platform_scanner import PlatformScanner
+from nysa.host.platform_scanner import get_platforms_with_device
+from nysa.host import platform_scanner
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -50,6 +48,8 @@ from nysa_base_controller import NysaBaseController
 
 from view.gpio_widget import GPIOWidget
 
+DRIVER = GPIO
+APP_NAME = "GPIO Controller"
 
 #Module Defines
 n = str(os.path.split(__file__)[1])
@@ -69,21 +69,9 @@ from gpio_actions import GPIOActions
 
 class Controller(NysaBaseController):
 
-    @staticmethod
-    def get_name():
-        return "GPIO Controller"
-
-    def __del__(self):
-        #if self.reader_thread is not None:
-        #    del (self.reader_thread)
-        pass
-
     def __init__(self):
         super (Controller, self).__init__()
-        self.mutex = QMutex()
-
         self.gpio_actions = GPIOActions()
-
         self.gpio_actions.get_pressed.connect(self.register_get_pressed)
         self.gpio_actions.set_pressed.connect(self.register_set_pressed)
         self.gpio_actions.gpio_out_changed.connect(self.gpio_out_changed)
@@ -91,27 +79,15 @@ class Controller(NysaBaseController):
         self.gpio_actions.interrupt_en_changed.connect(self.interrupt_en_changed)
         self.gpio_actions.interrupt_edge_changed.connect(self.interrupt_edge_changed)
         self.gpio_actions.interrupt_both_edge_changed.connect(self.interrupt_both_edge_changed)
-
         self.gpio_actions.read_start_stop.connect(self.read_start_stop)
         self.gpio_actions.gpio_input_changed.connect(self.gpio_input_changed)
         self.gpio_actions.gpio_interrupt.connect(self.process_interrupts)
-        #self.reader_thread = None
 
-    def _initialize(self, platform, device_index):
+    def _initialize(self, platform, urn):
         self.v = GPIOWidget(count = 32, gpio_actions = self.gpio_actions)
-        #self.m.setup_(self, platform[2], device_index)
-        self.platform_name = platform[0]
-        self.status.Verbose("Platform Name: %s" % self.platform_name)
-        self.gpio = GPIO(platform[2], device_index, debug = False)
-
-        self.n = platform[2]
-
-        self.dev_index = device_index + 1
+        self.gpio = GPIO(platform, urn, debug = False)
 
         #Initialize the thread with a 40mS timeout
-        #self.reader_thread = ReaderThread(self.gpio, self.mutex, .040, self.gpio_actions)
-
-
         self.v.add_register(0, "Value", initial_value = self.gpio.get_port_raw())
         self.v.add_register(1, "Direction", initial_value = self.gpio.get_port_direction())
         self.v.add_register(2, "Interrupts", initial_value = self.gpio.get_interrupts())
@@ -120,83 +96,18 @@ class Controller(NysaBaseController):
         self.v.add_register(5, "Interrupt Both Edge", initial_value = self.gpio.get_interrupt_both_edge())
         self.v.add_register(6, "Interrupt Timeout", initial_value = self.gpio.get_interrupt_timeout())
         self.v.add_register(7, "Read Clock Rate", initial_value = self.gpio.get_clock_rate())
-
-        #self.v.set_register(0, self.gpio.get_port_raw())
-        #self.v.set_register(1, self.gpio.get_port_direction())
-        #self.v.set_register(2, self.gpio.get_interrupts())
-        #self.v.set_register(3, self.gpio.get_interrupt_enable())
-        #self.v.set_register(4, self.gpio.get_interrupt_edge())
-
         self.gpio.register_interrupt_callback(self.interrupt_callback)
 
-    def start_standalone_app(self, platform, device_index, status):
-        #print "Device Index: %d" % device_index
-        app = QApplication (sys.argv)
-        main = QMainWindow()
+    def start_tab_view(self, platform, urn, status):
         self.status = status
-        self.status.Verbose("Starting Standalone Application")
-        self._initialize(platform, device_index)
-        QThread.currentThread().setObjectName("main")
         self.status.Verbose("Thread name: %s" % QThread.currentThread().objectName())
-        main.setCentralWidget(self.v)
-        main.show()
-        sys.exit(app.exec_())
-
-    def start_tab_view(self, platform, device_index, status):
-        #print "Device Index: %d" % device_index
-        self.status = status
-        self._initialize(platform, device_index)
-        self.status.Verbose("Thread name: %s" % QThread.currentThread().objectName())
+        self._initialize(platform, urn)
 
     def get_view(self):
         return self.v
 
-    @staticmethod
-    def get_unique_image_id():
-        """
-        If this ia controller for an entire image return the associated unique
-        image ID here
-        """
-        return None
-
-    @staticmethod
-    def get_device_id():
-        return 1
-
-    @staticmethod
-    def get_device_sub_id():
-        """
-        If this is a controller for an individual device with that has a
-        specific implementation (Cospan Design's version of a GPIO controller
-        as apposed to just a generic GPIO controller) return the sub ID here
-        """
-        return None
-
-    @staticmethod
-    def get_device_unique_id():
-        """
-        Used to differentiate devices with the same device/sub ids.
-        """
-        return None
-
     def read_start_stop(self, start_stop, rate):
         self.status.Verbose("Enter Read/startstop")
-        '''
-        if start_stop:
-            #Start
-            if not self.reader_thread.isRunning():
-                self.reader_thread.start()
-                self.gpio_actions.read_rate_change.emit(rate)
-        else:
-            print "Stopping"
-            #Stop
-            self.reader_thread.end_reading()
-            self.reader_thread.wait()
-            print "Reader thread is finished"
-            del(self.reader_thread)
-            #Wait till thread is finished
-            self.reader_thread = ReaderThread(self.gpio, self.mutex, rate, self.gpio_actions)
-        '''
 
     def gpio_input_changed(self, value):
         self.status.Verbose("Input Changed")
@@ -205,82 +116,56 @@ class Controller(NysaBaseController):
 
     def register_get_pressed(self, index):
         self.status.Verbose("Register Get Pressed: %d" % index)
-        value = self.n.read_register(self.dev_index, index)
+        value = self.gpio.read_register(index)
         self.v.set_register(index, value)
 
     def register_set_pressed(self, index, value):
         self.status.Verbose("Register Set Pressed: %d: %d" % (index, value))
-        self.n.write_register(self.dev_index, index, value)
+        self.gpio.write_register(index, value)
 
     def gpio_out_changed(self, index, val):
         self.status.Verbose( "GPIO Out: %d : %s" % (index, str(val)))
         self.gpio.set_bit_value(index, val)
 
-    def direction_changed(self, index, val):
-        self.status.Verbose( "GPIO Direction: %d : %s" % (index, str(val)))
-        self.n.enable_register_bit(self.dev_index, 1, index, val)
+    def direction_changed(self, index, value):
+        self.status.Verbose( "GPIO Direction: %d : %s" % (index, str(value)))
+        self.gpio.enable_register_bit(1, index, value)
 
-    def interrupt_en_changed(self, index, val):
-        self.status.Verbose("Interrupt En Changed: %d : %s" % (index, str(val)))
-        self.n.enable_register_bit(self.dev_index, 3, index, val)
+    def interrupt_en_changed(self, index, value):
+        self.status.Verbose("Interrupt En Changed: %d : %s" % (index, str(value)))
+        self.gpio.enable_register_bit(3, index, value)
 
-    def interrupt_edge_changed(self, index, val):
-        self.status.Verbose("Interrupt Edge Changed %d : %s" % (index, str(val)))
-        self.n.enable_register_bit(self.dev_index, 4, index, val)
+    def interrupt_edge_changed(self, index, value):
+        self.status.Verbose("Interrupt Edge Changed %d : %s" % (index, str(value)))
+        self.gpio.enable_register_bit(4, index, value)
 
-    def interrupt_both_edge_changed(self, index, val):
-        self.status.Verbose("Interrupt Both Edges Changed %d: %s" % (index, str(val)))
-        self.n.enable_register_bit(self.dev_index, 5, index, val)
+    def interrupt_both_edge_changed(self, index, value):
+        self.status.Verbose("Interrupt Both Edges Changed %d: %s" % (index, str(value)))
+        self.gpio.enable_register_bit(5, index, value)
 
-    #@pyqtSlot()
     def process_interrupts(self):
         self.status.Verbose("Process interrupts")
-        #print "Current thread ID: %s" % QThread.currentThread().objectName()
         value = self.gpio.get_port_raw()
         interrupts = self.gpio.get_interrupts()
         self.v.set_register(2, interrupts)
-        #time.sleep(0.020)
-
-        #while interrupts != 0:
-        #    interrupts = self.gpio.get_interrupts()
-
-        #time.sleep(0.020)
-        #interrupts = self.gpio.get_interrupts()
-        #self.v.set_register(2, interrupts)
-
         self.gpio_actions.gpio_input_changed.emit(value)
 
     def interrupt_callback(self):
         self.status.Verbose("Received interrupt callback")
-        #print "self type: %s" % str(type(self))
         self.gpio_actions.gpio_interrupt.emit()
-        '''
-        try:
-            QMetaObject.invokeMethod(self,
-                                        "process_interrupts",
-                                        Qt.QueuedConnection)
-        except:
-            print "Exception: %s" % sys.exc_info()[0]
-        '''
-        #self.gpio_actions.gpio_interrupt.emit()
 
-def main(argv):
+def main():
     #Parse out the commandline arguments
     s = status.Status()
-    s.set_level(status.StatusLevel.INFO)
+    s.set_level("info")
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
             description = DESCRIPTION,
             epilog = EPILOG
     )
-    debug = False
-
     parser.add_argument("-d", "--debug",
                         action = "store_true",
                         help = "Enable Debug Messages")
-    parser.add_argument("-l", "--list",
-                        action = "store_true",
-                        help = "List the available devices from a platform scan")
     parser.add_argument("platform",
                         type = str,
                         nargs='?',
@@ -288,72 +173,37 @@ def main(argv):
                         help="Specify the platform to use")
 
     args = parser.parse_args()
-    plat = ["", None, None]
 
     if args.debug:
-        s.set_level(status.StatusLevel.VERBOSE)
+        s.set_level("verbose")
         s.Debug("Debug Enabled")
-        debug = True
 
-    pscanner = PlatformScanner()
-    platform_dict = pscanner.get_platforms()
-    platform_names = platform_dict.keys()
-    if "sim" in platform_names:
-        #If sim is in the platforms, move it to the end
-        platform_names.remove("sim")
-        platform_names.append("sim")
-    dev_index = None
-    for platform_name in platform_dict:
-        s.Verbose("Platform: %s" % str(platform_name))
-        s.Verbose("Type: %s" % str(platform_dict[platform_name]))
+    s.Verbose("platform scanner: %s" % str(dir(platform_scanner)))
+    platforms = platform_scanner.get_platforms_with_device(DRIVER, s)
 
-        platform_instance = platform_dict[platform_name](s)
-        s.Verbose("Platform Instance: %s" % str(platform_instance))
+    if len(platforms) == 0:
+        sys.exit("Didn't find any platforms with device: %s" % str(DRIVER))
 
+    platform = platforms[0]
+    urn = platform.find_device(DRIVER)[0]
+    s.Important("Using: %s" % platform.get_board_name())
 
-        instances_dict = platform_instance.scan()
-        if plat[1] is not None:
-            break
-
-        for name in instances_dict:
-
-            #s.Verbose("Found Platform Item: %s" % str(platform_item))
-            n = instances_dict[name]
-            plat = ["", None, None]
-
-            if n is not None:
-                s.Verbose("Found a nysa instance: %s" % name)
-                n.read_drt()
-                dev_index = n.find_device(Nysa.get_id_from_name("GPIO"))
-                if dev_index is not None:
-                    s.Important("Found a device at %d" % dev_index)
-                    plat = [platform_name, name, n]
-                    break
-                continue
-
-            if platform_name == args.platform and plat[0] != args.platform:
-                #Found a match for a platfom to use
-                plat = [platform_name, name, n]
-                continue
-
-            s.Verbose("\t%s" % psi)
-
-    if args.list:
-        s.Verbose("Listed all platforms, exiting")
-        sys.exit(0)
-
-    if plat is not None:
-        s.Important("Using: %s" % plat)
-    else:
-        s.Fatal("Didn't find a platform to use!")
-
-
+    #Get a reference to the controller
     c = Controller()
-    if dev_index is None:
-        sys.exit("Failed to find a GPIO Device")
 
-    c.start_standalone_app(plat, dev_index, s)
+    #Initialize the application
+    app = QApplication(sys.argv)
+    main = QMainWindow()
+
+    #Tell the controller to set things up
+    c.start_tab_view(platform, urn, s)
+    QThread.currentThread().setObjectName("main")
+    s.Verbose("Thread name: %s" % QThread.currentThread().objectName())
+    #Pass in the view to the main widget
+    main.setCentralWidget(c.get_view())
+    main.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
 

@@ -28,11 +28,11 @@ import os
 import sys
 import argparse
 
-from PyQt4.Qt import QApplication
-from PyQt4 import QtCore
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.Qt import *
 
-#Platform Scanner
-from nysa.host.platform_scanner import PlatformScanner
+from nysa.host import platform_scanner
 
 #I2C Driver
 from nysa.host.driver.i2c import I2C
@@ -59,10 +59,12 @@ from protocol_utils.i2c.i2c_engine import I2CEngineError
 
 import status
 
+# Put your device name (GPIO, SPI, I2C, etc...)
+DRIVER = I2C
+APP_NAME = "I2C Controller"
+
 #Module Defines
 n = str(os.path.split(__file__)[1])
-
-
 
 DESCRIPTION = "\n" \
 "\n"\
@@ -91,12 +93,8 @@ class Controller(NysaBaseController):
         if self.i2c is not None:
             self.i2c.enable_i2c(False)
 
-    @staticmethod
-    def get_name():
-        return "I2C Controller"
-
-    def _initialize(self, platform, device_index):
-        self.i2c = I2C(platform[2], device_index, status)
+    def _initialize(self, platform, urn):
+        self.i2c = I2C(platform, urn, status)
         self.m = I2CController(self.status, self.actions)
         self.server = UDPServer(self.status, self.actions, I2C_PORT)
 
@@ -115,40 +113,13 @@ class Controller(NysaBaseController):
         self.actions.i2c_step.connect(self.i2c_step)
         self.actions.i2c_loop_step.connect(self.i2c_loop_step)
 
-    def start_standalone_app(self, platform, device_index, status, debug = False):
-        app = QApplication (sys.argv)
-        self.status = status.ClStatus()
-        if debug:
-            self.status.set_level(status.StatusLevel.VERBOSE)
-        else:
-            self.status.set_level(status.StatusLevel.INFO)
-        self.status.Verbose( "Starting Standalone Application")
-        self._initialize(platform, device_index)
-        sys.exit(app.exec_())
-
-    def start_tab_view(self, platform, device_index, status):
+    def start_tab_view(self, platform, urn, status):
         self.status = status
         self.status.Verbose( "Starting I2C Application")
-        self._initialize(platform, device_index)
+        self._initialize(platform, urn)
 
     def get_view(self):
         return self.v
-
-    @staticmethod
-    def get_unique_image_id():
-        return None
-
-    @staticmethod
-    def get_device_id():
-        return 3
-
-    @staticmethod
-    def get_device_sub_id():
-        return None
-
-    @staticmethod
-    def get_device_unique_id():
-        return None
 
     def i2c_run(self):
         init_transactions = self.m.get_all_init_transactions()
@@ -200,86 +171,56 @@ class Controller(NysaBaseController):
         self.v.set_config_name(self.m.get_config_name())
         self.v.set_config_description(self.m.get_config_description())
 
-
-
-def main(argv):
+def main():
     #Parse out the commandline arguments
-    s = status.ClStatus()
-    s.set_level(status.StatusLevel.INFO)
+    s = status.Status()
+    s.set_level("info")
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
             description = DESCRIPTION,
             epilog = EPILOG
     )
-    debug = False
-
     parser.add_argument("-d", "--debug",
                         action = "store_true",
                         help = "Enable Debug Messages")
-    parser.add_argument("-l", "--list",
-                        action = "store_true",
-                        help = "List the available devices from a platform scan")
     parser.add_argument("platform",
                         type = str,
                         nargs='?',
                         default=["first"],
                         help="Specify the platform to use")
- 
+
     args = parser.parse_args()
-    plat = None
 
     if args.debug:
-        s.set_level(status.StatusLevel.VERBOSE)
-        s.Debug(None, "Debug Enabled")
-        debug = True
+        s.set_level("verbose")
+        s.Debug("Debug Enabled")
 
-    pscanner = PlatformScanner()
-    ps = pscanner.get_platforms()
-    dev_index = None
-    for p in ps:
-        s.Verbose(None, p)
-        for psi in ps[p]:
-            if plat is None:
-                s.Verbose(None, "Found a platform: %s" % p)
-                n = ps[p][psi]
-                n.read_drt()
-                dev_index = n.find_device(I2C.get_core_id())
-                if dev_index is not None:
-                    print "Dev Index: %d" % dev_index
-                    plat = [p, psi, ps[p][psi]]
-                    break
-                continue
-            if p == args.platform and plat[0] != args.platform:
-                #Found a match for a platfom to use
-                plat = [p, psi, ps[p][psi]]
-                continue
-            if p == psi:
-                #Found a match for a name!
-                #See if we can find a GPIO device: 0
-                dev_index = n.find_device(I2C.get_core_id())
-                print "Dev Index: %d" % dev_index
-                if dev_index is not None:
-                    plat = [p, psi, ps[p][psi]]
-                    break
+    s.Verbose("platform scanner: %s" % str(dir(platform_scanner)))
+    platforms = platform_scanner.get_platforms_with_device(DRIVER, s)
 
-            s.Verbose(None, "\t%s" % psi)
+    if len(platforms) == 0:
+        sys.exit("Didn't find any platforms with device: %s" % str(DRIVER))
 
-    if args.list:
-        s.Verbose(None, "Listed all platforms, exiting")
-        sys.exit(0)
+    platform = platforms[0]
+    urn = platform.find_device(DRIVER)[0]
+    s.Important("Using: %s" % platform.get_board_name())
 
-    if plat is not None:
-        s.Important(None, "Using: %s" % plat)
-    else:
-        s.Fatal(None, "Didn't find a platform to use!")
-
-
+    #Get a reference to the controller
     c = Controller()
-    if dev_index is None:
-        sys.exit("Failed to find an I2C Device")
 
-    c.start_standalone_app(plat, dev_index, status, debug)
+    #Initialize the application
+    app = QApplication(sys.argv)
+    main = QMainWindow()
+
+    #Tell the controller to set things up
+    c.start_tab_view(platform, urn, s)
+    QThread.currentThread().setObjectName("main")
+    s.Verbose("Thread name: %s" % QThread.currentThread().objectName())
+    #Pass in the view to the main widget
+    main.setCentralWidget(c.get_view())
+    main.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
 

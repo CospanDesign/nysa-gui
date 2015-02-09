@@ -86,7 +86,7 @@ DRAW_XOR          = 3
 class OLED(object):
 
     #OLED Functions
-    def __init__(self, platform, status):
+    def __init__(self, platform, nui, status):
         gpio_id = platform.find_device(Nysa.get_id_from_name(GPIO_DEVICE_NAME),
                                 sub_id = None,
                                 unique_id = GPIO_UNIQUE_ID)

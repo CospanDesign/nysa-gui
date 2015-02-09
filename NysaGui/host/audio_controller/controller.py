@@ -39,7 +39,9 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
 
+from nysa.common import status
 from nysa.host.nysa import Nysa
+from nysa.host import platform_scanner
 from nysa.host.driver.i2s import I2S
 
 
@@ -56,14 +58,17 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from common import status as sts 
 
 from nysa_base_controller import NysaBaseController
-from audio_actions import AudioActions
 from view.view import View
+
+from audio_actions import AudioActions
 
 
 from nysa.common import site_manager
 from nysa.host import platform_scanner
 from nysa.host.platform_scanner import PlatformScanner
 
+DRIVER = I2S
+APP_NAME = "Audio Playback"
 #Module Defines
 n = str(os.path.split(__file__)[1])
 
@@ -95,17 +100,11 @@ class Controller(NysaBaseController):
 
         self.filename = ""
 
-    @staticmethod
-    def get_name():
-        return "Audio Viewer"
-
-    def _initialize(self, platform, device_index):
+    def _initialize(self, platform, urn):
         self.v = View(self.actions, self.status)
-        self.platform_name = platform[0]
+        self.platform_name = platform.get_board_name()
         self.status.Verbose("Platform Name: %s" % self.platform_name)
-        self.i2s = I2S(platform[2], device_index, debug = False)
-        #if self.platform_name != "sim":
-        #    self.i2s.setup()
+        self.i2s = I2S(platform, urn, debug = False)
         QMetaObject.invokeMethod(self.audio_worker,
                                  "thread_init",
                                  Qt.QueuedConnection,
@@ -119,45 +118,13 @@ class Controller(NysaBaseController):
         self.i2s.enable_interrupt(True)
         self.set_audio_file("/home/cospan/sandbox/wave_file.wav")
 
-    def start_standalone_app(self, platform, device_index, status, debug = False):
-        app = QApplication (sys.argv)
-        main = QMainWindow()
-
-        #self.status = status.Status()
-        self.status = status
-        if debug:
-            self.status.set_level(sts.StatusLevel.VERBOSE)
-        else:
-            self.status.set_level(sts.StatusLevel.INFO)
-        self.status.Verbose("Starting Standalone Application")
-        self._initialize(platform, device_index)
-        main.setCentralWidget(self.v)
-        main.show()
-        sys.exit(app.exec_())
-
-    def start_tab_view(self, platform, device_index, status):
+    def start_tab_view(self, platform, urn, status):
         self.status = status
         self.status.Verbose("Starting Audio Application")
-        self._initialize(platform, device_index)
+        self._initialize(platform, urn)
 
     def get_view(self):
         return self.v
-
-    @staticmethod
-    def get_unique_image_id():
-        return None
-
-    @staticmethod
-    def get_device_id():
-        return Nysa.get_id_from_name("I2S")
-
-    @staticmethod
-    def get_device_sub_id():
-        return None
-
-    @staticmethod
-    def get_device_unique_id():
-        return None
 
     #Audio Controller
     def set_audio_file(self, filename):
@@ -480,26 +447,18 @@ class AudioWorker(QObject):
             #                         Q_ARG(float, val))
         '''
 
-
-
-def main(argv):
+def main():
     #Parse out the commandline arguments
-    #s = status.Status()
-    s = sts.ClStatus()
-    s.set_level(sts.StatusLevel.INFO)
+    s = status.Status()
+    s.set_level("info")
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
             description = DESCRIPTION,
             epilog = EPILOG
     )
-    debug = False
-
     parser.add_argument("-d", "--debug",
                         action = "store_true",
                         help = "Enable Debug Messages")
-    parser.add_argument("-l", "--list",
-                        action = "store_true",
-                        help = "List the available devices from a platform scan")
     parser.add_argument("platform",
                         type = str,
                         nargs='?',
@@ -507,72 +466,37 @@ def main(argv):
                         help="Specify the platform to use")
 
     args = parser.parse_args()
-    plat = ["", None, None]
 
     if args.debug:
-        s.set_level(sts.StatusLevel.VERBOSE)
+        s.set_level("verbose")
         s.Debug("Debug Enabled")
-        debug = True
 
-    pscanner = PlatformScanner()
-    platform_dict = pscanner.get_platforms()
-    platform_names = platform_dict.keys()
-    if "sim" in platform_names:
-        #If sim is in the platforms, move it to the end
-        platform_names.remove("sim")
-        platform_names.append("sim")
-    dev_index = None
-    for platform_name in platform_dict:
-        s.Verbose("Platform: %s" % str(platform_name))
-        s.Verbose("Type: %s" % str(platform_dict[platform_name]))
+    s.Verbose("platform scanner: %s" % str(dir(platform_scanner)))
+    platforms = platform_scanner.get_platforms_with_device(DRIVER, s)
 
-        platform_instance = platform_dict[platform_name](s)
-        s.Verbose("Platform Instance: %s" % str(platform_instance))
+    if len(platforms) == 0:
+        sys.exit("Didn't find any platforms with device: %s" % str(DRIVER))
 
+    platform = platforms[0]
+    urn = platform.find_device(DRIVER)[0]
+    s.Important("Using: %s" % platform.get_board_name())
 
-        instances_dict = platform_instance.scan()
-        if plat[1] is not None:
-            break
-
-        for name in instances_dict:
-
-            #s.Verbose("Found Platform Item: %s" % str(platform_item))
-            n = instances_dict[name]
-            plat = ["", None, None]
-
-            if n is not None:
-                s.Verbose("Found a nysa instance: %s" % name)
-                n.read_drt()
-                dev_index = n.find_device(Nysa.get_id_from_name("I2S"))
-                if dev_index is not None:
-                    s.Important("Found a device at %d" % dev_index)
-                    plat = [platform_name, name, n]
-                    break
-                continue
-
-            if platform_name == args.platform and plat[0] != args.platform:
-                #Found a match for a platfom to use
-                plat = [platform_name, name, n]
-                continue
-
-            s.Verbose("\t%s" % psi)
-
-    if args.list:
-        s.Verbose("Listed all platforms, exiting")
-        sys.exit(0)
-
-    if plat is not None:
-        s.Important("Using: %s" % plat)
-    else:
-        s.Fatal("Didn't find a platform to use!")
-
-
+    #Get a reference to the controller
     c = Controller()
-    if dev_index is None:
-        sys.exit("Failed to find an I2S Device")
 
-    c.start_standalone_app(plat, dev_index, s, debug)
+    #Initialize the application
+    app = QApplication(sys.argv)
+    main = QMainWindow()
+
+    #Tell the controller to set things up
+    c.start_tab_view(platform, urn, s)
+    QThread.currentThread().setObjectName("main")
+    s.Verbose("Thread name: %s" % QThread.currentThread().objectName())
+    #Pass in the view to the main widget
+    main.setCentralWidget(c.get_view())
+    main.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
 

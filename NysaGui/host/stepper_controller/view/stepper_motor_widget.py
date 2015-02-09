@@ -33,14 +33,11 @@ p = os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
                              os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             "gui",
+                             "common",
                              "pvg")
 
 p = os.path.abspath(p)
-#print ("Dir: %s" % p)
+print ("Dir: %s" % p)
 sys.path.append(p)
 
 RECT_SIZE = 200.0

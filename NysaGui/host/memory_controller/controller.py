@@ -30,11 +30,13 @@ import argparse
 import time
 from array import array as Array
 
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.Qt import *
 
-from PyQt4.Qt import QApplication
-from PyQt4 import QtCore
-
-from nysa.host.nysa import NysaCommError
+from nysa.common import status
+from nysa.host import platform_scanner
+from nysa.host.driver.memory import Memory
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -42,9 +44,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              "common"))
 
 from nysa_base_controller import NysaBaseController
-
 from view.view import View
-from model.model import AppModel
 
 from memory_actions import MemoryActions
 
@@ -53,8 +53,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
-import status
-from platform_scanner import PlatformScanner
+# Put your device name (GPIO, SPI, I2C, etc...)
+DRIVER = Memory
+APP_NAME = "Memory Controller"
 
 #Module Defines
 n = str(os.path.split(__file__)[1])
@@ -70,7 +71,7 @@ EPILOG = "\n" \
 "\t\t%s Something\n"\
 "\n" % n
 
-class ReaderThread(QtCore.QThread):
+class ReaderThread(QThread):
     def __init__(self, mutex, func):
         super(ReaderThread, self).__init__()
 
@@ -84,23 +85,7 @@ class ReaderThread(QtCore.QThread):
         result = "Error"
         result = self.func()
         self.mutex.unlock()
-        '''
-        try:
-            result = self.func()
-        except TypeError as ex:
-            print "Error while executing memory test: %s" % str(ex)
-        except NameError as ex:
-            print "Error while executing memory test: %s" % str(ex)
-        except NysaCommError as ex:
-            print "Error while executing memory test: %s" % str(ex)
-        except:
-            print "Error while executing memory test: %s" % sys.exc_info()[0]
-        finally:
-            self.mutex.unlock()
-        '''
-
         self.memory_actions.memory_read_finished.emit(result)
-        print "Finished with thread"
 
 class Controller(NysaBaseController):
 
@@ -109,15 +94,10 @@ class Controller(NysaBaseController):
         self.status = None
         self.actions = None
         self.memory_actions = MemoryActions()
-        self.mutex = QtCore.QMutex()
-        self.m = AppModel()
+        self.mutex = QMutex()
         self.reader_thread = None
         self.memory_actions.memory_test_start.connect(self.start_tests)
         self.memory_actions.memory_read_finished.connect(self.run_test)
-
-    @staticmethod
-    def get_name():
-        return "Memory Controller"
 
     def __del__(self):
         if self.reader_thread is not None:
@@ -125,48 +105,22 @@ class Controller(NysaBaseController):
             self.status.Important( "Waiting for reader thread to finish")
             self.reader_thread.join()
 
-    def _initialize(self, platform, dev_index):
-        print "platform: %s" % str(platform)
-        self.n = platform[2]
-        print "Index: %d" % dev_index
-        self.dev_index = dev_index
+    def _initialize(self, platform, urn):
+        self.n = platform
+        self.urn = urn
         self.v = View(self.status, self.memory_actions)
         self.v.setup_view()
         self.v.add_test("Single Read/Write at Start", True, self.test_single_rw_start)
         self.v.add_test("Single Read/Write at End", True, self.test_single_rw_end)
         self.v.add_test("Long Read/Write Test", True, self.test_long_burst)
-        self.v.set_memory_size(self.n.get_device_size(dev_index))
+        self.v.set_memory_size(self.n.get_device_size(urn))
 
-
-    def start_standalone_app(self, plat, dev_index, status):
-        app = QApplication (sys.argv)
-        self.status = status.ClStatus()
-        self._initialize(plat, dev_index)
-        sys.exit(app.exec_())
-
-    def start_tab_view(self, platform, dev_index, status):
+    def start_tab_view(self, platform, urn, status):
         self.status = status
-        self._initialize(platform, dev_index)
+        self._initialize(platform, urn)
 
     def get_view(self):
         return self.v
-
-    @staticmethod
-    def get_unique_image_id():
-        return None
-
-    @staticmethod
-    def get_device_id():
-        #Return Memory Device ID
-        return 5
-
-    @staticmethod
-    def get_device_sub_id():
-        return None
-
-    @staticmethod
-    def get_device_unique_id():
-        return None
 
     def start_tests(self):
         print "Start Tests!"
@@ -198,8 +152,8 @@ class Controller(NysaBaseController):
 
     def test_single_rw_start(self):
         status = "Passed"
-        print "device index: %d" % self.dev_index
-        size = self.n.get_device_size(self.dev_index)
+        print "device URN: %s" % self.urn
+        size = self.n.get_device_size(self.urn)
         print "size: 0x%08X" % size
         if self.status.is_command_line():
             print "Command Line %s" % str(type(self.status))
@@ -228,12 +182,13 @@ class Controller(NysaBaseController):
         for i in range (len(data_out)):
             if data_in[i] != data_out[i]:
                 status = "Failed"
-                print "ERROR at: [{0:>2}] OUT: {1:>8} IN: {2:>8}".format(str(i), hex(data_out[i]), hex(data_in[i]))
+                print "Error at: 0x%02X OUT: 0x%08X IN: 0x%08X" % (i, data_out[i], data_in[i])
+                #print "ERROR at: [{0:>2}] OUT: {1:>8} IN: {2:>8}".format(str(i), hex(data_out[i]), hex(data_in[i]))
         return status
 
     def test_single_rw_end(self):
         status = "Passed"
-        size = self.n.get_device_size(self.dev_index)
+        size = self.n.get_device_size(self.urn)
         if self.status.is_command_line():
             self.status.Verbose( "Clearing Memory")
             self.status.Verbose( "Memory Size: 0x%08X" % size)
@@ -253,14 +208,15 @@ class Controller(NysaBaseController):
 
         for i in range (len(data_out)):
             if data_in[i] != data_out[i]:
-                print "ERROR at: [{0:>2}] OUT: {1:>8} IN: {2:>8}".format(str(i), hex(data_out[i]), hex(data_in[i]))
+                print "Error at: 0x%02X OUT: 0x%08X IN: 0x%08X" % (i, data_out[i], data_in[i])
+                #print "ERROR at: [{0:>2}] OUT: {1:>8} IN: {2:>8}".format(str(i), hex(data_out[i]), hex(data_in[i]))
                 status = "Failed"
 
         return status
 
     def test_long_burst(self):
         status = "Passed"
-        size = self.n.get_device_size(self.dev_index)
+        size = self.n.get_device_size(self.urn)
         if self.status.is_command_line():
             self.status.Verbose( "Clearing Memory")
             self.status.Verbose( "Memory Size: 0x%08X" % size)
@@ -313,11 +269,7 @@ class Controller(NysaBaseController):
                 fail = True
                 status = "Failed"
                 if self.status.is_command_line(): 
-                    self.status.Error(
-                        "Mismatch at: {0:>8}: WRITE (Hex):[{0:>8}] Read (Hex): [{0:>8}]".format(
-                        hex(i),
-                        hex(data_out[i]),
-                        hex(data_in[i])))
+                    self.status.Error("Mismatch @ 0x%08X: Write: (Hex): 0x%08X Read (Hex): 0x%08X" % (i, data_out[i], data_in[i]))
                 if fail_count >= 16:
                     break
                 fail_count += 1
@@ -331,85 +283,56 @@ def test_iterator(count):
         yield index
         index += 1
 
-def main(argv):
+def main():
     #Parse out the commandline arguments
-    s = status.ClStatus()
-    s.set_level(status.StatusLevel.INFO)
+    s = status.Status()
+    s.set_level("info")
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
             description = DESCRIPTION,
             epilog = EPILOG
     )
-    debug = False
-
     parser.add_argument("-d", "--debug",
                         action = "store_true",
                         help = "Enable Debug Messages")
-    parser.add_argument("-l", "--list",
-                        action = "store_true",
-                        help = "List the available devices from a platform scan")
     parser.add_argument("platform",
                         type = str,
                         nargs='?',
                         default=["first"],
                         help="Specify the platform to use")
-                        
 
     args = parser.parse_args()
-    plat = None
 
     if args.debug:
-        s.set_level(status.StatusLevel.VERBOSE)
-        s.Debug(None, "Debug Enabled")
-        debug = True
+        s.set_level("verbose")
+        s.Debug("Debug Enabled")
 
-    if debug:
-        s.Debug(None, "Display a list of platforms found")
-    pscanner = PlatformScanner()
-    ps = pscanner.get_platforms()
-    dev_index = None
-    for p in ps:
-        s.Verbose(None, p)
-        for psi in ps[p]:
-            if plat is None:
-                s.Verbose(None, "Found a platform: %s" % p)
-                n = ps[p][psi]
-                n.read_drt()
-                dev_index = n.find_device(5)
-                if dev_index is not None:
-                    print "Dev Index: %d" % dev_index
-                    plat = [p, psi, ps[p][psi]]
-                    break
-                continue
-            if p == args.platform and plat[0] != args.platform:
-                #Found a match for a platfom to use
-                plat = [p, psi, ps[p][psi]]
-                continue
-            if p == psi:
-                #Found a match for a name!
-                #See if we can find a Memory device: 0
-                dev_index = n.find_device(5)
-                print "Dev Index: %d" % dev_index
-                if dev_index is not None:
-                    plat = [p, psi, ps[p][psi]]
-                    break
+    s.Verbose("platform scanner: %s" % str(dir(platform_scanner)))
+    platforms = platform_scanner.get_platforms_with_device(DRIVER, s)
 
-            s.Verbose(None, "\t%s" % psi)
+    if len(platforms) == 0:
+        sys.exit("Didn't find any platforms with device: %s" % str(DRIVER))
 
-    if args.list:
-        s.Verbose(None, "Listed all platforms, exiting")
-        sys.exit(0)
+    platform = platforms[0]
+    urn = platform.find_device(DRIVER)[0]
+    s.Important("Using: %s" % platform.get_board_name())
 
-    if plat is not None:
-        s.Important(None, "Using: %s" % plat)
-    else:
-        s.Fatal(None, "Didn't find a platform to use!")
-
+    #Get a reference to the controller
     c = Controller()
-    if dev_index is None:
-        sys.exit("Failed to find a Memory")
 
-    c.start_standalone_app(plat, dev_index, status)
+    #Initialize the application
+    app = QApplication(sys.argv)
+    main = QMainWindow()
+
+    #Tell the controller to set things up
+    c.start_tab_view(platform, urn, s)
+    QThread.currentThread().setObjectName("main")
+    s.Verbose("Thread name: %s" % QThread.currentThread().objectName())
+    #Pass in the view to the main widget
+    main.setCentralWidget(c.get_view())
+    main.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
+

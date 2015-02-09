@@ -28,11 +28,13 @@ import os
 import sys
 import argparse
 
-from PyQt4.Qt import QApplication
-from PyQt4 import QtCore
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.Qt import *
 
-#Platform Scanner
-from nysa.host.platform_scanner import PlatformScanner
+from nysa.common import status
+from nysa.host import platform_scanner
+
 from nysa.host.driver.sf_camera import SFCamera
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
@@ -42,12 +44,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 
 from nysa_base_controller import NysaBaseController
-from nysa.common import status
 
 from sf_camera_actions import SFCameraActions
 from view.camera_widget import CameraWidget
-from model.model import AppModel
-
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -56,6 +55,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 #from protocol_utils.sf_camera.camera_utils import CameraUtils
 
 import camera_engine
+DRIVER = SFCamera
+APP_NAME = "Sparkfun Camera Controller"
+
 
 
 #Module Defines
@@ -63,7 +65,7 @@ n = str(os.path.split(__file__)[1])
 
 DESCRIPTION = "\n" \
 "\n"\
-"A template app\n"
+"%s\n" % APP_NAME
 
 EPILOG = "\n" \
 "\n"\
@@ -80,7 +82,6 @@ class Controller(NysaBaseController):
     def __init__(self):
         super (Controller, self).__init__()
         self.actions = SFCameraActions()
-        self.m = AppModel()
         self.debug = False
         self.actions.sf_camera_run.connect(self.run)
         self.actions.sf_camera_reset.connect(self.reset)
@@ -90,53 +91,19 @@ class Controller(NysaBaseController):
         pass
         #self.camera_util.stop()
 
-    @staticmethod
-    def get_name():
-        #Change this for your app
-        return "Sparkfun 640x480 Camera Controller"
-
-    def _initialize(self, platform):
+    def _initialize(self, platform, urn):
         self.v = CameraWidget(self.status, self.actions)
-        self.camera = SFCamera(platform[2], camera_id = 0, i2c_id = 1)
-        #self.camera_util = CameraUtils(self.camera, self.actions, self.status)
+
+        self.camera = SFCamera(platform, urn)
         self.engine = camera_engine.CameraEngine(self.camera, self.actions, self.status)
-        #self.camera_util.setup_camera()
 
-    def start_standalone_app(self, platform, debug = False):
-        app = QApplication (sys.argv)
-        self.status = status.Status()
-        self._initialize(platform)
-        sys.exit(app.exec_())
-
-    def start_tab_view(self, platform, status):
+    def start_tab_view(self, platform, urn, status):
         self.status = status
         self.status.Verbose("Starting Sparkfun Video")
-        self._initialize(platform)
+        self._initialize(platform, urn)
 
     def get_view(self):
         return self.v
-
-    @staticmethod
-    def get_unique_image_id():
-        """
-        Unique Image ID for SF Camera can be found in the configuration file
-
-        '/nysa/ibuilder/example_projects/dionysus_sf_camera.json'
-
-        """
-        return SF_CAMERA_IMAGE_ID
-
-    @staticmethod
-    def get_device_id():
-        return None
-
-    @staticmethod
-    def get_device_sub_id():
-        return None
-
-    @staticmethod
-    def get_device_unique_id():
-        return None
 
     def run(self):
         self.status.Important("Start")
@@ -156,24 +123,18 @@ class Controller(NysaBaseController):
         #self.camera_util.reset()
         self.engine.reset()
 
-
-def main(argv):
+def main():
     #Parse out the commandline arguments
     s = status.Status()
-    s.set_level(status.StatusLevel.INFO)
+    s.set_level("info")
     parser = argparse.ArgumentParser(
             formatter_class = argparse.RawDescriptionHelpFormatter,
             description = DESCRIPTION,
             epilog = EPILOG
     )
-    debug = False
-
     parser.add_argument("-d", "--debug",
                         action = "store_true",
                         help = "Enable Debug Messages")
-    parser.add_argument("-l", "--list",
-                        action = "store_true",
-                        help = "List the available devices from a platform scan")
     parser.add_argument("platform",
                         type = str,
                         nargs='?',
@@ -181,44 +142,37 @@ def main(argv):
                         help="Specify the platform to use")
 
     args = parser.parse_args()
-    plat = None
 
     if args.debug:
-        s.set_level(status.StatusLevel.VERBOSE)
-        s.Debug(None, "Debug Enabled")
-        debug = True
+        s.set_level("verbose")
+        s.Debug("Debug Enabled")
 
-    pscanner = PlatformScanner()
-    ps = pscanner.get_platforms()
-    image_id = None
-    for p in ps:
-        s.Verbose(p)
-        for psi in ps[p]:
-            if plat is None:
-                s.Verbose("Found a platform: %s" % p)
-                n = ps[p][psi]
-                n.read_drt()
-                #n.drt_manager.pretty_print_drt()
-                image_id = n.get_image_id()
-                #print "image id: %s" % str(image_id)
-                if image_id is not None and image_id == SF_CAMERA_IMAGE_ID:
-                    print "Found an image ID that matches: %d" % image_id
-                    plat = [p, psi, ps[p][psi]]
-                    break
+    s.Verbose("platform scanner: %s" % str(dir(platform_scanner)))
+    platforms = platform_scanner.get_platforms_with_device(DRIVER, s)
 
-            s.Verbose("\t%s" % psi)
+    if len(platforms) == 0:
+        sys.exit("Didn't find any platforms with device: %s" % str(DRIVER))
 
-    if args.list:
-        s.Verbose("Listed all platforms, exiting")
-        sys.exit(0)
+    platform = platforms[0]
+    urn = platform.find_device(DRIVER)[0]
+    s.Important("Using: %s" % platform.get_board_name())
 
-    if plat is not None:
-        s.Important("Using: %s" % plat)
-    else:
-        s.Fatal("Didn't find a platform to use!")
-
+    #Get a reference to the controller
     c = Controller()
-    c.start_standalone_app(plat, debug)
+
+    #Initialize the application
+    app = QApplication(sys.argv)
+    main = QMainWindow()
+
+    #Tell the controller to set things up
+    c.start_tab_view(platform, urn, s)
+    QThread.currentThread().setObjectName("main")
+    s.Verbose("Thread name: %s" % QThread.currentThread().objectName())
+    #Pass in the view to the main widget
+    main.setCentralWidget(c.get_view())
+    main.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
+

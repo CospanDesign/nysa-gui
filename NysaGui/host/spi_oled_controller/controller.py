@@ -28,13 +28,14 @@ import os
 import sys
 import argparse
 import time
-
 from array import array as Array
-from nysa.host.nysa import Nysa
 
-from PyQt4.Qt import QApplication
-from PyQt4 import QtCore
-from PyQt4 import QtGui
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
+from PyQt4.Qt import *
+
+from nysa.common import status
+from nysa.host import platform_scanner
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -44,14 +45,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from nysa_base_controller import NysaBaseController
 from view.view import View
 from oled_pmod import OLED
+from nysa.host.driver.spi import SPI
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
-from standalone_controller import find_image
-
-IMAGE_ID = 258
+DRIVER = SPI
+APP_NAME = "SPI OLED Viewer"
 
 #Module Defines
 n = str(os.path.split(__file__)[1])
@@ -183,64 +184,75 @@ class Controller(NysaBaseController):
             self.bitmap[byte_address] = self.bitmap[byte_address] & (~(bit & 0x0FF))
 
     #Application Functions
-    def _initialize(self, platform):
+    def _initialize(self, platform, nui):
         #Get a reference to GPIO
-        n = platform[2]
         self.set_bitmap_image(CD_IMAGE)
         #self.set_bitmap_image(FOR_RENT_IMAGE)
         #self.oled_write_buffer()
         #Setup View
         self.v = View(self.status, self.actions)
         self.v.setup_simple_text_output_view()
-        self.oled = OLED(n, self.status)
+        self.oled = OLED(platform, nui, self.status)
         self.oled.write_buffer(self.bitmap)
 
-    def start_standalone_app(self, platform, device_index, status, debug = False):
-        app = QApplication (sys.argv)
-        main = QtGui.QMainWindow()
-
-        self.status = status.Status()
-        if debug:
-            self.status.set_level(status.StatusLevel.VERBOSE)
-        else:
-            self.status.set_level(status.StatusLevel.INFO)
-        self.status.Verbose("Starting Standalone Application")
-        self._initialize(platform)
-        main.setCentralWidget(self.v)
-        main.show()
-        sys.exit(app.exec_())
-
-    def start_tab_view(self, platform, status):
+    def start_tab_view(self, platform, nui, status):
         self.status = status
         self.status.Verbose("Starting Template Application")
-        self._initialize(platform)
+        self._initialize(platform, nui)
 
     def get_view(self):
         return self.v
 
-    @staticmethod
-    def get_unique_image_id():
-        return 258
+def main():
+    #Parse out the commandline arguments
+    s = status.Status()
+    s.set_level("info")
+    parser = argparse.ArgumentParser(
+            formatter_class = argparse.RawDescriptionHelpFormatter,
+            description = DESCRIPTION,
+            epilog = EPILOG
+    )
+    parser.add_argument("-d", "--debug",
+                        action = "store_true",
+                        help = "Enable Debug Messages")
+    parser.add_argument("platform",
+                        type = str,
+                        nargs='?',
+                        default=["first"],
+                        help="Specify the platform to use")
 
-    @staticmethod
-    def get_device_id():
-        #return Nysa.get_id_from_name(DEVICE_NAME)
-        return None
+    args = parser.parse_args()
 
-    @staticmethod
-    def get_device_sub_id():
-        return None
+    if args.debug:
+        s.set_level("verbose")
+        s.Debug("Debug Enabled")
 
-    @staticmethod
-    def get_device_unique_id():
-        return None
+    s.Verbose("platform scanner: %s" % str(dir(platform_scanner)))
+    platforms = platform_scanner.get_platforms_with_device(DRIVER, s)
 
+    if len(platforms) == 0:
+        sys.exit("Didn't find any platforms with device: %s" % str(DRIVER))
 
-def main(argv):
-    platform, status, debug = find_image(argv, IMAGE_ID)
+    platform = platforms[0]
+    urn = platform.find_device(DRIVER)[0]
+    s.Important("Using: %s" % platform.get_board_name())
+
+    #Get a reference to the controller
     c = Controller()
-    c.start_standalone_app(platform, None, status, debug)
+
+    #Initialize the application
+    app = QApplication(sys.argv)
+    main = QMainWindow()
+
+    #Tell the controller to set things up
+    c.start_tab_view(platform, urn, s)
+    QThread.currentThread().setObjectName("main")
+    s.Verbose("Thread name: %s" % QThread.currentThread().objectName())
+    #Pass in the view to the main widget
+    main.setCentralWidget(c.get_view())
+    main.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main()
 
