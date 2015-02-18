@@ -31,7 +31,6 @@ from PyQt4.QtGui import *
 
 from nysa.ibuilder.lib import utils
 from nysa.ibuilder.lib import verilog_utils as vutils
-from nysa.cbuilder.drt import drt
 
 PROJECT_STATUS_DICT = {
     "unsaved":QColor(0xFF, 0x99, 0x00),
