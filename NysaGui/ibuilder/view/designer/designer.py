@@ -45,6 +45,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 #from box_list import BoxList
 from nysa_bus_view import NysaBusView
 from box_list import BoxList
+from integration_dialog import IntegrationDialog
 
 from defines import PERIPHERAL_BUS_COLOR
 from defines import MEMORY_BUS_COLOR
@@ -79,6 +80,7 @@ class Designer(QWidget):
         self.actions.slave_selected.connect(self.slave_selected)
         self.actions.slave_deselected.connect(self.slave_deselected)
         self.controller = None
+        self.user_signal = None
 
     def set_controller(self, controller):
         self.nbv.set_controller(controller)
@@ -106,15 +108,16 @@ class Designer(QWidget):
     def slave_selected(self, slave_name, bus_name):
         #print "%s-%s selected" % (bus_name, slave_name)
         parameters = {}
-        unique_id = None
-        if str(slave_name).lower() == "drt":
+        if str(slave_name).lower() == "sdb":
             self.clear_param_table()
             self.populate_param_table(slave_name, parameters)
             return
 
         tags = self.controller.get_slave_tags(bus_name, slave_name)
+
+        model = self.controller.get_model()
         project_tags = self.controller.get_module_project_tags(slave_name)
-        unique_id = self.controller.get_module_id(slave_name)
+
         pfound = False
         if "parameters" in tags:
             for parameter in tags["parameters"]:
@@ -132,16 +135,34 @@ class Designer(QWidget):
 
         self.clear_param_table()
         self.populate_param_table(slave_name, parameters)
+        #print "bus name: %s" % bus_name
+        if bus_name.toLower() == "peripherals":
+            bn = str(bus_name)
+            self.integration_button.setEnabled(True)
+            integration_list = []
+            if "integration" in project_tags:
+                integration_list = project_tags["integration"]
+        
+            full_list = []
+            for slave_index in range(model.get_number_of_peripheral_slaves()):
+                name = model.get_slave_name(bn, slave_index)
+                if name == slave_name:
+                    continue
+
+                full_list.append(name)
+            f = partial(self.update_integration,
+                        bn,
+                        slave_name,
+                        integration_list,
+                        full_list)
+            self.user_signal = f
+            #print "signal: %s" % str(dir(self.integration_button.clicked))
+
+            self.integration_button.clicked.connect(f)
+            self.integration_button.setEnabled(True)
 
         #Does this slave have a arbiter master?
         self.slave_id_line.setDisabled(False)
-        self.slave_id_button.setDisabled(False)
-        if unique_id is None:
-            self.slave_id_line.setText("")
-        else:
-            self.slave_id_line.setText(str(unique_id))
-
-
 
     def slave_deselected(self, slave_name, bus_name):
         #print "%s-%s deselected" % (bus_name, slave_name)
@@ -151,6 +172,7 @@ class Designer(QWidget):
         #print "Populating Parameter Table"
         #print "Module tags: %s" % str(tags)
         self.sel_slave_name.setText(name)
+        #print "Adding integration Record Dialog"
         if parameters is None:
             return
 
@@ -167,43 +189,26 @@ class Designer(QWidget):
         self.param_table.resizeColumnsToContents()
         self.commit_params_button.setEnabled(True)
 
-    def update_slave_image_id(self):
-        slave_name = self.sel_slave_name.text()
-        unique_id = 0
-        if len(slave_name) == 0:
-            return
-        try:
-            unique_id = int(self.slave_id_line.text())
-        except ValueError:
-            return
-
-        self.status.Debug ("Update Slave :%s with iD: %d" % (slave_name, unique_id))
-        if unique_id > 0:
-            self.controller.set_module_id(slave_name, unique_id)
-
     def create_parameters_table(self):
         pt = QWidget(self)
         pt.setMaximumWidth(300)
 
-        unique_id_layout = QHBoxLayout()
         self.slave_id_line = QLineEdit("")
         v = QIntValidator()
         v.setBottom(0)
         v.setTop(256)
         self.slave_id_line.setValidator(v)
         self.slave_id_line.setDisabled(True)
-        self.slave_id_button = QPushButton("Set Unique Slave ID")
-        self.slave_id_button.clicked.connect(self.update_slave_image_id)
-        self.slave_id_button.setDisabled(True)
-        unique_id_layout.addWidget(QLabel("Unique Slave ID"))
-        unique_id_layout.addWidget(self.slave_id_line)
-        unique_id_layout.addWidget(self.slave_id_button)
 
         self.sel_slave_name = QLabel(NO_MODULE_SEL)
         layout = QVBoxLayout()
 
+        #Add Integration Dialog Button
+        self.integration_button = QPushButton("Modify Component Integration")
+        self.integration_button.setDisabled(True)
+
         layout.addWidget(self.sel_slave_name)
-        layout.addLayout(unique_id_layout)
+        layout.addWidget(self.integration_button)
 
         self.param_table = QTableWidget()
         self.param_table.setColumnCount(2)
@@ -230,16 +235,28 @@ class Designer(QWidget):
         param_dict = {}
         for i in range(param_count):
             param_dict[self.param_table.cellWidget(i, 0).text()] = self.param_table.cellWidget(i, 1).text()
-
         self.actions.commit_slave_parameters.emit(name, param_dict)
 
     def clear_param_table(self):
         self.sel_slave_name.setText(NO_MODULE_SEL)
         self.slave_id_line.setText("")
         self.slave_id_line.setDisabled(True)
-        self.slave_id_button.setDisabled(True)
         self.param_table.clear()
         self.param_table.setRowCount(0)
         self.param_table.setHorizontalHeaderLabels(["Name", "Value"])
         self.commit_params_button.setDisabled(True)
+        self.integration_button.setDisabled(True)
+
+        if self.user_signal is not None:
+            self.integration_button.clicked.disconnect(self.user_signal)
+            self.user_signal = None
+
+    def update_integration(self, bus_name, name, connected_components, all_components):
+        connected_components = IntegrationDialog.get_integration_list(name, all_components, connected_components)
+        #print "Update integration: %s, %s, %s" % (name, connected_components, all_components)
+        tags = self.controller.get_slave_tags(bus_name, name)
+        tags["integration"] = connected_components
+        self.actions.commit_slave_integration_list.emit(bus_name, name, connected_components)
+
+
 

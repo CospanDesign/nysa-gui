@@ -105,7 +105,7 @@ class InfoView(QWidget):
         if "image" not in self.board_dict:
             return
         image_path = os.path.join(self.board_directory, str(name).lower(), "board", self.board_dict["image"])
-        print "Image path: %s" % image_path
+        #print "Image path: %s" % image_path
         self.set_board_image_view(image_path)
 
     def board_link_activated(self, link):

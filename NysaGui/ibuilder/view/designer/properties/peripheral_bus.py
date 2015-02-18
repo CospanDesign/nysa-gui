@@ -24,10 +24,9 @@ class PeripheralBusProperties(PropertiesBase):
                       "\t0x01000000\n"
                       "\t0x02000000\n"
                       "\n"
-                      "Offset 0x00 is reserved for DRT\n"
+                      "Offset 0x00 is reserved for SDB\n"
                       "Offset 0xFF is reserved for Interrupts\n")
         self.hide()
-
 
     def set_config_dict(self, config_dict):
         self.config_dict = config_dict

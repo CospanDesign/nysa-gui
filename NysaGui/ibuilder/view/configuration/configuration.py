@@ -44,20 +44,6 @@ class Configuration(QWidget):
         name_layout.addWidget(self.project_name_line)
         name_layout.addWidget(update_project_name_button)
 
-        #Unique Identification Number
-        image_id_layout = QHBoxLayout()
-        self.image_id_line = QLineEdit()
-        self.image_id_line.setText("0")
-        v = QIntValidator()
-        v.setBottom(0)
-        v.setTop(65535)
-        self.image_id_line.setValidator(v)
-        update_image_id = QPushButton("Update Image ID")
-        update_image_id.clicked.connect(self.update_image_id)
-        image_id_layout.addWidget(self.image_id_line)
-        image_id_layout.addWidget(update_image_id)
-        
-
         #Board Layout
         board_layout = QHBoxLayout()
         self.board_list = QComboBox()
@@ -98,7 +84,6 @@ class Configuration(QWidget):
         constraints_layout.addLayout(constraints_button_layout)
 
         layout.addRow("project name", name_layout)
-        layout.addRow("unique image ID", image_id_layout)
         layout.addRow("board select", board_layout)
         layout.addRow("bus type", bus_template_layout)
         layout.addRow("internal bindings", self.setup_internal_bind_widget())
@@ -283,14 +268,6 @@ class Configuration(QWidget):
     def update_project_name_button(self):
         project_name = self.project_name_line.text()
         self.actions.update_project_name.emit(self.current_project_name, project_name)
-
-    def set_image_id(self, image_id):
-        self.image_id_line.setText(str(image_id))
-
-    def update_image_id(self):
-        image_id = int(self.image_id_line.text())
-        self.status.Debug("Changing Image ID to: %d" % image_id)
-        self.actions.update_image_id.emit(image_id)
 
 class InternalBindModel(QAbstractTableModel):
     def __init__(self, header_data=["Signal To", "Signal From"], parent=None, *args):

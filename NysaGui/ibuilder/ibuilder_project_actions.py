@@ -40,6 +40,9 @@ class IBuilderProjectActions(QtCore.QObject):
     #Slave Parameters
     commit_slave_parameters = QtCore.pyqtSignal(str, object, name = "ibuilder_designer_commit_slave_params")
 
+    #Integration Records
+    commit_slave_integration_list = QtCore.pyqtSignal(str, str, object, name = "ibuilder_designer_commit_slave_integration_list")
+
     #Arbiter Selected
     arbiter_selected = QtCore.pyqtSignal(str, str, name = "ibuilder_designer_arbiter_selected")
     arbiter_deselected = QtCore.pyqtSignal(str, name = "ibuilder_designer_arbiter_deselected")

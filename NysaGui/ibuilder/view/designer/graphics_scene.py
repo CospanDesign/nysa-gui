@@ -132,8 +132,8 @@ class GraphicsScene(gs):
 
         print "check for arbiter selected"
         self.state = view_state.arbiter_master_selected
-        if str(name).lower() == "drt":
-            self.status.Info("Can't attach to the DRT")
+        if str(name).lower() == "sdb":
+            self.status.Info("Can't attach to the SDB")
             return
 
         from_slave = self.arbiter_selected.get_slave()

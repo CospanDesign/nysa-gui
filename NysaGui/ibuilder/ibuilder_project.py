@@ -32,7 +32,7 @@ from view.project_view import ProjectView
 
 from nysa.ibuilder.lib import utils
 from nysa.ibuilder.lib import verilog_utils as vutils
-from nysa.cbuilder.drt import drt
+from nysa.cbuilder import device_manager
 
 PROJECT_STATUS_DICT = {
     "unsaved":QColor(0xFF, 0x99, 0x00),
@@ -80,7 +80,6 @@ class IBuilderProject(QObject):
         self.project_actions.internal_bind_connect.connect(self.controller.bind_internal_signal)
         self.project_actions.internal_bind_disconnect.connect(self.controller.unbind_internal_signal)
         self.project_actions.update_board.connect(self.update_board)
-        self.project_actions.update_image_id.connect(self.controller.set_image_id)
 
         scene = self.project_view.get_designer_scene()
         self.project_actions.arbiter_selected.connect(scene.arbiter_master_selected)
@@ -115,12 +114,14 @@ class IBuilderProject(QObject):
 
         for slave in slave_list:
             tags = vutils.get_module_tags(  filename = slave,
-                                            keywords=["DRT_FLAGS", "DRT_ID"],
+                                            keywords=["SDB_ABI_VERSION_MAJOR", "SDB_NAME"],
                                             bus = self.controller.get_bus(),
                                             user_paths = paths)
             #print "Tags: %s" % str(tags)
-            core_id = int(tags["keywords"]["DRT_ID"])
-            if drt.is_memory_core(core_id):
+            #core_id = int(tags["keywords"]["SDB_NAME"])
+            device_abi_major = int(tags["keywords"]["SDB_ABI_VERSION_MAJOR"], 0)
+            memory_abi_major = device_manager.get_device_id_from_name("memory")
+            if device_abi_major == memory_abi_major:
                 memory_dict[tags["module"]] = tags
             else:
                 peripheral_dict[tags["module"]] = tags
@@ -134,6 +135,7 @@ class IBuilderProject(QObject):
         self.project_actions.add_default_board_constraint.connect(self.add_default_board_constraint)
         self.project_actions.remove_default_board_constraint.connect(self.remove_default_board_constraint)
         self.project_actions.commit_slave_parameters.connect(self.commit_slave_parameters)
+        self.project_actions.commit_slave_integration_list.connect(self.commit_slave_integration_list)
 
     def add_default_board_constraint(self):
         self.controller.add_default_board_constraint()
@@ -156,6 +158,11 @@ class IBuilderProject(QObject):
         for param in param_dict:
             nparam_dict[str(param)] = str(param_dict[param])
         self.controller.commit_slave_parameters(name, nparam_dict)
+
+    def commit_slave_integration_list(self, bus_name, name, commit_list):
+        #tags["integration"] = connected_components
+        model = self.controller.get_model()
+        self.controller.commit_slave_integration_list(name, commit_list)
 
     def get_view_names(self):
         return self.project_view.get_view_names()
@@ -293,7 +300,6 @@ DEFAULT_CONFIG = {
     "SLAVES":{
         "gpio1":{
             "filename":"wb_gpio.v",
-            "unique_id":1,
             "bind":{
                 "gpio_out[1:0]":{
                     "loc":"led[1:0]",
