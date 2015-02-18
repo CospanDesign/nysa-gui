@@ -53,6 +53,7 @@ class GraphicsView(QGraphicsView):
         self.scale_min = .01
         self.scale_max = 1000
         self.dbg = False
+        self.s = None
         #self.dbg = True
 
     def set_scene(self, scene):
@@ -137,6 +138,7 @@ class GraphicsView(QGraphicsView):
     def resizeEvent(self, event):
         super(GraphicsView, self).resizeEvent(event)
         #print "resize event"
-        self.s.auto_update_all_links()
-        self.fit_in_view()
+        if self.s is not None:
+            self.s.auto_update_all_links()
+            self.fit_in_view()
 

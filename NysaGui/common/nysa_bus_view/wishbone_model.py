@@ -52,12 +52,19 @@ MASTER             = get_unique_name("Master", NodeType.MASTER)
 MEMORY_BUS         = get_unique_name("Memory", NodeType.MEMORY_INTERCONNECT)
 PERIPHERAL_BUS     = get_unique_name("Peripherals",
                                             NodeType.PERIPHERAL_INTERCONNECT)
-DRT                = get_unique_name("DRT",
+SDB                = get_unique_name("SDB",
                                             NodeType.SLAVE,
                                             SlaveType.PERIPHERAL,
                                             slave_index=0)
 
-
+def _string_to_slave_type(slave_type):
+    if slave_type.lower() == "peripheral":
+        return SlaveType.PERIPHERAL
+    if slave_type.lower() == "peripherals":
+        return SlaveType.PERIPHERAL
+    elif slave_type.lower() == "memory":
+        return SlaveType.MEMORY
+    raise AssertionError("Unknown Slave Type: %s" % slave_type)
 
 class WishboneModel():
 #Good
@@ -88,7 +95,7 @@ class WishboneModel():
     def initialize_graph(self, debug=False):
         """Initializes the graph and project tags."""
         # Clear any previous data.
-        print "initialize graph"
+        #print "initialize graph"
         self.gm.clear_graph()
 
         # Set the bus type.
@@ -113,19 +120,21 @@ class WishboneModel():
         self.gm.add_node("Master", NodeType.MASTER)
         self.gm.add_node("Memory", NodeType.MEMORY_INTERCONNECT)
         self.gm.add_node("Peripherals", NodeType.PERIPHERAL_INTERCONNECT)
-        self.add_slave("DRT", SlaveType.PERIPHERAL, slave_index=0)
+        self.add_slave("SDB", SlaveType.PERIPHERAL, slave_index=0)
 
         # Attach all the appropriate nodes.
         self.gm.connect_nodes(HOST_INTERFACE, MASTER)
         self.gm.connect_nodes(MASTER, MEMORY_BUS)
         self.gm.connect_nodes(MASTER, PERIPHERAL_BUS)
-        self.gm.connect_nodes(PERIPHERAL_BUS, DRT)
+        self.gm.connect_nodes(PERIPHERAL_BUS, SDB)
 
-        # Get module data for the DRT.
+        # Get module data for the SDB
         # Attempt to load data from the tags.
         #print "Config Dict: %s" % str(self.config_dict)
         if "SLAVES" in self.config_dict:
             for slave_name in self.config_dict["SLAVES"]:
+                if slave_name == "SDB":
+                    continue
                 #Get the slave tags for this project
                 slave_project_tags = self.config_dict["SLAVES"][slave_name]
                 module_tags = {}
@@ -169,7 +178,7 @@ class WishboneModel():
         #Now that all the slaves are connected I need to connect any arbiters
         if "SLAVES" in self.config_dict:
             for slave_name in self.config_dict["SLAVES"]:
-                print "working on slave: %s" % slave_name
+                #print "working on slave: %s" % slave_name
                 slave_project_tags = self.config_dict["SLAVES"][slave_name]
 
                 if "BUS" not in slave_project_tags:
@@ -179,13 +188,14 @@ class WishboneModel():
                 from_slave_uname = self.get_unique_from_module_name(slave_name)
                 for arbiter in slave_project_tags["BUS"]:
                     slave_module_name = slave_project_tags["BUS"][arbiter]
-                    print "slave_module_name: %s" % slave_module_name
+                    #print "slave_module_name: %s" % slave_module_name
                     try:
                         to_slave_uname = self.get_unique_from_module_name(slave_module_name)
                     except gm.SlaveError as ex:
                         to_slave_uname = slave_module_name
                     slave_project_tags["BUS"][arbiter] = to_slave_uname
                     self.connect_arbiter(from_slave_uname, arbiter, to_slave_uname)
+
 
         # Check if there is a host interface defined.
         if "INTERFACE" in self.config_dict:
@@ -195,6 +205,9 @@ class WishboneModel():
             print ("Finish Initialize graph")
 
     def get_number_of_slaves(self, slave_type):
+        if isinstance(slave_type, str):
+            slave_type = _string_to_slave_type(slave_type)
+
         if slave_type is None:
             raise SlaveError("slave type was not specified")
 
@@ -335,14 +348,17 @@ class WishboneModel():
             name = sc_slave.name
             if debug:
                 print (("name: %s" % str(name)))
-            #if debug:
-            #    print (("Projct tags: %s" % str(self.config_dict)))
-            if str(name).lower() == "drt":
+            if str(name).lower() == "sdb":
                 continue
             if name not in list(self.config_dict["SLAVES"].keys()):
                 self.config_dict["SLAVES"][name] = {}
 
             pt_slave = self.config_dict["SLAVES"][name]
+            #if name == "spi1":
+            #    print "pt slave: %s" % str(pt_slave)
+            if "integration" in pt_slave and len(pt_slave["integration"]):
+                del(pt_slave["integration"])
+
 
             # Overwrite the current arbiter dictionary.
             if "BUS" in list(pt_slave.keys()):
@@ -523,8 +539,8 @@ class WishboneModel():
         return self.get_node_ports(HOST_INTERFACE)
 
     #Slave Control
-    def add_drt(self):
-        DRT_NAME = "DRT"
+    def add_sdb(self):
+        SDB_NAME = "SDB"
         slave = None
         try:
             slave = self.gm.get_slave_at(SlaveType.PERIPHERAL, 0)
@@ -532,12 +548,10 @@ class WishboneModel():
             pass
 
         if slave is not None:
-            #print "%s: add_drt: name: %s" % (__file__, slave.name)
-            if slave.name == DRT_NAME:
-                #print "%s: DRT Already in Graph Manager" % (__file__)
+            if slave.name == SDB_NAME:
                 return
         s_count = self.gm.get_number_of_peripheral_slaves()
-        uname = self.gm.add_node(   DRT_NAME,
+        uname = self.gm.add_node(   SDB_NAME,
                                     NodeType.SLAVE,
                                     SlaveType.PERIPHERAL)
 
@@ -553,11 +567,16 @@ class WishboneModel():
         self.add_slave(name, SlaveType.MEMORY, module_tags, project_tags, index)
 
     def add_slave(self, name, slave_type, module_tags = {}, slave_project_tags = None, slave_index=-1):
-        """Adds a slave to the specified bus at the specified index."""
+        #Adds a slave to the specified bus at the specified index.
+        if isinstance(slave_type, str):
+            slave_type = _string_to_slave_type(slave_type)
+
         # Check if the slave_index makes sense.  If slave index s -1 then add it
         # to the next available location
-        if name == "DRT":
-            return self.add_drt()
+        #print "name: %s" % name
+        if name == "SDB":
+            return self.add_sdb()
+
 
         if slave_project_tags is None:
             slave_project_tags = {}
@@ -584,6 +603,7 @@ class WishboneModel():
                           ports = module_ports,
                           bindings = bindings)
 
+
         s_count = self.gm.get_number_of_slaves(slave_type)
         #If the user didn't specify the slave index put it at the end
         if slave_index == -1:
@@ -591,8 +611,8 @@ class WishboneModel():
 
         else:  # Add the slave wherever.
             if slave_type == SlaveType.PERIPHERAL:
-                if slave_index == 0 and name != "DRT":
-                    raise gm.SlaveError("Only the DRT can be at position 0")
+                if slave_index == 0 and name != "SDB":
+                    raise gm.SlaveError("Only the SDB can be at position 0")
                 s_count = self.gm.get_number_of_peripheral_slaves()
                 uname = get_unique_name(name,
                                              NodeType.SLAVE,
@@ -642,6 +662,9 @@ class WishboneModel():
 
     def remove_slave(self, slave_type=SlaveType.PERIPHERAL, slave_index=0):
         """Removes slave from specified index."""
+        if isinstance(slave_type, str):
+            slave_type = _string_to_slave_type(slave_type)
+
         #Check if there are any bindings to remove
         name = self.get_slave_name(slave_type, slave_index)
         if slave_type == SlaveType.PERIPHERAL:
@@ -668,12 +691,18 @@ class WishboneModel():
         return
 
     def get_slave_ports(self, slave_type, slave_index):
+        if isinstance(slave_type, str):
+            slave_type = _string_to_slave_type(slave_type)
+
         slave_name = self.get_slave_name(slave_type, slave_index)
         uname = get_unique_name(slave_name, NodeType.SLAVE, slave_type,
                                      slave_index)
         return self.get_node_ports(uname)
 
     def get_slave_name(self, slave_type, slave_index):
+        if isinstance(slave_type, str):
+            slave_type = _string_to_slave_type(slave_type)
+
         s_name = self.gm.get_slave_name_at(slave_type, slave_index)
         slave = self.gm.get_node(s_name)
         return slave.name
@@ -846,6 +875,9 @@ class WishboneModel():
         return bind_dict
 
     def get_slave_bindings(self, slave_type, slave_index):
+        if isinstance(slave_type, str):
+            slave_type = _string_to_slave_type(slave_type)
+
         slave_name = self.get_slave_name(slave_type, slave_index)
         uname = get_unique_name(slave_name,
                                      NodeType.SLAVE,
@@ -900,10 +932,10 @@ class WishboneModel():
         bindings = cu.consolodate_constraints(bindings)
         tags = self.get_node_project_tags(uname)
         tags["bind"] = bindings
-        if uname == "DRT_1_0":
+        if uname == "SDB_1_0":
             return
-        #if "drt" in str(uname).lower():
-        #    
+        #if "sdb" in str(uname).lower():
+        #
         #    print "uname: %s" % uname
         #    print "old tags: "
         #    utils.pretty_print_dict(tags)
@@ -936,7 +968,12 @@ class WishboneModel():
         pcount = self.get_number_of_peripheral_slaves()
         for i in range(pcount):
             uname = self.gm.get_slave_name_at(SlaveType.PERIPHERAL, i)
-            print "uname: %s" % uname
+
+            project_tags = self.gm.get_node_project_tags(uname)
+            if ("integration" in project_tags) and (len(project_tags["integration"]) == 0):
+                del project_tags["integration"]
+
+            #print "uname: %s" % uname
             #name = self.gm.get_node(uname).name
             #print "name: %s" % self.gm.get_node(uname).name
             '''
@@ -987,6 +1024,11 @@ class WishboneModel():
         uname = self.get_unique_from_module_name(module_name)
         project_tags = self.get_node_project_tags(uname)
         project_tags["parameters"] = parameters
+
+    def commit_slave_integration_list(self, module_name, integration_list):
+        uname = self.get_unique_from_module_name(module_name)
+        project_tags = self.get_node_project_tags(uname)
+        project_tags["integration"] = integration_list
 
     def is_peripheral_slave(self, uname):
         node = self.gm.get_node(uname)

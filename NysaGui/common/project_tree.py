@@ -146,7 +146,7 @@ class RootBranch(BranchNode):
         super (RootBranch, self).__init__(name, parent)
 
     def add_project(self, project):
-        print "project: %s" % str(project)
+        #print "project: %s" % str(project)
         name = QString(project.get_name())
         node = ProjectNode(self, self.actions, self.status, project)
         self.insertChild(node)

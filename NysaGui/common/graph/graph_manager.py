@@ -233,9 +233,9 @@ class GraphManager:
         return count
 
     def remove_slave(self, slave_type, slave_index, debug = False):
-        # Can't remove the DRT so if the index is 0 then don't try.
+        # Can't remove the SDB so if the index is 0 then don't try.
         if slave_type == SlaveType.PERIPHERAL and slave_index == 0:
-            raise SlaveError("DRT cannot be removed")
+            raise SlaveError("SDB cannot be removed")
 
         count = self.get_number_of_slaves(slave_type)
         if debug: print "count: %d" % count
@@ -344,9 +344,9 @@ class GraphManager:
             return
 
         if from_index == 0:
-            raise SlaveError("Cannot move DRT")
+            raise SlaveError("Cannot move SDB")
         if to_index == 0:
-            raise SlaveError("DRT is the only peripheral slave at index 0")
+            raise SlaveError("SDB is the only peripheral slave at index 0")
 
         graph_dict = self.get_nodes_dict()
 

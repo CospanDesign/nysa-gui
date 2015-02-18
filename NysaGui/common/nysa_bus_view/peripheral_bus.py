@@ -100,7 +100,7 @@ class PeripheralBus(Bus):
             sm = None
             if am is not None:
                 sm = am.get_slave()
-            if self.expand_slaves and self.slaves[i] != sm and self.slaves[i].box_name != "DRT":
+            if self.expand_slaves and self.slaves[i] != sm and self.slaves[i].box_name != "SDB":
                 x = PERIPHERAL_BUS_POS.x() + PERIPHERAL_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING + ARB_MASTER_EXPAND_OFFSET
             else:
                 x = PERIPHERAL_BUS_POS.x() + PERIPHERAL_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING
@@ -122,13 +122,13 @@ class PeripheralBus(Bus):
             am = self.scene().get_arbiter_master_selected()
             self.scene().arbiter_master_deselected(am)
             self.scene().clear_links()
- 
+
         if self.prev_selected_slave is not None:
             self.prev_selected_slave = None
 
         super(PeripheralBus, self).update_slaves(slave_list, editable)
         for slave in self.slaves:
-            if slave.box_name == "DRT":
+            if slave.box_name == "SDB":
                 slave.movable(False)
             else:
                 slave.movable(editable)

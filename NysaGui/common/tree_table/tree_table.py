@@ -85,15 +85,12 @@ class BranchNode(QObject):
             #print "child: %s" % str(child)
             children.append(child[0])
         return children
-            
 
 class RootNode(BranchNode):
-
     def __init__(self, name, parent=None):
         super(RootNode, self).__init__(name, parent)
 
 class LeafNode(QObject):
-
     def __init__(self, fields, parent=None):
         super(LeafNode, self).__init__()
         self.parent = parent
@@ -124,7 +121,6 @@ class LeafNode(QObject):
         return self.fields[column]
 
 class TreeTableModel(QAbstractItemModel):
-
     def __init__(self, parent=None):
         super(TreeTableModel, self).__init__(parent)
         self.root = RootNode("")
@@ -206,14 +202,13 @@ class TreeTableModel(QAbstractItemModel):
             return self.headers[section]
 
     def index(self, row, column, parent):
-        #print "base index"
         assert self.root
         branch = self.nodeFromIndex(parent)
         assert branch is not None
         return self.createIndex(row, column,
                                 branch.childAtRow(row))
 
-    def parent(self, index): 
+    def parent(self, index):
         node = self.nodeFromIndex(index)
         if node is None:
             return QModelIndex()

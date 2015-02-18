@@ -280,18 +280,6 @@ class Controller (QObject):
         #print "VC: Path: %s" % path
         return True
 
-    '''
-    def connect_signal(self, module_name, signal_name, direction, index, pin_name):
-        #print "Connect"
-        self.model.set_binding(module_name, signal_name, pin_name, index)
-
-    def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
-        #Remove signal from model
-        #print "Controller: Disconnect"
-        uname = self.model.get_unique_from_module_name(module_name)
-        self.model.unbind_port(uname, signal_name, index)
-    '''
-
     def get_model(self):
         return self.model
 
@@ -311,7 +299,6 @@ class Controller (QObject):
         self.configuration_editor.populate_connected_signals(self.model.get_internal_bindings())
         self.configuration_editor.populate_available_signals(self.model.get_available_internal_bind_signals())
         self.configuration_editor.populate_constraints_file_list(self.model.get_constraint_filenames())
-        self.configuration_editor.set_image_id(self.model.get_image_id())
 
     def get_project_location(self):
         return self.model.get_project_location()
@@ -573,6 +560,9 @@ class Controller (QObject):
         self.model.commit_slave_parameters(name, param_dict)
         self.project_dirty = True
 
+    def commit_slave_integration_list(self, name, commit_list):
+        self.model.commit_slave_integration_list(name, commit_list)
+
     #Arbiter Interface
     def is_arbiter_master(self, module_name):
         """ Returns true if this module is an arbiter master
@@ -650,8 +640,8 @@ class Controller (QObject):
             Nothing
         """
 
-        if str(to_module_name).lower() == "drt":
-            raise DesignControlError("Can't attach to the DRT")
+        if str(to_module_name).lower() == "sdb":
+            raise DesignControlError("Can't attach to the SDB")
         from_uname = self.model.get_unique_from_module_name(from_module_name)
         to_uname = self.model.get_unique_from_module_name(to_module_name)
         self.model.connect_arbiter(from_uname, arbiter_name, to_uname)
@@ -779,12 +769,6 @@ class Controller (QObject):
         #    self.status.Fatal("Unknown exception occured while generating project")
         return False
 
-    def get_image_id(self):
-        return self.model.get_image_id()
-
-    def set_image_id(self, image_id):
-        self.model.set_image_id(image_id)
-
     def get_module_id(self, name):
         uname = self.model.get_unique_from_module_name(name)
         return QString(self.model.get_node_id(uname))
@@ -793,7 +777,6 @@ class Controller (QObject):
         uname = self.model.get_unique_from_module_name(name)
         module_id = int(module_id)
         self.model.set_node_id(uname, module_id)
-
 
     def program_board(self, serial, file_path):
         board_name = self.get_board_name()
