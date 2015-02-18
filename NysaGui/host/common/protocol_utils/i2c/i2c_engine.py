@@ -34,7 +34,8 @@ from PyQt4 import QtCore
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
-from driver.i2c import I2CError
+from nysa.host.driver.i2c import I2CError
+from nysa.host.driver.i2c import I2C
 
 
 
@@ -259,7 +260,6 @@ class I2CEngine (QtCore.QObject):
         #Whether this is a read or a write
         #print "i2c type: %s" % str(self.i2c)
         debug = True
-        if debug: print "I2C Device: 0x%02X" % self.i2c.dev_id
         if not self.i2c.is_i2c_enabled():
             self.i2c.enable_i2c(True)
 

@@ -31,9 +31,7 @@ SPI OLED Controller
 """
 
 GPIO_DEVICE_NAME = "GPIO"
-GPIO_UNIQUE_ID = 1
 SPI_DEVICE_NAME = "SPI"
-SPI_UNIQUE_ID = 2
 
 #GPIOs
 DATA_COMMAND_MODE = 2
@@ -86,20 +84,16 @@ DRAW_XOR          = 3
 class OLED(object):
 
     #OLED Functions
-    def __init__(self, platform, nui, status):
-        gpio_id = platform.find_device(Nysa.get_id_from_name(GPIO_DEVICE_NAME),
-                                sub_id = None,
-                                unique_id = GPIO_UNIQUE_ID)
+    def __init__(self, platform, urn, status):
         self.status = status
-        self.status.Debug("GPIO ID: %s" % str(gpio_id))
-        self.gpio = GPIO(platform, gpio_id)
-        #Get a reference to SPI
-        spi_id = platform.find_device(Nysa.get_id_from_name(SPI_DEVICE_NAME),
-                                sub_id = None,
-                                unique_id = SPI_UNIQUE_ID)
-        self.status.Debug("SPI ID: %s" % str(spi_id))
-        self.spi = SPI(platform, spi_id)
+        spi_urn = urn
+        gpio_urn = platform.get_integration_references(spi_urn)[0]
+        self.status.Debug("GPIO URN: %s" % gpio_urn)
+        self.status.Debug("SPI URN: %s" % spi_urn)
+        self.gpio = GPIO(platform, gpio_urn, status)
+        self.spi = SPI(platform, spi_urn, status)
 
+        self.status = status
         #Setup the controller
         self.platform = platform
         self.status = status

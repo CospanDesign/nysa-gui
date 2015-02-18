@@ -79,16 +79,24 @@ EPILOG = "\n" \
 
 from i2c_actions import I2CActions
 
-from NysaGui.common.udp_server import UDPServer
+from udp_server import UDPServer
 I2C_PORT = 0xC594
 
 class Controller(NysaBaseController):
+
+    @staticmethod
+    def get_name():
+        return APP_NAME
+
+    @staticmethod
+    def get_driver():
+        return DRIVER
 
     def __init__(self):
         super (Controller, self).__init__()
         self.actions = I2CActions()
         self.i2c = None
-    
+
     def __del__(self):
         if self.i2c is not None:
             self.i2c.enable_i2c(False)
@@ -156,7 +164,7 @@ class Controller(NysaBaseController):
         description = self.v.get_config_description()
         self.status.Important( "Saving I2C Config File: %s" % filename)
         self.m.save_i2c_commands(filename, name, description)
-        
+
     def load_default_callback(self, filename):
         self.status.Important( "Loading Default I2C Config File: %s" % filename)
         self.m.load_i2c_commands(filename)

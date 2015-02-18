@@ -39,7 +39,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from driver.i2c import I2C
+from nysa.host.driver.i2c import I2C
 
 
 

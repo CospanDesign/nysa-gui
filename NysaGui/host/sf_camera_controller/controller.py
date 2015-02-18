@@ -79,6 +79,14 @@ SF_CAMERA_IMAGE_ID = 260
 
 class Controller(NysaBaseController):
 
+    @staticmethod
+    def get_name():
+        return APP_NAME
+
+    @staticmethod
+    def get_driver():
+        return DRIVER
+
     def __init__(self):
         super (Controller, self).__init__()
         self.actions = SFCameraActions()

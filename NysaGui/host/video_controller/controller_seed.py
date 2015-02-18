@@ -146,23 +146,6 @@ class Controller(NysaBaseController):
     def get_view(self):
         return self.v
 
-    @staticmethod
-    def get_unique_image_id():
-        return None
-
-    @staticmethod
-    def get_device_id():
-        return Nysa.get_id_from_name("LCD")
-
-    @staticmethod
-    def get_device_sub_id():
-        return None
-
-    @staticmethod
-    def get_device_unique_id():
-        return None
-
-
 def main(argv):
     #Parse out the commandline arguments
     s = status.Status()
@@ -222,7 +205,7 @@ def main(argv):
             
             if n is not None:
                 s.Verbose("Found a nysa instance: %s" % name)
-                n.read_drt()
+                n.read_sdb()
                 dev_index = n.find_device(Nysa.get_id_from_name("LCD"))
                 if dev_index is not None:
                     s.Important("Found a device at %d" % dev_index)

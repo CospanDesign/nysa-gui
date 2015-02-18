@@ -73,20 +73,28 @@ EPILOG = "\n" \
 
 class Controller(NysaBaseController):
 
+    @staticmethod
+    def get_name():
+        return APP_NAME
+
+    @staticmethod
+    def get_driver():
+        return DRIVER
+
     def __init__(self):
         super (Controller, self).__init__()
         self.actions = StepperActions()
 
-    def _initialize(self, platform, nui):
-        self.stepper = Stepper(platform, nui, self.status)
+    def _initialize(self, platform, urn):
+        self.stepper = Stepper(platform, urn, self.status)
         self.v = View(self.status, self.actions)
         self.engine = StepperEngine(self.stepper, self.status, self.actions)
         self.engine.update_configuration(self.v.get_configuration())
 
-    def start_tab_view(self, platform, nui, status):
+    def start_tab_view(self, platform, urn, status):
         self.status = status
         self.status.Verbose( "Starting Template Application")
-        self._initialize(platform, nui)
+        self._initialize(platform, urn)
 
     def get_view(self):
         return self.v

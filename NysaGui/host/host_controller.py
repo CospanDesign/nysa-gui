@@ -56,6 +56,7 @@ class HostController(QObject):
         self.fv = self.view.get_nysa_bus_view()
         self.scripts = []
         self.sm = ScriptManager(self.status, self.actions)
+        self.urn = None
 
         self.actions.platform_tree_refresh.connect(self.refresh_platform_tree)
         self.actions.platform_tree_changed_signal.connect(self.platform_changed)
@@ -88,7 +89,7 @@ class HostController(QObject):
         self.actions.platform_tree_clear_signal.emit()
         ps = PlatformScanner(self.status)
         platforms_dict = ps.get_platforms()
-        
+
         #print "platform: %s" % str(platforms_dict)
         for platform_name in platforms_dict:
             #platform_name: dionysus
@@ -102,7 +103,7 @@ class HostController(QObject):
                 #print "platform_instance: %s" % str(platform_instance)
                 #print "platform_uid: %s" % str(platform_uid)
                 self.actions.add_device_signal.emit(platform_name, platform_uid, platform_instance)
-         
+
             self.actions.platform_tree_get_first_dev.emit()
 
     def platform_changed(self, uid, platform_type, nysa_device):
@@ -124,8 +125,8 @@ class HostController(QObject):
         self.n = nysa_device.scan()[str(uid)]
 
         #print "Nysa: %s" % str(self.n)
-        self.n.read_drt()
-        self.config_dict = drt_to_config(self.n)
+        self.n.read_sdb()
+        self.config_dict = sdb_to_config(self.n)
         self.fv.update_nysa_image(self.n, self.config_dict)
         self.setup_bus_properties(self.config_dict, self.n)
         self.device_index = None
@@ -134,11 +135,12 @@ class HostController(QObject):
         self.status.Verbose( "Module %s Selected" % name)
         self.device_index = None
         self.fv.host_module_selected(name)
-        self.device_index = None
+        self.urn = None
 
     def host_module_deselected(self, name):
         self.setup_bus_properties(self.config_dict, self.n)
         self.device_index = None
+        self.urn = None
 
     def slave_selected(self, name, bus):
         self.status.Info( "Slave: %s on %s bus selected" % (name, bus))
@@ -147,48 +149,58 @@ class HostController(QObject):
         #for using the OrderedDict
 
         name = str(name)
-        dev_id = None
-        dev_sub_id = None
-        dev_unique_id = None
+
+        abi_class = None
+        abi_major = None
+        abi_minor = None
+        vendor_id = None
+        product_id = None
+        version = None
+        date = None
 
         if bus == "Peripherals":
-            if name == "DRT":
-                dev_id = 0
-                dev_sub_id = 0
-                unique_id = 0
-                self.device_index = 0
-            else:
+            self.urn = "/top/peripheral/%s" % name
+            self.device_index = self.config_dict["SLAVES"].keys().index(name)
+            #self.device_index = self.config_dict["SLAVES"][name]["device_index, status"]
 
-                self.device_index = self.config_dict["SLAVES"][name]["device_index, status"]
+            abi_class = self.config_dict["SLAVES"][name]["abi_class"]
+            abi_major = self.config_dict["SLAVES"][name]["abi_major"]
+            abi_minor = self.config_dict["SLAVES"][name]["abi_minor"]
+            vendor_id = self.config_dict["SLAVES"][name]["vendor_id"]
+            product_id = self.config_dict["SLAVES"][name]["product_id"]
+            version = self.config_dict["SLAVES"][name]["version"]
+            date = self.config_dict["SLAVES"][name]["date"]
 
-                dev_id = self.config_dict["SLAVES"][name]["id"]
-                dev_sub_id = self.config_dict["SLAVES"][name]["sub_id"]
-                dev_unique_id = self.config_dict["SLAVES"][name]["unique_id"]
         elif bus == "Memory":
+            self.urn = "/top/memory/%s" % name
             #print "Name: %s" % name
-            self.device_index = self.config_dict["MEMORY"][name]["device_index, status"]
+            self.device_index = self.self.config_dict["MEMORY"].keys().index(name)
+            #self.device_index = self.self.config_dict["MEMORY"][name]["device_index, status"]
 
-            dev_id = self.config_dict["MEMORY"][name]["id"]
-            dev_sub_id = self.config_dict["MEMORY"][name]["sub_id"]
-            dev_unique_id = self.config_dict["MEMORY"][name]["unique_id"]
+            abi_class = self.config_dict["MEMORY"][name]["abi_class"]
+            abi_major = self.config_dict["MEMORY"][name]["abi_major"]
+            abi_minor = self.config_dict["MEMORY"][name]["abi_minor"]
+            vendor_id = self.config_dict["MEMORY"][name]["vendor_id"]
+            product_id = self.config_dict["MEMORY"][name]["product_id"]
+            version = self.config_dict["MEMORY"][name]["version"]
+            date = self.config_dict["MEMORY"][name]["date"]
 
-        scripts = self.sm.get_device_script(dev_id, dev_sub_id, dev_unique_id)
+        scripts = self.sm.get_device_script(abi_class, abi_major, abi_minor, vendor_id, product_id, version, date)
         self.fv.slave_selected(name, bus, self.config_dict, self.n, scripts)
 
     def slave_deselected(self, name, bus):
         self.setup_bus_properties(self.config_dict, self.n)
         self.device_index = None
+        self.urn = None
 
     def setup_bus_properties(self, config_dict, n):
         scripts = []
-        image_id = self.config_dict["IMAGE_ID"]
-        scripts = self.sm.identify_image_scripts(image_id)
         self.fv.setup_bus_properties(self.uid, self.config_dict, n, scripts)
 
     def script_item_selected(self, name, script):
         self.status.Debug("Script Item selected: %s: %s" % (name, str(script)))
         #print "UID: %s" % str(self.uid)
-        platform = [self.platform_type, self.uid, self.n]
+        platform = self.n
         #print "Script for: %s" % name
         uid = create_hash(self.uid)
         name = "%s:%s" % (self.uid, script.get_name())
@@ -198,15 +210,9 @@ class HostController(QObject):
 
         widget = script()
         self.scripts.append([uid, name, widget])
-        if self.device_index is not None:
-            #print "Index: %d" % self.device_index
-            widget.start_tab_view(platform, self.device_index, self.status)
-        else:
-            #print "image ID: %d" % script.get_unique_image_id()
-            widget.start_tab_view(platform, self.status)
+        widget.start_tab_view(platform, self.urn, self.status)
 
         view = widget.get_view()
-       
         self.view.add_tab(uid, view, name)
 
     def remove_script(self, view):
@@ -221,18 +227,16 @@ class HostController(QObject):
     def open(self):
         print "host open"
 
-def drt_to_config(n):
+def sdb_to_config(n):
     config_dict = {}
     #Read the board id and find out what type of board this is
     config_dict["board"] = n.get_board_name()
-    config_dict["IMAGE_ID"] = n.get_image_id()
-    #print "Name: %s" % config_dict["board"]
 
     #Read the bus flag (Wishbone or Axie)
     if n.is_wishbone_bus():
         config_dict["bus_type"] = "wishbone"
         config_dict["TEMPLATE"] = "wishbone_template.json"
-    if n.is_axie_bus():
+    elif n.is_axie_bus():
         config_dict["bus_type"] = "axie"
         config_dict["TEMPLATE"] = "axie_template.json"
 
@@ -240,34 +244,50 @@ def drt_to_config(n):
     config_dict["MEMORY"] = collections.OrderedDict()
     #Read the number of slaves
     #Go thrugh each of the slave devices and find out what type it is
-    #n.pretty_print_drt()
-    #print "Number of devices: %d" % n.get_number_of_devices()
-    #Add the DRT to the config
+    som = n.nsm.som
+    root = som.get_root()
+    memory_bus = None
+    peripheral_bus = None
+    for som_component in root:
+        component = som_component.get_component()
+        if component.is_interconnect() and component.get_name() == "peripheral":
+            peripheral_bus = som_component
+        if component.is_interconnect() and component.get_name() == "memory":
+            memory_bus = som_component
 
 
-    for i in range (n.get_number_of_devices()):
-        if n.is_memory_device(i):
-            name = "Memory %d" % i
-            #print "Name: %s" % n.get_device_name_from_id(n.get_device_id(i))
-            config_dict["MEMORY"][name] = {}
-            config_dict["MEMORY"][name]["id"] = n.get_device_id(i)
-            config_dict["MEMORY"][name]["sub_id"] = n.get_device_sub_id(i)
-            config_dict["MEMORY"][name]["unique_id"] = n.get_device_unique_id(i)
-            config_dict["MEMORY"][name]["address"] = n.get_device_address(i)
-            config_dict["MEMORY"][name]["size"] = n.get_device_size(i)
-            config_dict["MEMORY"][name]["device_index, status"] = i
+
+    for som_component in memory_bus:
+        component = som_component.get_component()
+        if not component.is_device():
             continue
+        name = component.get_name()
+        config_dict["MEMORY"][name] = {}
+        config_dict["MEMORY"][name]["abi_class"] = component.get_abi_class_as_int()
+        config_dict["MEMORY"][name]["abi_major"] = component.get_abi_version_major_as_int()
+        config_dict["MEMORY"][name]["abi_minor"] = component.get_abi_version_minor_as_int()
+        config_dict["MEMORY"][name]["vendor_id"] = component.get_vendor_id_as_int()
+        config_dict["MEMORY"][name]["product_id"] = component.get_device_id_as_int()
+        config_dict["MEMORY"][name]["version"] = component.get_version_as_int()
+        config_dict["MEMORY"][name]["date"] = component.get_date_as_int()
+        config_dict["MEMORY"][name]["address"] = component.get_start_address_as_int()
+        config_dict["MEMORY"][name]["size"] = component.get_size_as_int()
 
-        name = n.get_device_name_from_id(n.get_device_id(i))
-        name = "%s %d" % (name, i)
+    for som_component in peripheral_bus:
+        component = som_component.get_component()
+        if not component.is_device():
+            continue
+        name = component.get_name()
         config_dict["SLAVES"][name] = {}
-        config_dict["SLAVES"][name]["device_index, status"] = i
-        #print "Name: %s" % n.get_device_name_from_id(n.get_device_id(i))
-        config_dict["SLAVES"][name]["id"] = n.get_device_id(i)
-        config_dict["SLAVES"][name]["sub_id"] = n.get_device_sub_id(i)
-        config_dict["SLAVES"][name]["unique_id"] = n.get_device_unique_id(i)
-        config_dict["SLAVES"][name]["address"] = n.get_device_address(i)
-        config_dict["SLAVES"][name]["size"] = n.get_device_size(i)
+        config_dict["SLAVES"][name]["abi_class"] = component.get_abi_class_as_int()
+        config_dict["SLAVES"][name]["abi_major"] = component.get_abi_version_major_as_int()
+        config_dict["SLAVES"][name]["abi_minor"] = component.get_abi_version_minor_as_int()
+        config_dict["SLAVES"][name]["vendor_id"] = component.get_vendor_id_as_int()
+        config_dict["SLAVES"][name]["product_id"] = component.get_device_id_as_int()
+        config_dict["SLAVES"][name]["version"] = component.get_version_as_int()
+        config_dict["SLAVES"][name]["date"] = component.get_date_as_int()
+        config_dict["SLAVES"][name]["address"] = component.get_start_address_as_int()
+        config_dict["SLAVES"][name]["size"] = component.get_size_as_int()
 
     config_dict["INTERFACE"] = {}
     return config_dict

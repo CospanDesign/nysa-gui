@@ -143,8 +143,11 @@ class Controller(NysaBaseController):
 
     @staticmethod
     def get_name():
-        #Change this for your app
-        return "SPI Oled Controller"
+        return APP_NAME
+
+    @staticmethod
+    def get_driver():
+        return DRIVER
 
     def __init__(self):
         super (Controller, self).__init__()
@@ -184,7 +187,7 @@ class Controller(NysaBaseController):
             self.bitmap[byte_address] = self.bitmap[byte_address] & (~(bit & 0x0FF))
 
     #Application Functions
-    def _initialize(self, platform, nui):
+    def _initialize(self, platform, urn):
         #Get a reference to GPIO
         self.set_bitmap_image(CD_IMAGE)
         #self.set_bitmap_image(FOR_RENT_IMAGE)
@@ -192,13 +195,13 @@ class Controller(NysaBaseController):
         #Setup View
         self.v = View(self.status, self.actions)
         self.v.setup_simple_text_output_view()
-        self.oled = OLED(platform, nui, self.status)
+        self.oled = OLED(platform, urn, self.status)
         self.oled.write_buffer(self.bitmap)
 
-    def start_tab_view(self, platform, nui, status):
+    def start_tab_view(self, platform, urn, status):
         self.status = status
         self.status.Verbose("Starting Template Application")
-        self._initialize(platform, nui)
+        self._initialize(platform, urn)
 
     def get_view(self):
         return self.v
