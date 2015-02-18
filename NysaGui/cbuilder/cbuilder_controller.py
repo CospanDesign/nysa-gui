@@ -33,7 +33,7 @@ from PyQt4.QtCore import *
 from view.cbuilder_view import CBuilderView
 from cbuilder_actions import Actions
 from core_wizard import CoreWizard
-from nysa.cbuilder.scripts.cbuilder_factory import CBuilderFactory
+#from nysa.cbuilder.scripts.cbuilder_factory import CBuilderFactory
 from nysa.ibuilder.lib import utils
 
 from cbuilder_project import CBuilderProject
@@ -82,8 +82,8 @@ class CBuilderController(QObject):
         dma_reader = self.wizard.is_dma_reader()
         dma_writer = self.wizard.is_dma_writer()
         self.status.Important("Generating Slave!")
-        cbuilder = CBuilderFactory(cb)
-        self.status.Important("Generated Slave at: %s" % cb["base"])
+        #cbuilder = CBuilderFactory(cb)
+        #self.status.Important("Generated Slave at: %s" % cb["base"])
 
     def search_for_projects(self):
         path = utils.get_user_cbuilder_project_dir()
