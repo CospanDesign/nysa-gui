@@ -16,7 +16,7 @@
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
 
-""" DRT Viewer... view
+""" SDB Viewer... view
 """
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
@@ -32,34 +32,56 @@ from PyQt4.QtGui import QToolBar
 from PyQt4.QtGui import QPushButton
 from PyQt4.QtCore import Qt
 
-from .drt_table import DRTTree
+from .sdb_table import SDBTree
+from .sdb_raw_table import SDBRawTree
 
 class View(QWidget):
 
     def __init__(self, status = None, Actions = None):
         super (View, self).__init__()
 
-    def setup_simple_text_output_view(self):
         self.setWindowTitle("Standalone View")
-        self.drt_tree_table = DRTTree(self)
+        self.sdb_tree_table = SDBTree(self)
+        self.sdb_raw_tree_table = SDBRawTree(self)
         main_layout = QVBoxLayout()
-        button_layout = QHBoxLayout()
-        main_layout.addLayout(button_layout)
 
         #Create the buttons
-        self.expand_all_button = QPushButton("Expand All")
-        self.collapse_all_button = QPushButton("Collapse All")
-        button_layout.addWidget(self.expand_all_button)
-        button_layout.addWidget(self.collapse_all_button)
+        expand_raw_button = QPushButton("Expand All")
+        collapse_raw_button = QPushButton("Collapse All")
+
+        expand_parsed_button = QPushButton("Expand All")
+        collapse_parsed_button = QPushButton("Collapse All")
 
         #Connect the signals
-        self.expand_all_button.clicked.connect(self.expand_all)
-        self.collapse_all_button.clicked.connect(self.collapse_all)
+        expand_raw_button.clicked.connect(self.sdb_raw_tree_table.expandAll)
+        collapse_raw_button.clicked.connect(self.sdb_raw_tree_table.collapseAll)
+
+        expand_parsed_button.clicked.connect(self.sdb_tree_table.expandAll)
+        collapse_parsed_button.clicked.connect(self.sdb_tree_table.collapseAll)
+
+
 
         layout = QHBoxLayout()
         main_layout.addLayout(layout)
 
-        layout.addWidget(self.drt_tree_table)
+        raw_tree_table_layout = QVBoxLayout()
+        raw_tree_table_layout.addWidget(QLabel("Raw SDB"))
+        l = QHBoxLayout()
+        l.addWidget(expand_raw_button)
+        l.addWidget(collapse_raw_button)
+        raw_tree_table_layout.addLayout(l)
+        raw_tree_table_layout.addWidget(self.sdb_raw_tree_table)
+
+        parsed_tree_table_layout = QVBoxLayout()
+        parsed_tree_table_layout.addWidget(QLabel("Parsed SDB"))
+        l = QHBoxLayout()
+        l.addWidget(expand_parsed_button)
+        l.addWidget(collapse_parsed_button)
+        parsed_tree_table_layout.addLayout(l)
+        parsed_tree_table_layout.addWidget(self.sdb_tree_table)
+
+        layout.addLayout(raw_tree_table_layout)
+        layout.addLayout(parsed_tree_table_layout)
         self.text = ""
         self.te = QLabel(self.text)
         self.te.setMaximumWidth(500)
@@ -69,7 +91,8 @@ class View(QWidget):
 
         #self.setLayout(layout)
         self.setLayout(main_layout)
-        #
+        self.text = ""
+        self.te.setText("")
 
     def append_text(self, text):
         self.text += text
@@ -79,20 +102,22 @@ class View(QWidget):
         self.text = ""
         self.te.setText("")
 
-    def add_drt_entry(self, index, raw, description, dev_type, value_list):
-        self.drt_tree_table.add_entry(index, raw, description, dev_type, value_list)
+    #SDB Parsed Table
+    def set_sdb_parsed_som(self, som):
+        self.sdb_tree_table.set_som(som)
 
     def clear_table(self):
-        self.drt_tree_table.clear()
+        self.sdb_tree_table.clear()
 
     def resize_columns(self):
-        self.drt_tree_table.resize_columns()
+        self.sdb_tree_table.resize_columns()
+        self.sdb_raw_tree_table.resize_columns()
 
-    def expand_all(self):
-        self.drt_tree_table.expandAll()
+    #SDB Raw
+    def add_sdb_raw_entry(self, index, address, name, raw):
+        self.sdb_raw_tree_table.add_entry(index, address, name, raw)
+
+    def clear_sdb_raw_table(self):
+        self.sdb_raw_table.clear()
 
 
-    def collapse_all(self):
-        self.drt_tree_table.collapseAll()
-
-        

@@ -34,15 +34,22 @@ from PyQt4.Qt import *
 
 from nysa.common import status
 from nysa.host import platform_scanner
+from nysa.host.driver.sdb import SDB
+from nysa.cbuilder.sdb_component import convert_rom_to_32bit_buffer
+from nysa.cbuilder.sdb_component import SDB_INTERCONNECT_MAGIC
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
                              "common"))
 
+SDB_DESC_LOC = os.path.join(os.path.dirname(__file__),
+                            os.pardir,
+                            os.pardir,
+                            "docs",
+                            "sdb.txt")
 from nysa_base_controller import NysaBaseController
 from view.view import View
-from model.model import AppModel
 
 DRIVER = SDB
 APP_NAME = "Self Defined Bus Viewer"
@@ -58,6 +65,14 @@ EPILOG = "\n"
 
 class Controller(NysaBaseController):
 
+    @staticmethod
+    def get_name():
+        return APP_NAME
+
+    @staticmethod
+    def get_driver():
+        return DRIVER
+
     def __init__(self):
         super (Controller, self).__init__()
         f = open(SDB_DESC_LOC, 'r')
@@ -65,31 +80,100 @@ class Controller(NysaBaseController):
         f.close()
         s = s.split("DESCRIPTION START")[1]
         s = s.split("DESCRIPTION END")[0]
-        #print "s: %s" % s
-        self.drt_desc = s
-        self.m = AppModel()
+        self.sdb_desc = s
 
     def _initialize(self, platform, urn):
-        self.m.setup_model(self, platform)
+        self.platform = platform
+        print "platform: %s" % str(self.platform)
+        self.sdb_urn = urn
         self.v = View(self.status, self.actions)
-        self.v.setup_simple_text_output_view()
-        self.v.clear_text()
-        self.v.append_text(self.drt_desc)
-
-        for i in range(self.m.get_row_count()):
-            row_data = self.m.get_row_data(i)
-            index = "0x%02X" % i
-            self.v.add_drt_entry(index, row_data[0], row_data[1], row_data[2], row_data[3])
-
-        self.v.resize_columns()
-        self.v.collapse_all()
+        self.v.append_text(self.sdb_desc)
+        #self.v.resize_columns()
+        #self.v.collapse_all()
+        self.setup_som_raw()
+        self.setup_som_parsed()
 
     def start_tab_view(self, platform, urn, status):
         self.status = status
-        self._initialize(platform)
+        self._initialize(platform, urn)
 
     def get_view(self):
         return self.v
+
+    def setup_som_raw(self):
+        self.sdb_rom = convert_rom_to_32bit_buffer(self.platform.read_sdb())
+        rom = self.sdb_rom.splitlines()
+        #print "rom: %s" % rom
+        data = []
+        component_data = None
+        name = None
+        address = "0x%04X" % 0x00
+        buf = []
+        for i in range (0, len(rom), 4):
+
+            if (i % 16 == 0):
+                if name is not None:
+                    data.append([address, name, buf])
+                    address = "0x%04X" % (i / 2)
+                buf = []
+                #print "rom data: %s" % str(rom[i])
+                magic = "0x%s" % (rom[i].lower())
+                last_val = int(rom[i + 15], 16) & 0xFF
+                #print "magic: %s" % magic
+                magic = int(rom[i], 16)
+                #if (magic == hex(SDB_INTERCONNECT_MAGIC) and (last_val == 0)):
+                if (magic == SDB_INTERCONNECT_MAGIC and (last_val == 0)):
+                    name = "Interconnect"
+                elif last_val == 0x01:
+                    name = "Device"
+                elif last_val == 0x02:
+                    name = "Bridge"
+                elif last_val == 0x80:
+                    name = "Integration"
+                elif last_val == 0x81:
+                    name = "URL"
+                elif last_val == 0x82:
+                    name = "Synthesis"
+                elif last_val == 0xFF:
+                    name = "Empty"
+                else:
+                    name = "???"
+
+            buf.append("%s %s : %s %s" % (rom[i], rom[i + 1], rom[i + 2], rom[i + 3]))
+        data.append([address, name, buf])
+        #print "sdb: %s" % str(data)
+        for raw_sdb_component in data:
+            self.v.add_sdb_raw_entry(data.index(raw_sdb_component), raw_sdb_component[0], raw_sdb_component[1], raw_sdb_component[2])
+
+    def setup_som_parsed(self):
+        self.v.set_sdb_parsed_som(self.platform.nsm.som)
+
+def print_sdb(rom):
+    rom = rom.splitlines()
+    print "ROM"
+    for i in range (0, len(rom), 4):
+        if (i % 16 == 0):
+            magic = "0x%s" % (rom[i].lower())
+            last_val = int(rom[i + 15], 16) & 0xFF
+            print ""
+            if (magic == hex(SDB_INTERCONNECT_MAGIC) and last_val == 0):
+                print "Interconnect"
+            elif last_val == 0x01:
+                print "Device"
+            elif last_val == 0x02:
+                print "Bridge"
+            elif last_val == 0x80:
+                print "Integration"
+            elif last_val == 0x81:
+                print "URL"
+            elif last_val == 0x82:
+                print "Synthesis"
+            elif last_val == 0xFF:
+                print "Empty"
+            else:
+                print "???"
+
+        print "%s %s : %s %s" % (rom[i], rom[i + 1], rom[i + 2], rom[i + 3])
 
 def main():
     #Parse out the commandline arguments

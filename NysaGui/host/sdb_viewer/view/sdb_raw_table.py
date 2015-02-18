@@ -21,47 +21,49 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import sys
 import os
 
-
 from PyQt4.QtGui import QTreeView
 from PyQt4.Qt import QSize
+from PyQt4.Qt import QString
 from PyQt4.QtCore import Qt
 from PyQt4.QtGui import QFont
 from PyQt4.QtGui import QColor
 
-from NysaGui.common.tree_table.tree_table import TreeTableModel
-from NysaGui.common.tree_table.tree_table import BranchNode
-from NysaGui.common.tree_table.tree_table import LeafNode
+from color_scheme import *
+p = os.path.join(os.path.dirname(__file__),
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 "common",
+                 "tree_table")
+p = os.path.abspath(p)
+#print "Path: %s" % p
+sys.path.append(p)
+
+from tree_table import TreeTableModel
+from tree_table import BranchNode
+from tree_table import LeafNode
+
+
 
 KEY, NODE = range(2)
 
-class DRTValueNode(LeafNode):
+class SDBRawNode(LeafNode):
     def __init__(self, parent, value):
         fields = [value]
-        super (DRTValueNode, self).__init__(fields, parent)
+        super (SDBRawNode, self).__init__(fields, parent)
 
     def field(self, column):
-        if column == 3:
+        if column == 1:
             return self.fields[0]
 
-class DRTDescriptionBranch(BranchNode):
-    def __init__(self, parent, index, raw, description, dev_type):
-        name = "Description Branch"
-        super (DRTDescriptionBranch, self).__init__(name, parent)
-        self.fields = [index, raw, description, ""]
-        self.dev_type = dev_type
-        
+class SDBComponentBranch(BranchNode):
+    def __init__(self, parent, index, name):
+        super (SDBComponentBranch, self).__init__(name, parent)
+        self.fields = [index, name]
+        self.name = name
+
     def __len__(self):
         return len(self.children)
-
-    def orderKey(self):
-        #return self.name.toLower()
-        return self.name
-
-    def get_type(self):
-        return self.name
-    
-    def get_dev_type(self):
-        return self.dev_type
 
     def is_first_index(self):
         index = int(self.fields[0], 16)
@@ -73,16 +75,16 @@ class DRTDescriptionBranch(BranchNode):
         assert 0 <= column <= len(self.fields)
         return self.fields[column]
 
-class Root(BranchNode):
+class SDBRawRoot(BranchNode):
     def __init__(self, name, parent=None):
-        super (Root, self).__init__("", parent)
+        super (SDBRawRoot, self).__init__("", parent)
         self.parent = None
 
     def __len__(self):
         return len(self.children)
 
     def childWithKey(self, key):
-        key = key.toLower()
+        key = QString(key).toLower()
         if not self.children:
             return None
         i = bisect.bisect_left(self.children, (key, None))
@@ -95,25 +97,24 @@ class Root(BranchNode):
     def remove_type(self, type_name):
         c = None
         for child in self.children:
-            if child[NODE].name.toLower() == type_name:
+            if QString(child[NODE].name).toLower() == str(type_name).toLower():
                 c = child
                 break
         self.children.remove(c)
 
     def insertChild(self, child):
-        print "Insert Child"
         child.parent = self
         self.children.append(child)
 
     def removeChild(self, child):
         self.children.remove(child)
 
-class DRTTreeModel(TreeTableModel):
+class SDBRawTreeModel(TreeTableModel):
 
     def __init__(self, parent = None):
-        super (DRTTreeModel, self).__init__(parent)
-        self.root = Root("")
-        headers = ["Index", "Row", "Description", "Value"]
+        self.root = SDBRawRoot("")
+        super (SDBRawTreeModel, self).__init__(parent)
+        headers = ["Address", "Type/ROM Block"]
         self.initialize(nesting = 1, headers = headers)
         self.font = QFont("White Rabbit")
         self.font.setBold(True)
@@ -125,42 +126,40 @@ class DRTTreeModel(TreeTableModel):
         node = self.nodeFromIndex(parent)
         if node is None:
             return 0
-        if isinstance(node, DRTDescriptionBranch):
+        if isinstance(node, SDBComponentBranch):
             return len(node)
-        if isinstance(node, DRTValueNode):
+        if isinstance(node, SDBRawNode):
             return 0
         return len(node)
-        
+
     def asRecord(self, index):
         node = self.nodeFromIndex(index)
 
         #Only return valid records
         if node is None:
             return []
-        if isinstance(node, Root):
+        if isinstance(node, SDBRawRoot):
             return []
-        if isinstance(node, DRTDescriptionBranch):
+        if isinstance(node, SDBComponentBranch):
             return [node.asRecord()]
-        if isinstance(node, DRTValueNode):
+        if isinstance(node, SDBRawNode):
             return node.asRecord()
 
-    def addRecord(self, index, raw, description, dev_type, value_list):
-        fields = [raw, description, value_list]
-        assert len(fields) > self.nesting
+    def addRecord(self, index, address, name, raw_list):
         root = self.root
 
         #There is no branch with that name
-        desc_branch = root.childWithKey(index)
+        component_branch = root.childWithKey(index)
 
-        if desc_branch is None:
+        if component_branch is None:
             #This thing doesn't exist
             #all type branches are children of root
-            desc_branch = DRTDescriptionBranch(root, index, raw, description, dev_type)
-            root.insertChild(desc_branch)
+            component_branch = SDBComponentBranch(root, address, name)
+            root.insertChild(component_branch)
 
-        for value in value_list:
-            value_node = DRTValueNode(desc_branch, value)
-            desc_branch.insertChild(value_node)
+        for raw in raw_list:
+            raw_node = SDBRawNode(component_branch, raw)
+            component_branch.insertChild(raw_node)
 
         #This may not be needed
         self.reset()
@@ -176,66 +175,69 @@ class DRTTreeModel(TreeTableModel):
             if index.column() == 0:
                 if index.row() != 0:
                     node = self.nodeFromIndex(index)
-                    if isinstance(node, DRTDescriptionBranch):
-                        if node.is_first_index():
-                            return QColor.fromRgb(0xC0C0C0)
+
             if index.column() == 2:
                 if index.row() != 0:
                     node = self.nodeFromIndex(index)
-                    if isinstance(node, DRTDescriptionBranch):
-                        if node.is_first_index():
-                            return QColor.fromRgb(0xC0C0C0)
-                   
+
             if index.column() == 1:
                 node = self.nodeFromIndex(index)
 
-                if isinstance(node, DRTValueNode):
+                if isinstance(node, SDBRawNode):
                     node = node.parent
 
-                dev_type = node.get_dev_type()
-                if isinstance(node, DRTDescriptionBranch):
-                    if dev_type == None:
-                        return QColor.fromRgb(0xBDFCC9)
-
-                    if dev_type == "memory":
-                        return QColor.fromRgb(0xDA70D6)
-
-                    return QColor.fromRgb(0xB0C4DE)
+                if isinstance(node, SDBComponentBranch):
+                    if node.name == "Interconnect":
+                        return QColor.fromRgb(BUS_COLOR)
+                    if node.name == "Bridge":
+                        return QColor.fromRgb(BRIDGE_COLOR)
+                    if node.name == "Empty":
+                        return QColor.fromRgb(EMPTY_COLOR)
+                    if node.name == "Device":
+                        return QColor.fromRgb(DEVICE_COLOR)
+                    if node.name == "URL":
+                        return QColor.fromRgb(URL_COLOR)
+                    if node.name == "Synthesis":
+                        return QColor.fromRgb(SYNTHESIS_COLOR)
+                    if node.name == "Integration":
+                        return QColor.fromRgb(INTEGRATION_COLOR)
+                    if node.name == "???":
+                        return QColor.fromRgb(UNKOWN_COLOR)
+                    return QColor.fromRgb(BAD_CHOICE_COLOR)
 
 
         if role != Qt.DisplayRole:
             return
 
-
         node = self.nodeFromIndex(index)
         assert node is not None
 
         node_value = ""
-        if isinstance(node, Root):
+        if isinstance(node, SDBRawRoot):
             return None
-        if isinstance(node, DRTDescriptionBranch):
+        if isinstance(node, SDBComponentBranch):
             return node.field(index.column())
-        if isinstance(node, DRTValueNode):
+        if isinstance(node, SDBRawNode):
             return node.field(index.column())
         return None
 
-class DRTTree(QTreeView):
-    
+class SDBRawTree(QTreeView):
+
     def __init__(self, parent = None):
-        super (DRTTree, self).__init__(parent)
+        super (SDBRawTree, self).__init__(parent)
         self.setUniformRowHeights(True)
-        self.m = DRTTreeModel(parent)
+        self.m = SDBRawTreeModel(parent)
         self.setModel(self.m)
         self.expand(self.rootIndex())
         self.setMaximumWidth(1000)
- 
+
     def sizeHint(self):
         size = QSize()
         size.setWidth(1000)
         return size
 
-    def add_entry(self, index, raw, description, dev_type, value_list):
-        self.m.addRecord(index, raw, description, dev_type, value_list)
+    def add_entry(self, index, address, name, raw):
+        self.m.addRecord(index, address, QString(name), raw)
 
     def clear(self):
         self.m.clear()
@@ -246,6 +248,5 @@ class DRTTree(QTreeView):
             self.resizeColumnToContents(i)
 
         self.expandAll()
-
 
 
