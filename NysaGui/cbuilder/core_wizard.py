@@ -3,8 +3,8 @@ from PyQt4.Qt import *
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 
-from nysa.cbuilder.drt import drt
 from nysa.ibuilder.lib import utils
+from nysa.cbuilder import device_manager
 
 INTRO_INFO = "Create a verilog core project"
 
@@ -156,7 +156,7 @@ class CoreWizard(QWizard):
 
     def setup_device_table(self):
         #Get the list of devices
-        dev_list = drt.get_device_list()
+        dev_list = device_manager.get_device_list()
         sdev_list = []
         for dev in dev_list:
             if int(dev["ID"], 16) == 0:
