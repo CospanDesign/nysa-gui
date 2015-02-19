@@ -160,6 +160,8 @@ class CoreWizard(QWizard):
         for dev in dev_list:
             if int(dev["ID"], 16) == 0:
                 continue
+            if int(dev["ID"], 16) == 1:
+                continue
             sdev_list.append(dev)
 
         dev_list = sdev_list
