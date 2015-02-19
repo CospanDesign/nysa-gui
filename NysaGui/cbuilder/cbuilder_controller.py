@@ -35,6 +35,7 @@ from cbuilder_actions import Actions
 from core_wizard import CoreWizard
 #from nysa.cbuilder.scripts.cbuilder_factory import CBuilderFactory
 from nysa.ibuilder.lib import utils
+from nysa.tools.generate_slave import generate_slave_from_dict
 
 from cbuilder_project import CBuilderProject
 
@@ -61,29 +62,21 @@ class CBuilderController(QObject):
         print "cbuilder open"
 
     def new_core_wizard(self):
-        
+
         self.wizard = CoreWizard(self.actions, self.status)
         self.wizard.accepted.connect(self.wizard_accepted)
         self.wizard.go()
 
     def wizard_accepted(self):
         cb = {}
-        cb["name"] = self.wizard.get_core_name()
-        cb["drt_id"] = self.wizard.get_slave_id()
-        cb["drt_sub_id"] = self.wizard.get_slave_sub_id()
-        cb["drt_flags"] = 1
-        cb["drt_size"] = 0
-        cb["type"] = self.wizard.get_bus_type()
-        cb["bus_type"] = "slave"
-        cb["type"] = "wishbone"
-        cb["subtype"] = "peripheral"
+        cb["NAME"] = self.wizard.get_core_name()
+        cb["ABI_MAJOR"] = self.wizard.get_slave_id()
+        cb["ABI_MINOR"] = self.wizard.get_slave_sub_id()
         output_dir = self.wizard.get_output_dir()
-        cb["base"] = os.path.abspath(output_dir)
-        dma_reader = self.wizard.is_dma_reader()
-        dma_writer = self.wizard.is_dma_writer()
+        output_dir = os.path.abspath(output_dir)
         self.status.Important("Generating Slave!")
-        #cbuilder = CBuilderFactory(cb)
-        #self.status.Important("Generated Slave at: %s" % cb["base"])
+        self.status.Important("Generated Slave at: %s" % output_dir)
+        generate_slave_from_dict(cb, output_dir, self.status)
 
     def search_for_projects(self):
         path = utils.get_user_cbuilder_project_dir()
@@ -104,4 +97,3 @@ class CBuilderController(QObject):
             for d in dirs:
                 found_dirs.extend(self._search_for_projects(d))
         return found_dirs
-                

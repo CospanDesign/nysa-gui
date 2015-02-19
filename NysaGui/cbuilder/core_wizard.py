@@ -66,7 +66,6 @@ class CoreWizard(QWizard):
         self.addPage(self.create_output_dir_page())
         self.setWindowTitle("CBuilder Core Creator Wizard")
 
-
     def create_intro_page(self):
         self.status.Verbose("Creating intro page")
         page = QWizardPage()
@@ -178,7 +177,6 @@ class CoreWizard(QWizard):
 
         self.t.setRangeSelected(QTableWidgetSelectionRange(0, 0, 0, 1), True)
         self.t.itemSelectionChanged.connect(self.core_id_select)
-
 
     def core_id_select(self):
         print "select an id"
