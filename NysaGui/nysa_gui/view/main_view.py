@@ -67,7 +67,7 @@ class MainForm(QMainWindow):
 
         self.cbuilder_widget.setWidget(self.cbuilder_view)
         self.addDockWidget(Qt.TopDockWidgetArea, self.cbuilder_widget)
- 
+
         self.status_widget = QDockWidget("Status")
         self.status_widget.setAllowedAreas(Qt.BottomDockWidgetArea)
         self.status_widget.setWidget(self.status)
@@ -169,7 +169,7 @@ class MainForm(QMainWindow):
 
 
         #self.set_host_view()
-        
+
         self.tabifyDockWidget(self.host_widget, self.ibuilder_widget)
         self.tabifyDockWidget(self.ibuilder_widget, self.cbuilder_widget)
         self.setTabOrder(self.host_widget, self.ibuilder_widget)
@@ -178,11 +178,11 @@ class MainForm(QMainWindow):
         self.show()
 
     def set_host_view(self):
-        self.status.Info("Show Host View") 
+        self.status.Info("Show Host View")
 
         #if not self.ibuilder_widget.isFloating():
         #    self.ibuilder_widget.hide()
-            
+
         #if not self.cbuilder_widget.isFloating():
         #    self.cbuilder_widget.hide()
         self.host_widget.show()
@@ -190,7 +190,7 @@ class MainForm(QMainWindow):
         self.repaint()
 
     def set_ibuilder_view(self):
-        self.status.Info("Show IBuilder View") 
+        self.status.Info("Show IBuilder View")
         #if not self.host_widget.isFloating():
         #    self.host_widget.hide()
         #if not self.cbuilder_widget.isFloating():
@@ -201,7 +201,7 @@ class MainForm(QMainWindow):
         self.repaint()
 
     def set_cbuilder_view(self):
-        self.status.Info("Show CBuilder View") 
+        self.status.Info("Show CBuilder View")
         #if not self.host_widget.isFloating():
         #    self.host_widget.hide()
         #if not self.ibuilder_widget.isFloating():
