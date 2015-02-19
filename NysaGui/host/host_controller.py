@@ -120,7 +120,7 @@ class HostController(QObject):
             self.fv.clear()
             return
 
-        #print "uid: %s" % str(uid)
+        print "uid: %s" % str(uid)
         self.uid = uid
         self.n = nysa_device.scan()[str(uid)]
 
@@ -174,8 +174,8 @@ class HostController(QObject):
         elif bus == "Memory":
             self.urn = "/top/memory/%s" % name
             #print "Name: %s" % name
-            self.device_index = self.self.config_dict["MEMORY"].keys().index(name)
-            #self.device_index = self.self.config_dict["MEMORY"][name]["device_index, status"]
+            self.device_index = self.config_dict["MEMORY"].keys().index(name)
+            #self.device_index = self.config_dict["MEMORY"][name]["device_index, status"]
 
             abi_class = self.config_dict["MEMORY"][name]["abi_class"]
             abi_major = self.config_dict["MEMORY"][name]["abi_major"]
