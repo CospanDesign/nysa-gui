@@ -72,10 +72,8 @@ class NysaGui(QObject):
         #sys.exit(app.exec_())
         app.exec_()
 
-
 def main(argv=None):
     n = NysaGui(debug=True)
-
 
 if __name__ == "__main__":
     main(sys.argv)
