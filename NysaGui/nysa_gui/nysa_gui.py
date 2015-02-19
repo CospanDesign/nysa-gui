@@ -61,7 +61,6 @@ class NysaGui(QObject):
         self.ic = IBuilderController(self.actions, self.status, self.xmsgs)
         iv = self.ic.get_view()
         #Get CBuilder Controller
-        #self.cc = CBuilderController(self.actions, self.status)
         self.cc = CBuilderController(self.actions, self.status)
         cv = self.cc.get_view()
 
@@ -69,7 +68,6 @@ class NysaGui(QObject):
 
         self.status.Debug("Created main form!")
         self.hc.refresh_platform_tree()
-        #sys.exit(app.exec_())
         app.exec_()
 
 def main(argv=None):
