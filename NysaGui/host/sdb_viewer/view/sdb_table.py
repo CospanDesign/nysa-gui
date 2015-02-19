@@ -34,10 +34,9 @@ p = os.path.join(os.path.dirname(__file__),
                  os.pardir,
                  os.pardir,
                  os.pardir)
-#                 "common",
-#                 "tree_table")
+
 p = os.path.abspath(p)
-print "Path: %s" % p
+#print "Path: %s" % p
 sys.path.append(p)
 
 from NysaGui.common.tree_table.tree_table import TreeTableModel

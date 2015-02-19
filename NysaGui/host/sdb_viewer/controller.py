@@ -84,7 +84,7 @@ class Controller(NysaBaseController):
 
     def _initialize(self, platform, urn):
         self.platform = platform
-        print "platform: %s" % str(self.platform)
+        #print "platform: %s" % str(self.platform)
         self.sdb_urn = urn
         self.v = View(self.status, self.actions)
         self.v.append_text(self.sdb_desc)
@@ -101,6 +101,7 @@ class Controller(NysaBaseController):
         return self.v
 
     def setup_som_raw(self):
+        rom = self.platform.read_sdb()
         self.sdb_rom = convert_rom_to_32bit_buffer(self.platform.read_sdb())
         rom = self.sdb_rom.splitlines()
         #print "rom: %s" % rom
