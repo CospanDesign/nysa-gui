@@ -23,6 +23,7 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
+from functools import partial
 
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
@@ -45,6 +46,7 @@ class MainForm(QMainWindow):
 
         #self.setDockOptions(QMainWindow.ForceTabbedDocks)
         self.host_widget  = QDockWidget("Host View")
+        self.host_widget.visibilityChanged.connect(self.host_widget_changed)
         #self.host_widget.setFeatures(   QDockWidget.DockWidgetMovable |
         #                                QDockWidget.DockWidgetFloatable |
         #                                QDockWidget.DockWidgetVerticalTitleBar)
@@ -53,6 +55,7 @@ class MainForm(QMainWindow):
         self.addDockWidget(Qt.TopDockWidgetArea, self.host_widget)
 
         self.ibuilder_widget = QDockWidget("IBuilder View")
+        self.ibuilder_widget.visibilityChanged.connect(self.ibuilder_widget_changed)
         #self.ibuilder_widget.setFeatures(   QDockWidget.DockWidgetMovable |
         #                                    QDockWidget.DockWidgetFloatable |
         #                                    QDockWidget.DockWidgetVerticalTitleBar)
@@ -61,6 +64,7 @@ class MainForm(QMainWindow):
         self.addDockWidget(Qt.TopDockWidgetArea, self.ibuilder_widget)
 
         self.cbuilder_widget = QDockWidget("CBuilder View")
+        self.cbuilder_widget.visibilityChanged.connect(self.cbuilder_widget_changed)
         #self.cbuilder_widget.setFeatures(   QDockWidget.DockWidgetMovable |
         #                                    QDockWidget.DockWidgetFloatable |
         #                                    QDockWidget.DockWidgetVerticalTitleBar)
@@ -163,19 +167,17 @@ class MainForm(QMainWindow):
                 cbuilder_menu.addAction(a)
 
 
-        self.actions.show_host_view.connect(self.set_host_view)
-        self.actions.show_ibuilder_view.connect(self.set_ibuilder_view)
-        self.actions.show_cbuilder_view.connect(self.set_cbuilder_view)
-
-
         #self.set_host_view()
-
         self.tabifyDockWidget(self.host_widget, self.ibuilder_widget)
         self.tabifyDockWidget(self.ibuilder_widget, self.cbuilder_widget)
         self.setTabOrder(self.host_widget, self.ibuilder_widget)
         self.host_widget.raise_()
         #self.host_view.fit()
         self.show()
+
+        self.actions.show_host_view.connect(self.set_host_view)
+        self.actions.show_ibuilder_view.connect(self.set_ibuilder_view)
+        self.actions.show_cbuilder_view.connect(self.set_cbuilder_view)
 
     def set_host_view(self):
         self.status.Info("Show Host View")
@@ -223,61 +225,47 @@ class MainForm(QMainWindow):
             self.xmsgs_widget.setVisible(True)
 
     def save_clicked(self):
-        self.status.Debug("Save Action!")
-        app = QApplication.instance()
-        #print "Active Window: %s" % str(app.activeWindow())
-        w = app.focusWidget()
-        parse_string = str(w).split(".")
-
-        #print "Focus Widget: %s" % str(app.focusWidget())
-        if app.focusWidget is None:
-            #print "Nothing focused"
-            return
-        #print "parse widget: %s" % parse_string[1]
-        name = parse_string[1]
-        #count = 0;
-        #parent = w.nativeParentWidget()
-        #while (parent is not None) and count < 10:
-        #    #print "parent name: %s" % parent.objectName()
-        #    parent = w.nativeParentWidget()
-        #    count += 1
-
-        #print "host windows state: 0x%08X" % self.host_view.windowState()
-        #print "host windows state: 0x%08X" % self.ibuilder_view.windowState()
-        #print "host windows state: 0x%08X" % self.cbuilder_view.windowState()
-        #if self.host_view.hasFocus():
-        #    #print "Host has focus"
-        #if self.ibuilder_view.hasFocus():
-        #    #print "ibuilder has focus"
-        #if self.cbuilder_view.hasFocus():
-        #    #print "cbuilder has focus"
-        if name == "host":
+        if self.focused_widget == "host":
+            self.status.Debug("Save Host Action!")
             self.actions.host_save.emit()
-        elif name == "ibuilder":
+        elif self.focused_widget == "ibuilder":
+            self.status.Debug("Save IBuilder Action!")
             self.actions.ibuilder_save.emit()
-        elif name == "cbuilder":
+        elif self.focused_widget == "cbuilder":
+            self.status.Debug("Save CBuilder Action!")
             self.actions.cbuilder_save.emit()
         else:
             #print "Unknown save location"
             pass
 
     def open_clicked(self):
-        self.status.Debug("Open Action!")
-        app = QApplication.instance()
-        w = app.focusWidget()
-        parse_string = str(w).split(".")
-        #print "Focus Widget: %s" % str(app.focusWidget())
-        #print "parse widget: %s" % parse_string[1]
-        name = parse_string[1]
-
-        if name == "host":
+        if self.focused_widget == "host":
+            self.status.Debug("Open Host Action!")
             self.actions.host_open.emit()
-        elif name == "ibuilder":
+        elif self.focused_widget == "ibuilder":
+            self.status.Debug("Open IBuilder Action!")
             self.actions.ibuilder_open.emit()
-        elif name == "cbuilder":
+        elif self.focused_widget == "cbuilder":
+            self.status.Debug("Open CBuilder Action!")
             self.actions.cbuilder_open.emit()
 
         else:
             #print "Unknown open location"
             pass
+
+
+    def host_widget_changed(self, value):
+        #print "host widget: %s" % str(value)
+        if value:
+            self.focused_widget = "host"
+        
+    def ibuilder_widget_changed(self, value):
+        #print "ibuilder widget: %s" % str(value)
+        if value:
+            self.focused_widget = "ibuilder"
+
+    def cbuilder_widget_changed(self, value):
+        #print "cbuilder widget: %s" % str(value)
+        if value:
+            self.focused_widget = "cbuilder"
 
