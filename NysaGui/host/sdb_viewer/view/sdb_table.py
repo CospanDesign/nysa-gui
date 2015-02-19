@@ -33,15 +33,16 @@ p = os.path.join(os.path.dirname(__file__),
                  os.pardir,
                  os.pardir,
                  os.pardir,
-                 "common",
-                 "tree_table")
+                 os.pardir)
+#                 "common",
+#                 "tree_table")
 p = os.path.abspath(p)
-#print "Path: %s" % p
+print "Path: %s" % p
 sys.path.append(p)
 
-from tree_table import TreeTableModel
-from tree_table import BranchNode
-from tree_table import LeafNode
+from NysaGui.common.tree_table.tree_table import TreeTableModel
+from NysaGui.common.tree_table.tree_table import BranchNode
+from NysaGui.common.tree_table.tree_table import LeafNode
 
 KEY, NODE = range(2)
 
