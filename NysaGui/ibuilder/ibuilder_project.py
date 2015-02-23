@@ -249,6 +249,9 @@ class IBuilderProject(QObject):
         scene = self.project_view.get_designer_scene()
         scene.disconnect_arbiter_master(from_module_name, to_module_name, arbiter_name)
 
+    #Board Control
+    def program_board(self, bin_path):
+        self.controller.program_board(bin_path)
 
 DEFAULT_CONFIG = {
     "BASE_DIR":"~/projects/ibuilder_project",

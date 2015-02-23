@@ -82,6 +82,7 @@ class View(QWidget):
         self.plots[name]["graph"].setData(self.plots[name]["x"], self.plots[name]["y"])
 
     def init_demo_data(self, length):
-        data = np.random.randint(100, size=length)
+        #data = np.random.randint(100, size=length)
+        data = [0] * length
         return data, np.arange(0, length)
         
