@@ -40,6 +40,14 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
+p = os.path.join(os.path.dirname(__file__),
+                 os.pardir,
+                 os.pardir)
+
+p = os.path.abspath(p)
+print "Path: %s" % p
+sys.path.append(p)
+
 from nysa_base_controller import NysaBaseController
 from view.view import View
 from register_viwer_actions import RegisterViewerActions
@@ -47,8 +55,8 @@ from nysa.host.driver.experiment import Experiment
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
-                             "common"))
-
+                             os.pardir,
+                             os.pardir))
 
 # Put your device name (GPIO, SPI, I2C, etc...)
 DRIVER = Experiment
@@ -86,10 +94,10 @@ class Controller(NysaBaseController):
         self.actions.set_pressed.connect(self.register_set_pressed)
 
     def _initialize(self, platform, urn):
-        self.v = View(self.status, self.actions)
         self.platform = platform
         self.urn = urn
         self.dev = Experiment(platform, urn, debug = False)
+        self.v = View(self.status, self.actions)
         self.v.set_name(self.dev.get_name())
         self.status.Verbose("Number of registers: %d" % self.dev.get_size())
         for r in range(self.dev.get_size()):
