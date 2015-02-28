@@ -167,7 +167,6 @@ class I2CWidget(QWidget):
         else:
             self.actions.i2c_row_delete.emit(False)
 
-
     def update_i2c_transactions(self, loop, transactions):
         if not loop:
             self.update_i2c_init_transactions(transactions)
