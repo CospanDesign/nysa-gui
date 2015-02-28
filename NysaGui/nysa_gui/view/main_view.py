@@ -253,7 +253,6 @@ class MainForm(QMainWindow):
             #print "Unknown open location"
             pass
 
-
     def host_widget_changed(self, value):
         #print "host widget: %s" % str(value)
         if value:
