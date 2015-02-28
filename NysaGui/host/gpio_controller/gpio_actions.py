@@ -2,16 +2,7 @@ import sys
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-_gpio_action_instance = None
-
-#Singleton Magic
-def GPIOActions(*args, **kw):
-    global _gpio_action_instance
-    if _gpio_action_instance is None:
-        _gpio_action_instance = _GPIOActions(*args, **kw)
-    return _gpio_action_instance
-
-class _GPIOActions(QtCore.QObject):
+class GPIOActions(QtCore.QObject):
 
     #Raw Register signals
     get_pressed = QtCore.pyqtSignal(int, name = "get_pressed")
@@ -29,10 +20,4 @@ class _GPIOActions(QtCore.QObject):
     interrupt_both_edge_changed = QtCore.pyqtSignal(int, bool, name = "interrupt_both_edge_changed")
 
     gpio_interrupt = QtCore.pyqtSignal(name = "gpio_interrupt")
-
-
-
-    def __init__(self, parent = None):
-        super (_GPIOActions, self).__init__(parent)
-        print "Started"
 
