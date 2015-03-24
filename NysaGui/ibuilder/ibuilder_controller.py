@@ -61,6 +61,8 @@ class IBuilderController(QObject):
             self.new_project()
         for p in ps:
             proj = json.load(open(p, 'r'))
+            if "PROJECT_NAME" not in proj:
+                continue
             name = proj["PROJECT_NAME"]
             #print "project path: %s" % p
             #print "project name: %s" % name
