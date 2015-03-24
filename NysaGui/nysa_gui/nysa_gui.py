@@ -71,7 +71,20 @@ class NysaGui(QObject):
         app.exec_()
 
 def main(argv=None):
-    n = NysaGui(debug=True)
+    #Parse out the commandline arguments
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=DESCRIPTION,
+        epilog=EPILOG
+    )
+
+    parser.add_argument("-d", "--debug",
+                        action="store_true",
+                        help="Enable Debug Messages")
+
+    args = parser.parse_args()
+
+    n = NysaGui(args.debug)
 
 if __name__ == "__main__":
     main(sys.argv)
