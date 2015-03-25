@@ -166,21 +166,7 @@ class Controller(NysaBaseController):
         print "device URN: %s" % self.urn
         size = self.n.get_device_size(self.urn)
         print "size: 0x%08X" % size
-        if self.status.is_command_line():
-            print "Command Line %s" % str(type(self.status))
-            self.status.Verbose( "Clearing Memory")
-            self.status.Verbose( "Memory Size: 0x%08X" % size)
-        data_out = Array('B')
-        #size = 16
-        for i in range(0, (size - 1)):
-            num = 0x00
-            data_out.append(num)
-
-        print "length of clear buffer: 0x%08X" % len(data_out)
-
-        self.n.write_memory(0, data_out)
-        print "Wrote first part!"
-
+        self.clear_memory()
         if self.status.is_command_line():
             self.status.Verbose( "Test Single Read/Write at Beginning")
         data_out = Array('B', [0xAA, 0xBB, 0xCC, 0xDD, 0x55, 0x66, 0x77, 0x88])
@@ -200,15 +186,7 @@ class Controller(NysaBaseController):
     def test_single_rw_end(self):
         status = "Passed"
         size = self.n.get_device_size(self.urn)
-        if self.status.is_command_line():
-            self.status.Verbose( "Clearing Memory")
-            self.status.Verbose( "Memory Size: 0x%08X" % size)
-        data_out = Array('B')
-        for i in range(0, ((size / 4) - 1)):
-            num = 0x00
-            data_out.append(num)
-        self.n.write_memory(0, data_out)
-
+        self.clear_memory()
 
         if self.status.is_command_line():
             self.status.Verbose( "Test Single Read/Write at End")
@@ -229,14 +207,13 @@ class Controller(NysaBaseController):
         status = "Passed"
         fail = False
         fail_count = 0
-        total_size = self.n.get_device_size(self.urn)
         position = 0
-        if self.status.is_command_line():
-            self.status.Verbose( "Clearing Memory")
-            self.status.Verbose( "Memory Size: 0x%08X" % total_size)
+        self.clear_memory()
+        total_size = self.n.get_device_size(self.urn)
+
         size = 0
         if total_size > MAX_LONG_SIZE:
-            self.status.Info("Memroy Size: 0x%08X is larger than read/write size" % total_size)
+            self.status.Info("Memory Size: 0x%08X is larger than read/write size" % total_size)
             self.status.Info("\tBreaking transaction into 0x%08X chunks" % MAX_LONG_SIZE)
             size = MAX_LONG_SIZE
         else:
@@ -245,12 +222,6 @@ class Controller(NysaBaseController):
         #Write Data Out
         while position < total_size:
             data_out = Array('B')
-            for i in range(0, ((size / 4) - 1)):
-                num = 0x00
-                data_out.append(num)
-
-            self.n.write_memory(0, data_out)
-
 
             if self.status.is_command_line():
                 self.status.Verbose( "long rw")
@@ -261,7 +232,7 @@ class Controller(NysaBaseController):
             if self.status.is_command_line():
                 self.status.Verbose( "Writing 0x%08X bytes of data" % (len(data_out)))
             start = time.time()
-            self.n.write_memory(0, data_out)
+            self.n.write_memory(position, data_out)
             end = time.time()
             if self.status.is_command_line():
                 self.status.Verbose( "Write Time : %f" % (end - start))
@@ -273,8 +244,6 @@ class Controller(NysaBaseController):
 
             if position + size > total_size:
                 size = total_size - position
-            else:
-                size += size
 
             if self.status:
                 self.status.Info("Wrote: 0x%08X - 0x%08X" % (prev_pos, position))
@@ -284,17 +253,16 @@ class Controller(NysaBaseController):
 
         start = time.time()
         if total_size > MAX_LONG_SIZE:
-            self.status.Info("Memroy Size: 0x%08X is larger than read/write size" % total_size)
+            self.status.Info("Memory Size: 0x%08X is larger than read/write size" % total_size)
             self.status.Info("\tBreaking transaction into 0x%08X chunks" % MAX_LONG_SIZE)
 
             size = MAX_LONG_SIZE
         else:
             size = total_size
-
  
         while position < total_size:
 
-            data_in = self.n.read_memory(0, len(data_out) / 4)
+            data_in = self.n.read_memory(position, len(data_out) / 4)
             end = time.time()
             if self.status.is_command_line():
                 self.status.Verbose( "Read Time: %f" % (end - start))
@@ -324,13 +292,44 @@ class Controller(NysaBaseController):
             position += size
             if position + size > total_size:
                 size = total_size - position
-            else:
-                size += position
 
             if self.status:
                 self.status.Info("Read: 0x%08X - 0x%08X" % (prev_pos, position))
 
         return status
+
+    def clear_memory(self):
+        total_size = self.n.get_device_size(self.urn)
+        position = 0
+        size = 0
+        if self.status.is_command_line():
+            self.status.Verbose( "Clearing Memory")
+            self.status.Verbose( "Memory Size: 0x%08X" % size)
+
+        if total_size > MAX_LONG_SIZE:
+            self.status.Info("Memory Size: 0x%08X is larger than read/write size" % total_size)
+            self.status.Info("\tBreaking transaction into 0x%08X chunks" % MAX_LONG_SIZE)
+            size = MAX_LONG_SIZE
+        else:
+            size = total_size
+
+        while position < total_size:
+            data_out = Array('B')
+            for i in range(0, ((size / 4) - 1)):
+                num = 0x00
+                data_out.append(num)
+
+            self.n.write_memory(position, data_out)
+
+            #Increment the position
+            prev_pos = position
+            position += size
+
+            if position + size > total_size:
+                size = total_size - position
+
+            if self.status:
+                self.status.Verbose("Cleared: 0x%08X - 0x%08X" % (prev_pos, position))
 
 def test_iterator(count):
     index = 0
