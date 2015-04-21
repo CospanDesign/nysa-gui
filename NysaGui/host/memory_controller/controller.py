@@ -125,6 +125,7 @@ class Controller(NysaBaseController):
         self.v.add_test("Single Read/Write at End", True, self.test_single_rw_end)
         self.v.add_test("Long Read/Write Test", True, self.test_long_burst)
         self.v.set_memory_size(self.n.get_device_size(urn))
+        self.v.set_memory_offset(self.n.get_device_address(urn))
 
     def start_tab_view(self, platform, urn, status):
         self.status = status
@@ -165,14 +166,16 @@ class Controller(NysaBaseController):
         status = "Passed"
         print "device URN: %s" % self.urn
         size = self.n.get_device_size(self.urn)
+        offset = self.n.get_device_address(self.urn)
         print "size: 0x%08X" % size
+        print "offset: 0x%08X" % offset
         self.clear_memory()
         if self.status.is_command_line():
             self.status.Verbose( "Test Single Read/Write at Beginning")
         data_out = Array('B', [0xAA, 0xBB, 0xCC, 0xDD, 0x55, 0x66, 0x77, 0x88])
-        self.n.write_memory(0, data_out)
+        self.n.write_memory(offset, data_out)
         print "Wrote second part!"
-        data_in = self.n.read_memory(0, len(data_out)/4)
+        data_in = self.n.read_memory(offset, len(data_out)/4)
         print "length: data_out: %d, data_in: %d" % (len(data_out), len(data_in))
         print "data out: %s" % str(data_out)
         print "data_in: %s" % str(data_in)
@@ -186,14 +189,15 @@ class Controller(NysaBaseController):
     def test_single_rw_end(self):
         status = "Passed"
         size = self.n.get_device_size(self.urn)
+        offset = self.n.get_device_address(self.urn)
         self.clear_memory()
 
         if self.status.is_command_line():
             self.status.Verbose( "Test Single Read/Write at End")
         data_out = Array('B', [0xAA, 0xBB, 0xCC, 0xDD, 0x55, 0x66, 0x77, 0x88])
-        self.n.write_memory((size - 16), data_out)
+        self.n.write_memory(offset + (size - 16), data_out)
         print "Reading from location: 0x%08X" % (size - 16)
-        data_in = self.n.read_memory((size - 16), 2)
+        data_in = self.n.read_memory(offset + (size - 16), 2)
 
         for i in range (len(data_out)):
             if data_in[i] != data_out[i]:
@@ -210,6 +214,7 @@ class Controller(NysaBaseController):
         position = 0
         self.clear_memory()
         total_size = self.n.get_device_size(self.urn)
+        offset = self.n.get_device_address(self.urn)
 
         size = 0
         if total_size > MAX_LONG_SIZE:
@@ -232,7 +237,7 @@ class Controller(NysaBaseController):
             if self.status.is_command_line():
                 self.status.Verbose( "Writing 0x%08X bytes of data" % (len(data_out)))
             start = time.time()
-            self.n.write_memory(position, data_out)
+            self.n.write_memory(offset + position, data_out)
             end = time.time()
             if self.status.is_command_line():
                 self.status.Verbose( "Write Time : %f" % (end - start))
@@ -262,7 +267,7 @@ class Controller(NysaBaseController):
  
         while position < total_size:
 
-            data_in = self.n.read_memory(position, len(data_out) / 4)
+            data_in = self.n.read_memory(offset + position, len(data_out) / 4)
             end = time.time()
             if self.status.is_command_line():
                 self.status.Verbose( "Read Time: %f" % (end - start))
@@ -300,6 +305,7 @@ class Controller(NysaBaseController):
 
     def clear_memory(self):
         total_size = self.n.get_device_size(self.urn)
+        offset = self.n.get_device_address(self.urn)
         position = 0
         size = 0
         if self.status.is_command_line():
@@ -319,7 +325,7 @@ class Controller(NysaBaseController):
                 num = 0x00
                 data_out.append(num)
 
-            self.n.write_memory(position, data_out)
+            self.n.write_memory(offset + position, data_out)
 
             #Increment the position
             prev_pos = position

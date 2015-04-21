@@ -44,16 +44,17 @@ class View(QWidget):
     def setup_view(self):
         self.setWindowTitle("Memory Controller")
         self.mem_size_label = QLabel("Memory Size:")
+        self.mem_offset_label = QLabel("Memory Offset:")
         layout = QVBoxLayout()
         self.mtw = MemoryTesterWidget()
         btn = QPushButton("Run Tests")
         btn.clicked.connect(self.memory_actions.memory_test_start.emit)
         layout.addWidget(self.mem_size_label)
+        layout.addWidget(self.mem_offset_label)
         layout.addWidget(self.mtw)
         layout.addWidget(btn)
 
         self.setLayout(layout)
-        
 
     def add_test(self, name, default_enabled, func):
         self.mtw.add_row(name, default_enabled, func)
@@ -72,5 +73,8 @@ class View(QWidget):
 
     def set_memory_size(self, size):
         self.mem_size_label.setText("Memory Size: 0x%08X" % size)
+
+    def set_memory_offset(self, offset):
+        self.mem_offset_label.setText("Memory Offset: 0x%08X" % offset)
         
 
