@@ -86,3 +86,7 @@ class View(QWidget):
     def set_urn(self, urn):
         self.mem_table.set_urn(urn)
 
+    def update(self):
+        self.mem_table.invalidate()
+
+

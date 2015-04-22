@@ -162,6 +162,7 @@ class Controller(NysaBaseController):
                 else:
                     continue
         except StopIteration:
+            self.v.update()
             print "Done!"
 
     def test_single_rw_start(self):
