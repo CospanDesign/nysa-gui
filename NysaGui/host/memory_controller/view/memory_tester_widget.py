@@ -61,7 +61,6 @@ class MemoryTesterWidget(QWidget):
 
         self.setLayout(self.lyt)
 
-
     def add_row(self, name, default_enable, func):
         cb = QCheckBox()
         cb.setChecked(default_enable)
@@ -73,7 +72,6 @@ class MemoryTesterWidget(QWidget):
         self.lyt.addWidget(QLabel(name), self.pos, 1)
         self.lyt.addWidget(self.test_results[self.pos - 1], self.pos, 2)
         self.pos += 1
-       
 
     def set_test_results(self, pos, result):
         self.test_results[pos].setText(result)
@@ -86,4 +84,5 @@ class MemoryTesterWidget(QWidget):
 
     def get_test_function(self, pos):
         return self.test_funcs[pos]
+
 

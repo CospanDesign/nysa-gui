@@ -28,35 +28,123 @@ from PyQt4.QtCore import QAbstractTableModel
 from PyQt4.QtGui import QTableView
 from PyQt4 import QtCore
 from PyQt4 import QtGui
+from array import array as Array
 
 ss = os.path.join(os.path.dirname(__file__), "stylesheet.css")
 STYLE = open(ss, "r").read()
 
 
+DEFAULT_ROW_COUNT = 10
+SIZE_DIVIDER = 2
+
+class MemCache(object):
+    def __init__(self):
+        super(MemCache, self).__init__()
+        self.data = Array('B')
+        self.start = 0
+        self.position = 0
+        self.mem_size = 0
+        self.cache_size = DEFAULT_ROW_COUNT * SIZE_DIVIDER
+
+    def set_nysa(self, nysa):
+        self.n = nysa
+
+    def set_urn(self, urn):
+        self.urn = urn
+        self.mem_size = self.n.get_device_size(urn)
+        self.start = self.n.get_device_address(urn)
+        self.position = self.start
+        self.invalidate()
+
+    def get_row_count(self):
+        return self.cache_size / SIZE_DIVIDER
+
+    def get_position(self):
+        return self.position
+
+    def move_up(self, amount = 1):
+        if (self.position + self.cache_size / DIVIDER) > (self.start + self.cache_size)
+            self.position = self.start
+
+    def move_down(self, amount = 1):
+        if self.position + amount > 
+
+    def check(self):
+        #Check if we need to get more data from the memory
+        if self.position < self.start:
+            print "Need to get more data"
+
+        if (self.position + self.cache_size / DIVIDER) > (self.start + self.cache_size)
+            print "Need to get more data"
+
+    def invalidate(self):
+        #Get more data from memory
 
 class TableModel(QtCore.QAbstractTableModel):
     def __init__(self):
         QtCore.QAbstractTableModel.__init__(self)
-        self.items=['One','Two','Three','Four','Five','Six','Seven']
+        self.items=['One','Two','Three','Four','Five','Six','Seven', "eight", "nine", "ten"]
+        self.mem_cache = MemCache()
+
+        self.mem_cache = {}
+        self.mem_cache["size"] = DEFAULT_ROW_COUNT * 2
+        self.mem_cache["start"] = 0
+        self.mem_cache["position"] = 0
+        self.mem_cache["data"] = Array('B')
+
         self.headers = ["Address", "",  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"]
+        self.base = 0
+        self.n = None
+        self.urn = None
+        self.row_count = self.mem_cache["size"] / 2
+        for i in range(self.row):
+            self.mem_cache["data"].append(0x00)
+            self.mem_cache["data"].append(0x00)
+            self.mem_cache["data"].append(0x00)
+            self.mem_cache["data"].append(0x00)
+            self.mem_cache["data"].append(0x00)
+            self.mem_cache["data"].append(0x00)
+            self.mem_cache["data"].append(0x00)
+            self.mem_cache["data"].append(0x00)
+
+        self.size = 0
 
     def rowCount(self, parent=QtCore.QModelIndex()):
-        return len(self.items)
+        return self.row_count
+
     def columnCount(self, index=QtCore.QModelIndex()):
-        return 35
+        return len(self.headers)
+
+    def set_nysa(self, nysa):
+        self.n = nysa
+
+    def set_urn(self, urn):
+        self.urn = urn
+        if self.n is None:
+            print "Nysa is not set!"
+        self.base = self.n.get_device_address(self.urn)
+        self.size = self.n.get_device_size(self.urn)
 
     def data(self, index, role):
+        position = self.mem_cache["position"]
         if not index.isValid() or not (0<=index.row()<len(self.items)):
             return QtCore.QVariant()
 
         item=str(self.items[index.row()])
-
         if role==QtCore.Qt.UserRole:
-           return item
+            return item
         if role==QtCore.Qt.DisplayRole:
-           return item
+            if index.column() == 0:
+                value = QtCore.QString("%08X" % (position + index.row()))
+                return QtCore.QVariant(value)
+            if index.column() == 1:
+                return QtCore.QVariant()
+            if index.column() == 18:
+                return QtCore.QVariant()
+            return item
+
         if role==QtCore.Qt.TextColorRole:
-           return QtCore.QVariant(QtGui.QColor(QtCore.Qt.white))
+            return QtCore.QVariant(QtGui.QColor(QtCore.Qt.white))
 
     def headerData(self, column, orientation, role=QtCore.Qt.DisplayRole):
         if role!=QtCore.Qt.DisplayRole:
@@ -64,54 +152,50 @@ class TableModel(QtCore.QAbstractTableModel):
         if orientation==QtCore.Qt.Horizontal:
             return QtCore.QVariant(self.headers[column])
 
+    def set_size(self, size):
+        self.row_count = size
+        self.mem_cache["size"] = size
+
 class TableView(QtGui.QTableView):
     def __init__(self, parent=None):
         super(TableView, self).__init__(parent)
-        #self.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
+        self.verticalHeader().setVisible(False)
         self.horizontalHeader().setDefaultAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+        self.horizontalHeader().setResizeMode(QtGui.QHeaderView.Stretch)
+        self.setStyleSheet(STYLE)
 
+        self.setAlternatingRowColors(True)
         myModel=TableModel()
         self.setModel(myModel)
 
-        appStyle="""
-        QTableView
-        {
-        background-color: black;
-        gridline-color:black;
-        color: black;
-        selection-color: black;
-        }
-        QTableView::item
-        {
-        color: white;
-        background:black;
-        }
-        QTableView::item:hover
-        {
-        color: black;
-        background:#ffaa00;
-        }
-        QTableView::item:focus
-        {
-        color: black;
-        background:#0063cd;
-        }
-        """
-        self.setStyleSheet(appStyle)
+    def set_nysa(self, nysa):
+        self.model().set_nysa(nysa)
+
+    def set_urn(self, urn):
+        self.model().set_urn(urn)
+        self.reset()
+
+    def set_size(self, size):
+        self.model().set_size(size)
+        self.reset()
 
 class MemoryTable(QWidget):
 
-    def __init__(self, memory = None):
+    def __init__(self):
         super (MemoryTable, self).__init__()
-        self.mem = memory
-        #self.mem_table = QTableWidget(32, 35)
         self.mem_table = TableView()
-        #self.mem_table.setHorizontalHeaderLabels(["Address", "",  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"])
         layout = QVBoxLayout()
         layout.addWidget(self.mem_table)
         model = self.mem_table.model()
-        #self.mem_table.setStyleSheet(STYLE)
         self.setLayout(layout)
 
+    def set_nysa(self, nysa):
+        self.mem_table.set_nysa(nysa)
+
+    def set_urn(self, urn):
+        self.mem_table.set_urn(urn)
+
+    def set_size(self, size):
+        self.mem_table.set_size(size)
 
 

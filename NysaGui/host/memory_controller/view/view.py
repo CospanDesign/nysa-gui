@@ -79,5 +79,10 @@ class View(QWidget):
 
     def set_memory_offset(self, offset):
         self.mem_offset_label.setText("Memory Offset: 0x%08X" % offset)
-        
+
+    def set_nysa(self, nysa):
+        self.mem_table.set_nysa(nysa)
+
+    def set_urn(self, urn):
+        self.mem_table.set_urn(urn)
 

@@ -126,6 +126,8 @@ class Controller(NysaBaseController):
         self.v.add_test("Long Read/Write Test", True, self.test_long_burst)
         self.v.set_memory_size(self.n.get_device_size(urn))
         self.v.set_memory_offset(self.n.get_device_address(urn))
+        self.v.set_nysa(self.n)
+        self.v.set_urn(self.urn)
 
     def start_tab_view(self, platform, urn, status):
         self.status = status
