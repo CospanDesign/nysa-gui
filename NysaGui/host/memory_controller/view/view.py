@@ -31,6 +31,7 @@ from PyQt4.QtGui import QTextEdit
 from PyQt4.QtGui import QPushButton
 
 from memory_tester_widget import MemoryTesterWidget
+from memory_table import MemoryTable
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
@@ -49,6 +50,8 @@ class View(QWidget):
         self.mtw = MemoryTesterWidget()
         btn = QPushButton("Run Tests")
         btn.clicked.connect(self.memory_actions.memory_test_start.emit)
+        self.mem_table = MemoryTable()
+        layout.addWidget(self.mem_table)
         layout.addWidget(self.mem_size_label)
         layout.addWidget(self.mem_offset_label)
         layout.addWidget(self.mtw)
