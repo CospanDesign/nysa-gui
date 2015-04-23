@@ -35,7 +35,7 @@ STYLE = open(ss, "r").read()
 
 
 DEFAULT_ROW_COUNT = 40
-DEFAULT_CACHE_BUFFER = 5
+DEFAULT_CACHE_BUFFER = 0
 
 class MemCache(object):
     def __init__(self):
@@ -46,6 +46,7 @@ class MemCache(object):
         self.mem_size = 0
         self.row_count = DEFAULT_ROW_COUNT
         self.cache_buffer = DEFAULT_CACHE_BUFFER
+        self.busy = False
         for i in range(self.cache_size()):
             self.data.append(i)
             self.data.append(i)
@@ -85,26 +86,35 @@ class MemCache(object):
         return self.position
 
     def move_up(self, amount = 1):
+        #print "move up"
         self.position -= amount
         self.check()
 
+    def get_start_addr(self):
+        return self.mem_base
+
     def move_down(self, amount = 1):
         #Check to see if the user is at the end of memory
+        #print "move down"
         self.position += amount
         self.check()
 
     def check(self):
         #Check if we need to get more data from the memory
+        #print "checking..."
+        print "s: %d p: %d cb: %d cs: %d" % (self.start, self.position, self.cache_buffer, self.cache_size())
         if self.position < self.mem_base:
             self.position = self.mem_base
+            self.invalidate()
 
-        if self.position > self.mem_size:
-            self.position = self.mem_size
+        if self.position > self.mem_size + self.mem_base:
+            self.position = self.mem_size + self.mem_base
 
-        if (self.position - self.cache_buffer) > (self.start + self.cache_size()):
+        if (self.position - self.cache_buffer + self.row_count) > (self.start + self.cache_size()):
             print "Need to get more data"
-            print "Position + cache buffer > mem_base + cache_size"
-            print "\t0x%08X + 0x%02X > 0x%08X + 0x%02X" % (self.position, self.cache_buffer, self.start, self.cache_size())
+            print "Position - cache buffer > start + cache_size"
+            print "\t0x%08X - 0x%02X + 0x%02X > 0x%08X + 0x%02X" % (self.position, self.cache_buffer, self.row_count, self.start, self.cache_size())
+            print "\t0x%08X > 0x%08X" % ((self.position - self.cache_buffer + self.row_count), self.start + self.cache_size())
             self.invalidate()
             return
 
@@ -113,29 +123,45 @@ class MemCache(object):
                 return
             print "Need to get more data,"
             self.invalidate()
+
         return
 
     def invalidate(self):
         #Get more data from memory
+        print "in invalidate"
         start = self.start
-        print "Check if we are close to the start"
         if (self.position - self.cache_buffer) < self.mem_base:
             start = self.mem_base
 
-        if (self.position - self.cache_buffer + self.cache_size()) >= (self.mem_base + self.mem_size):
+        elif (self.position - self.cache_buffer + self.cache_size()) >= (self.mem_base + self.mem_size):
+            print "we are close to the  end..."
             start = self.mem_size - self.cache_size() + self.cache_buffer
+        else:
+            start = self.position - self.cache_buffer
 
         #if start != self.start:
         print "update cache"
         print "start: 0x%08X" % start
+        self.busy = True
         self.data = self.n.read_memory(start, self.cache_size())
         print "length of data read: %d" % len(self.data)
         print "Length of cache: %d" % self.cache_size()
         self.start = start
+        self.busy = False
 
     def get_data(self, row, column):
-        position = self.start - self.position + row
-        return self.data[(position * 4) + column]
+        position = self.position - self.start + row
+        #print "start: %d curr pos: %d row: %d column: %d: position: %d" % (self.start, self.position, row, column, position)
+        #print "\tData Position: %d" % ((self.position * 4) + column)
+        if self.busy:
+            return "Loading..."
+        try:
+            return self.data[(position * 4) + column]
+        except:
+            return "??"
+
+    def is_busy(self):
+        return self.busy
 
 class TableModel(QtCore.QAbstractTableModel):
     def __init__(self):
@@ -175,9 +201,14 @@ class TableModel(QtCore.QAbstractTableModel):
             if index.column() == 6:
                 return QtCore.QVariant()
             if index.column() > 1 and index.column() < 6:
-                return str("%02X" % (self.mem_cache.get_data(index.row(), index.column() - 2)))
+                value = self.mem_cache.get_data(index.row(), index.column() - 2)
+                if isinstance(value, str):
+                    return value
+                return str("%02X" % value)
             else:
                 value = self.mem_cache.get_data(index.row(), index.column() - 7)
+                if isinstance(value, str):
+                    return value
                 return chr(value)
 
 
@@ -197,7 +228,25 @@ class TableModel(QtCore.QAbstractTableModel):
     def invalidate(self):
         self.mem_cache.invalidate()
 
+    def move_down(self, amount = 1):
+        self.mem_cache.move_down(amount)
+
+    def move_up(self, amount = 1):
+        self.mem_cache.move_up(amount)
+
+    def is_busy(self):
+        return self.mem_cache.is_busy()
+
+    def get_position(self):
+        return self.mem_cache.get_position()
+
+    def get_start_addr(self):
+        return self.mem_cache.get_start_addr()
+
 class TableView(QtGui.QTableView):
+    INITIAL_POS_MOVE_DELAY = 500
+    POS_MOVE_DELAY = 100
+
     def __init__(self, parent=None):
         super(TableView, self).__init__(parent)
         self.verticalHeader().setVisible(False)
@@ -208,6 +257,10 @@ class TableView(QtGui.QTableView):
         self.setAlternatingRowColors(True)
         myModel=TableModel()
         self.setModel(myModel)
+        self.vscroll = self.verticalScrollBar()
+        self.timer_id = 0
+        self.timer_start = True
+        self.vscroll.sliderReleased.connect(self.slider_released)
 
     def set_nysa(self, nysa):
         self.model().set_nysa(nysa)
@@ -223,6 +276,83 @@ class TableView(QtGui.QTableView):
     def invalidate(self):
         self.model().invalidate()
         self.reset()
+
+    def timerEvent(self, timer_event):
+        if timer_event.timerId() == self.timer_id:
+            #print "Timer Fired!"
+            if self.vscroll.value() == self.vscroll.maximum():
+                #print "Moving Down"
+                if self.timer_start:
+                    self.killTimer(self.timer_id)
+                    self.timer_id = self.startTimer(self.POS_MOVE_DELAY)
+                    self.timer_start = False
+
+                if not self.model().is_busy():
+                    self.model().move_down()
+                    self.reset()
+                else:
+                    print "Busy"
+
+            elif self.vscroll.value() == self.vscroll.minimum():
+                #print "Moving Up"
+                if self.model().get_position() <= self.model().get_start_addr():
+                    self.killTimer(self.timer_id)
+                    self.timer_start = True
+                    return
+
+                if self.timer_start:
+                    self.killTimer(self.timer_id)
+                    self.timer_id = self.startTimer(self.POS_MOVE_DELAY)
+                    self.timer_start = False
+
+                if not self.model().is_busy():
+                    self.model().move_up()
+                    self.reset()
+                else:
+                    print "Busy"
+
+            else:
+                print "killing timer"
+                self.killTimer(self.timer_id)
+
+
+
+    def slider_released(self):
+        self.timer_start = True
+        if self.timer_id != 0:
+            print "Killing timer"
+            self.killTimer(self.timer_id)
+            self.timer_id = 0
+
+    def verticalScrollbarValueChanged(self, value):
+        print "Value: %d" % value
+        print "Maximum: %d" % self.vscroll.maximum()
+        print "Minimum: %d" % self.vscroll.minimum()
+        super(TableView, self).verticalScrollbarValueChanged(value)
+        if value == self.vscroll.maximum():
+            print "Start timer..."
+            if self.timer_id == 0:
+                self.timer_id = self.startTimer(self.INITIAL_POS_MOVE_DELAY)
+                self.timer_start = True
+            print "timer id: %d" % self.timer_id
+
+        elif value == self.vscroll.minimum():
+            if self.model().get_position() <= self.model().get_start_addr():
+                if self.timer_id != 0:
+                    self.killTimer(self.timer_id)
+                    self.timer_start = True
+                return
+            #self.model().move_up()
+            print "Start timer..."
+            if self.timer_id == 0:
+                self.timer_id = self.startTimer(self.INITIAL_POS_MOVE_DELAY)
+                self.timer_start = True
+            print "timer id: %d" % self.timer_id
+        else:
+            if self.timer_id != 0:
+                self.killTimer(self.timer_id)
+                self.timer_id = 0
+
 
 class MemoryTable(QWidget):
 

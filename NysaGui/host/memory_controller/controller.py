@@ -235,7 +235,7 @@ class Controller(NysaBaseController):
                 self.status.Verbose( "long rw")
             data_out = Array('B')
             for i in range (0, size):
-                data_out.append((i % 255))
+                data_out.append((i % 256))
 
             if self.status.is_command_line():
                 self.status.Verbose( "Writing 0x%08X bytes of data" % (len(data_out)))
