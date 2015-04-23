@@ -234,7 +234,7 @@ class Controller(NysaBaseController):
             if self.status.is_command_line():
                 self.status.Verbose( "long rw")
             data_out = Array('B')
-            for i in range (0, size):
+            for i in range (0, size * 4):
                 data_out.append((i % 256))
 
             if self.status.is_command_line():

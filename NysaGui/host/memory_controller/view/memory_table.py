@@ -69,6 +69,7 @@ class MemCache(object):
         self.mem_base = self.n.get_device_address(urn)
         self.position = self.mem_base
         self.start = -1
+        #XXX: Debug
         self.invalidate()
 
     def set_cache_buffer(self, cache_buffer):
@@ -96,19 +97,27 @@ class MemCache(object):
     def move_down(self, amount = 1):
         #Check to see if the user is at the end of memory
         #print "move down"
-        self.position += amount
+        position = amount + self.position
+        if (position - self.cache_buffer + self.cache_size()) >= (self.mem_base + self.mem_size):
+            self.position = self.mem_base + (self.mem_size) - (self.cache_size())
+        else:
+            self.position = position
         self.check()
 
     def check(self):
         #Check if we need to get more data from the memory
         #print "checking..."
-        print "s: %d p: %d cb: %d cs: %d" % (self.start, self.position, self.cache_buffer, self.cache_size())
+        #print "s: %d p: %d cb: %d cs: %d" % (self.start, self.position, self.cache_buffer, self.cache_size())
         if self.position < self.mem_base:
             self.position = self.mem_base
             self.invalidate()
+            return
 
-        if self.position > self.mem_size + self.mem_base:
-            self.position = self.mem_size + self.mem_base
+        if self.position > (self.mem_size) + self.mem_base - self.cache_size():
+            self.position = (self.mem_size) + self.mem_base - self.cache_size()
+            print "possible overshoot, position: 0x%08X" % self.position
+            self.invalidate()
+            return
 
         if (self.position - self.cache_buffer + self.row_count) > (self.start + self.cache_size()):
             print "Need to get more data"
@@ -123,6 +132,7 @@ class MemCache(object):
                 return
             print "Need to get more data,"
             self.invalidate()
+            return
 
         return
 
@@ -131,11 +141,13 @@ class MemCache(object):
         print "in invalidate"
         start = self.start
         if (self.position - self.cache_buffer) < self.mem_base:
+            #check if we are at the beginning
             start = self.mem_base
 
         elif (self.position - self.cache_buffer + self.cache_size()) >= (self.mem_base + self.mem_size):
             print "we are close to the  end..."
-            start = self.mem_size - self.cache_size() + self.cache_buffer
+            start = (self.mem_base + self.mem_size) - self.cache_size() + self.cache_buffer
+            self.position = (self.mem_base + self.mem_size) - self.cache_size()
         else:
             start = self.position - self.cache_buffer
 
@@ -162,6 +174,11 @@ class MemCache(object):
 
     def is_busy(self):
         return self.busy
+
+    def at_end(self):
+        if self.position == (self.mem_base + self.mem_size) - self.cache_size():
+            return True
+        return False
 
 class TableModel(QtCore.QAbstractTableModel):
     def __init__(self):
@@ -223,7 +240,6 @@ class TableModel(QtCore.QAbstractTableModel):
 
     def set_size(self, size):
         self.row_count = size
-        self.mem_cache["size"] = size
 
     def invalidate(self):
         self.mem_cache.invalidate()
@@ -243,9 +259,14 @@ class TableModel(QtCore.QAbstractTableModel):
     def get_start_addr(self):
         return self.mem_cache.get_start_addr()
 
+    def at_end(self):
+        return self.mem_cache.at_end()
+
+
 class TableView(QtGui.QTableView):
     INITIAL_POS_MOVE_DELAY = 500
-    POS_MOVE_DELAY = 100
+    #POS_MOVE_DELAY = 100
+    POS_MOVE_DELAY = 25
 
     def __init__(self, parent=None):
         super(TableView, self).__init__(parent)
@@ -282,6 +303,12 @@ class TableView(QtGui.QTableView):
             #print "Timer Fired!"
             if self.vscroll.value() == self.vscroll.maximum():
                 #print "Moving Down"
+                if self.model().at_end():
+                    print "at end"
+                    self.killTimer(self.timer_id)
+                    self.timer_start = True
+                    return
+
                 if self.timer_start:
                     self.killTimer(self.timer_id)
                     self.timer_id = self.startTimer(self.POS_MOVE_DELAY)
@@ -325,11 +352,18 @@ class TableView(QtGui.QTableView):
             self.timer_id = 0
 
     def verticalScrollbarValueChanged(self, value):
-        print "Value: %d" % value
-        print "Maximum: %d" % self.vscroll.maximum()
-        print "Minimum: %d" % self.vscroll.minimum()
+        #print "Value: %d" % value
+        #print "Maximum: %d" % self.vscroll.maximum()
+        #print "Minimum: %d" % self.vscroll.minimum()
         super(TableView, self).verticalScrollbarValueChanged(value)
         if value == self.vscroll.maximum():
+            if self.model().at_end():
+                print "at end"
+                if self.timer_id != 0:
+                    self.killTimer(self.timer_id)
+                    self.timer_start = True
+                return
+
             print "Start timer..."
             if self.timer_id == 0:
                 self.timer_id = self.startTimer(self.INITIAL_POS_MOVE_DELAY)
