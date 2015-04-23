@@ -21,13 +21,13 @@ from PyQt4.QtCore import *
 
 from DMA_DEFINES import *
 
-class SourceWidget(QWidget):
+class SinkWidget(QWidget):
 
     def __init__(self, index):
-        super (SourceWidget, self).__init__()
+        super (SinkWidget, self).__init__()
         self.index = index
         layout = QVBoxLayout()
-        self.label = QLabel("Source %d" % index)
+        self.label = QLabel("Sink %d" % index)
         layout.addWidget(self.label)
         form_layout = QFormLayout()
 
@@ -35,14 +35,18 @@ class SourceWidget(QWidget):
         self.increment_addr.stateChanged.connect(self.increment_addr_changed)
         self.decrement_addr = QCheckBox()
         self.decrement_addr.stateChanged.connect(self.decrement_addr_changed)
+        self.respect_data_quantum = QCheckBox()
+        self.respect_data_quantum.stateChanged.connect(self.respect_data_quantum_changed)
         self.commit_button = QPushButton("Commit")
         self.commit_button.clicked.connect(self.commit)
 
         form_layout.addRow(QString("Increment Address"), self.increment_addr)
         form_layout.addRow(QString("Decrement Address"), self.decrement_addr)
+        form_layout.addRow(QString("Respect Data Quantum"), self.respect_data_quantum)
         form_layout.addRow(self.commit_button)
         layout.addLayout(form_layout)
         self.setLayout(layout)
+
         self.label.setStyleSheet("background-color: %s" % DMA_GOOD)
 
     def increment_addr_changed(self):
@@ -53,6 +57,9 @@ class SourceWidget(QWidget):
         value = self.decrement_addr.isChecked()
         self.label.setStyleSheet("background-color: %s" % DMA_WARNING)
 
+    def respect_data_quantum_changed(self):
+        value = self.respect_data_quantum.isChecked()
+        self.label.setStyleSheet("background-color: %s" % DMA_WARNING)
+
     def commit(self):
         self.label.setStyleSheet("background-color: %s" % DMA_GOOD)
-

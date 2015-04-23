@@ -71,6 +71,7 @@ class ScriptManager(QObject):
         from NysaGui.host.adc_visualizer.controller import Controller as adc_controller
         from NysaGui.host.spi_oled_controller.controller import Controller as oled_controller
         from NysaGui.host.register_viewer.controller import Controller as register_viewer_controller
+        from NysaGui.host.dma_controller.controller import Controller as dma_controller
         #print "DIR: %s" % (str(dir(self)))
         #self.status.Debug("Directory: %s" % str(dir(self)))
 

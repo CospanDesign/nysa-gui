@@ -24,14 +24,13 @@ __author__ = 'dave.mccoy@cospandesign.com (name)'
 import sys
 import os
 
-from PyQt4.QtGui import QWidget
-from PyQt4.QtGui import QVBoxLayout
-from PyQt4.QtGui import QHBoxLayout
-from PyQt4.QtGui import QTextEdit
-from PyQt4.QtGui import QLabel
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 from PyQt4 import Qt
 
 from source_widget import SourceWidget
+from sink_widget import SinkWidget
+from instruction_widget import InstructionWidget
 
 class View(QWidget):
 
@@ -60,27 +59,55 @@ class View(QWidget):
         self.source_count = source_count
         self.instruction_count = instruction_count
         self.sink_count = sink_count
-        #self.columns_layout.removeItem(self.source_layout)
-        #self.columns_layout.removeItem(self.instruction_layout)
-        #self.columns_layout.removeItem(self.sink_layout)
 
-        for i in reversed(range(self.columns_layout.count())): 
+        for i in reversed(range(self.columns_layout.count())):
             item = self.columns_layout.itemAt(i)
             self.columns_layout.removeItem(item)
 
-        self.source_layout = QVBoxLayout()
-        self.instruction_layout = QVBoxLayout()
-        self.sink_layout = QVBoxLayout()
+        self.source_layout = QScrollArea()
+        self.instruction_layout = QScrollArea()
+        self.sink_layout = QScrollArea()
+
+        #Source Boxes
+        sa = QGroupBox()
+        fl = QVBoxLayout()
         for s in range(self.source_count):
             print "Source: %d" % s
             sw = SourceWidget(s)
-            self.source_layout.addWidget(sw)
+            fl.addWidget(sw)
+        #sa.setLayout(fl)
+        #self.source_layout.setWidget(sa)
+        self.source_layout = fl
 
+        #Instruction Boxes
+        sa = QGroupBox()
+        fl = QVBoxLayout()
+        for s in range(self.instruction_count):
+            print "Instruction Count: %d" % s
+            sw = InstructionWidget(s, self.instruction_count)
+            fl.addWidget(sw)
+        sa.setLayout(fl)
+        self.instruction_layout.setWidget(sa)
+
+        #Sink Boxes
+        sa = QGroupBox()
+        fl = QVBoxLayout()
+        for s in range(self.sink_count):
+            print "Sink: %d" % s
+            sw = SinkWidget(s)
+            fl.addWidget(sw)
+        #sa.setLayout(fl)
+        #self.sink_layout.setWidget(sa)
+        self.sink_layout = fl
+
+        #self.columns_layout.addWidget(self.source_layout)
         self.columns_layout.addLayout(self.source_layout)
-        self.columns_layout.addLayout(self.instruction_layout)
+        self.columns_layout.addWidget(self.instruction_layout)
+        #self.columns_layout.addWidget(self.sink_layout)
         self.columns_layout.addLayout(self.sink_layout)
+
         self.update()
 
 
 
-       
+
