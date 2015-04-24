@@ -82,14 +82,56 @@ class Controller(NysaBaseController):
     def __init__(self):
         super (Controller, self).__init__()
         self.actions = DMAControllerActions()
+        self.actions.source_commit.connect(self.source_commit)
+        self.actions.sink_commit.connect(self.sink_commit)
+        self.actions.instruction_commit.connect(self.instruction_commit)
+        self.actions.enable_dma.connect(self.enable_dma)
+        self.actions.channel_enable.connect(self.channel_enable)
 
     def _initialize(self, platform, urn):
         self.v = View(self.status, self.actions)
         self.dma = DMA(platform, urn)
+        self.dma.setup()
+        #Keep the DMA Always On
+        self.enable_dma(True)
         if platform.get_board_name() == "sim":
-            self.v.setup(4, 8, 4)
-        else:
-            self.v.setup(self.dma.get_channel_count(), self.dma.get_instruction_count(), self.dma.get_sink_count())
+            self.dma.channel_count = 4
+            self.dma.sink_count = 4
+        self.v.setup(self.dma.get_channel_count(), self.dma.get_instruction_count(), self.dma.get_sink_count())
+        self.update_view()
+
+    def update_view(self):
+        source_count = self.dma.get_channel_count()
+        sink_count = self.dma.get_sink_count()
+        inst_count = self.dma.get_instruction_count()
+
+        for i in range(source_count):
+            sd = {}
+            sd["SINK_ADDR"] = self.dma.get_channel_sink_addr(i)
+            sd["INC_ADDR"] = self.dma.is_source_address_increment(i)
+            sd["DEC_ADDR"] = self.dma.is_source_address_decrement(i)
+            self.v.update_source_settings(i, sd)
+
+        for i in range(inst_count):
+            inst_dict = {}
+            inst_dict["SRC_RST_ON_CMD"] = self.dma.is_instruction_src_addr_reset_on_cmd(i)
+            inst_dict["DEST_RST_ON_CMD"] = self.dma.is_instruction_dest_addr_reset_on_cmd(i)
+            inst_dict["CMD_CONTINUE"] = self.dma.is_instruction_continue(i)
+            inst_dict["EGRESS_ADDR"] = self.dma.get_instruction_egress(i)
+            inst_dict["EGRESS_ENABLE"] = self.dma.is_egress_bond(i)
+            inst_dict["INGRESS_ADDR"] = self.dma.get_instruction_ingress(i)
+            inst_dict["INGRESS_ENABLE"] = self.dma.is_ingress_bond(i)
+            inst_dict["SRC_ADDR"] = self.dma.get_instruction_source_address(i)
+            inst_dict["DEST_ADDR"] = self.dma.get_instruction_dest_address(i)
+            inst_dict["COUNT"] = self.dma.get_instruction_data_count(i)
+            self.v.update_instruction_settings(i, inst_dict)
+
+        for i in range(sink_count):
+            sink_dict = {}
+            sink_dict["INC_ADDR"] = self.dma.is_dest_address_increment(i)
+            sink_dict["DEC_ADDR"] = self.dma.is_dest_address_decrement(i)
+            sink_dict["RESPECT_QUANTUM"] = self.dma.is_dest_respect_quantum(i)
+            self.v.update_sink_settings(i, sink_dict)
 
     def start_tab_view(self, platform, urn, status):
         self.status = status
@@ -98,6 +140,37 @@ class Controller(NysaBaseController):
 
     def get_view(self):
         return self.v
+
+    def source_commit(self, index, source_dict):
+        self.dma.set_channel_sink_addr(index, source_dict["SINK_ADDR"])
+        self.dma.enable_source_address_increment(index, source_dict["INC_ADDR"])
+        self.dma.enable_source_address_decrement(index, source_dict["DEC_ADDR"])
+        self.status.Important("Setting up Source: %d"% index)
+
+    def sink_commit(self, index, sink_dict):
+        self.dma.enable_dest_address_increment(index, sink_dict["INC_ADDR"])
+        self.dma.enable_dest_address_decrement(index, sink_dict["DEC_ADDR"])
+        self.dma.enable_dest_respect_quantum(index, sink_dict["RESPECT_QUANTUM"])
+        self.status.Important("Setting up Sink: %d" % index)
+
+    def instruction_commit(self, index, inst_dict):
+        self.dma.enable_instruction_src_addr_reset_on_cmd(index, inst_dict["SRC_RST_ON_CMD"])
+        self.dma.enable_instruction_dest_addr_reset_on_cmd(index, inst_dict["DEST_RST_ON_CMD"])
+        self.dma.enable_instruction_continue(index, inst_dict["CMD_CONTINUE"])
+        self.dma.set_instruction_egress(index, inst_dict["EGRESS_ADDR"])
+        self.dma.enable_egress_bond(index, inst_dict["EGRESS_ENABLE"])
+        self.dma.set_instruction_ingress(index, inst_dict["INGRESS_ADDR"])
+        self.dma.enable_ingress_bond(index, inst_dict["INGRESS_ENABLE"])
+        self.dma.set_instruction_source_address(index, inst_dict["SRC_ADDR"])
+        self.dma.set_instruction_dest_address(index, inst_dict["DEST_ADDR"])
+        self.dma.set_instruction_data_count(index, inst_dict["COUNT"])
+        self.status.Important("Setting up Instruction: %d" % index)
+
+    def enable_dma(self, enable):
+        self.dma.enable_dma(enable)
+
+    def channel_enable(self, index, enable):
+        self.dma.enable_channel(index, enable)
 
 def main():
     #Parse out the commandline arguments

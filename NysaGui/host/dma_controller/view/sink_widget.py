@@ -65,3 +65,14 @@ class SinkWidget(QWidget):
 
     def commit(self):
         self.label.setStyleSheet("background-color: %s" % DMA_GOOD)
+        sink_dict = {}
+        sink_dict["INC_ADDR"] = self.increment_addr.isChecked()
+        sink_dict["DEC_ADDR"] = self.decrement_addr.isChecked()
+        sink_dict["RESPECT_QUANTUM"] = self.respect_data_quantum.isChecked()
+        self.actions.sink_commit.emit(self.index, sink_dict)
+
+    def update_settings(self, sink_dict):
+        self.increment_addr.setChecked(sink_dict["INC_ADDR"])
+        self.decrement_addr.setChecked(sink_dict["DEC_ADDR"])
+        self.respect_data_quantum.setChecked(sink_dict["RESPECT_QUANTUM"])
+        self.label.setStyleSheet("background-color: %s" % DMA_GOOD)

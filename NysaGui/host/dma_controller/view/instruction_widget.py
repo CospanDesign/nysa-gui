@@ -54,7 +54,7 @@ class InstructionWidget(QWidget):
         self.sink_address.textChanged.connect(self.sink_addr_changed)
         v = QDoubleValidator()
         v.setRange(0, 0xFFFFFFFF)
-        self.data_count = QLineEdit()
+        self.data_count = QLineEdit("1")
         self.data_count.setValidator(v)
         self.data_count.textChanged.connect(self.data_count_changed)
         self.data_count_changed(self.data_count.text())
@@ -152,5 +152,30 @@ class InstructionWidget(QWidget):
         self.data_count.setStyleSheet('QLineEdit { background-color: %s }' % color)
 
     def commit(self):
+        self.label.setStyleSheet("background-color: %s" % DMA_GOOD)
+        inst_dict = {}
+        inst_dict["SRC_RST_ON_CMD"] = self.reset_src_addr_on_command.isChecked()
+        inst_dict["DEST_RST_ON_CMD"] = self.reset_dest_addr_on_command.isChecked()
+        inst_dict["CMD_CONTINUE"] = self.cmd_continue.isChecked()
+        inst_dict["EGRESS_ADDR"] = int(str(self.bond_egress_addr.currentText()), 0)
+        inst_dict["EGRESS_ENABLE"] = self.enable_bond_egress.isChecked()
+        inst_dict["INGRESS_ADDR"] = int(str(self.bond_ingress_addr.currentText()), 0)
+        inst_dict["INGRESS_ENABLE"] = self.enable_bond_ingress.isChecked()
+        inst_dict["SRC_ADDR"] = long(str(self.source_address.text()), 0)
+        inst_dict["DEST_ADDR"] = long(str(self.sink_address.text()), 0)
+        inst_dict["COUNT"] = int(str(self.data_count.text()), 0)
+        self.actions.instruction_commit.emit(self.index, inst_dict)
+
+    def update_settings(self, inst_dict):
+        self.reset_src_addr_on_command.setChecked(inst_dict["SRC_RST_ON_CMD"])
+        self.reset_dest_addr_on_command.setChecked(inst_dict["DEST_RST_ON_CMD"])
+        self.cmd_continue.setChecked(inst_dict["CMD_CONTINUE"])
+        self.enable_bond_egress.setChecked(inst_dict["EGRESS_ENABLE"])
+        self.bond_egress_addr.setCurrentIndex(inst_dict["EGRESS_ADDR"])
+        self.enable_bond_ingress.setChecked(inst_dict["INGRESS_ENABLE"])
+        self.bond_ingress_addr.setCurrentIndex(inst_dict["INGRESS_ADDR"])
+        self.source_address.setText("0x%016X" % inst_dict["SRC_ADDR"])
+        self.sink_address.setText("0x%016X" % inst_dict["DEST_ADDR"])
+        self.data_count.setText(str(inst_dict["COUNT"]))
         self.label.setStyleSheet("background-color: %s" % DMA_GOOD)
 

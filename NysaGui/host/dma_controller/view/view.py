@@ -56,6 +56,9 @@ class View(QWidget):
 
         layout.addLayout(self.columns_layout)
         self.setLayout(layout)
+        self.sources = []
+        self.sinks = []
+        self.instructions = []
 
     def setup(self, source_count, instruction_count, sink_count):
         self.source_count = source_count
@@ -74,10 +77,15 @@ class View(QWidget):
         self.sink_layout = QScrollArea()
 
         #Source Boxes
+        self.sourcs = []
+        self.sinks = []
+        self.instructions = []
+
         sa = QGroupBox()
         fl = QVBoxLayout()
         for s in range(self.source_count):
-            sw = SourceWidget(self.status, self.actions, s)
+            sw = SourceWidget(self.status, self.actions, s, self.sink_count)
+            self.sources.append(sw)
             fl.addWidget(sw)
         #sa.setLayout(fl)
         #self.source_layout.setWidget(sa)
@@ -88,6 +96,7 @@ class View(QWidget):
         fl = QVBoxLayout()
         for s in range(self.instruction_count):
             sw = InstructionWidget(self.status, self.actions, s, self.instruction_count)
+            self.instructions.append(sw)
             fl.addWidget(sw)
         sa.setLayout(fl)
         self.instruction_layout.setWidget(sa)
@@ -97,6 +106,7 @@ class View(QWidget):
         fl = QVBoxLayout()
         for s in range(self.sink_count):
             sw = SinkWidget(self.status, self.actions, s)
+            self.sinks.append(sw)
             fl.addWidget(sw)
         #sa.setLayout(fl)
         #self.sink_layout.setWidget(sa)
@@ -110,6 +120,12 @@ class View(QWidget):
 
         self.update()
 
+    def update_source_settings(self, index, source_dict):
+        self.sources[index].update_settings(source_dict)
 
+    def update_instruction_settings(self, index, instruction_dict):
+        self.instructions[index].update_settings(instruction_dict)
 
+    def update_sink_settings(self, index, sink_dict):
+        self.sinks[index].update_settings(sink_dict)
 
