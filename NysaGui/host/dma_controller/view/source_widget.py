@@ -23,7 +23,7 @@ from DMA_DEFINES import *
 
 class SourceWidget(QWidget):
 
-    def __init__(self, status, actions, index, sink_count):
+    def __init__(self, status, actions, index, instruction_count, sink_count):
         super (SourceWidget, self).__init__()
         self.status = status
         self.actions = actions
@@ -37,6 +37,12 @@ class SourceWidget(QWidget):
         for i in range(sink_count):
             self.sink_addr_select.addItem(str(i))
         self.sink_addr_select.currentIndexChanged.connect(self.sink_addr_changed)
+
+        self.instruction_select = QComboBox()
+        for i in range(instruction_count):
+            self.instruction_select.addItem(str(i))
+        self.instruction_select.currentIndexChanged.connect(self.instruction_addr_changed)
+
         self.increment_addr = QCheckBox()
         self.increment_addr.stateChanged.connect(self.increment_addr_changed)
         self.decrement_addr = QCheckBox()
@@ -47,9 +53,10 @@ class SourceWidget(QWidget):
         self.enable_button.setCheckable(True)
         self.enable_button.clicked.connect(self.enable_clicked)
 
-        form_layout.addRow(QString("Bind to Sink"), self.sink_addr_select)
         form_layout.addRow(QString("Increment Address"), self.increment_addr)
         form_layout.addRow(QString("Decrement Address"), self.decrement_addr)
+        form_layout.addRow(QString("Bind to Sink"), self.sink_addr_select)
+        form_layout.addRow(QString("Instruction Address"), self.instruction_select)
         form_layout.addRow(self.commit_button)
         form_layout.addRow(self.enable_button)
         layout.addLayout(form_layout)
@@ -65,7 +72,11 @@ class SourceWidget(QWidget):
     def sink_addr_changed(self, index):
         self.label.setStyleSheet("background-color: %s" % DMA_WARNING)
 
+    def instruction_addr_changed(self, index):
+        self.label.setStyleSheet("background-color: %s" % DMA_WARNING)
+
     def update_settings(self, source_dict):
+        self.instruction_select.setCurrentIndex(source_dict["INST_ADDR"])
         self.sink_addr_select.setCurrentIndex(source_dict["SINK_ADDR"])
         self.increment_addr.setChecked(source_dict["INC_ADDR"])
         self.decrement_addr.setChecked(source_dict["DEC_ADDR"])
@@ -75,11 +86,13 @@ class SourceWidget(QWidget):
         self.label.setStyleSheet("background-color: %s" % DMA_GOOD)
         #Get information from
         source_dict = {}
+        source_dict["INST_ADDR"] = self.instruction_select.currentIndex()
         source_dict["SINK_ADDR"] = self.sink_addr_select.currentIndex()
         source_dict["INC_ADDR"] = self.increment_addr.isChecked()
         source_dict["DEC_ADDR"] = self.decrement_addr.isChecked()
         self.actions.source_commit.emit(self.index, source_dict)
 
     def enable_clicked(self):
-        value = self.enable_button.isDown()
+        value = self.enable_button.isChecked()
         self.actions.enable_channel.emit(self.index, value)
+

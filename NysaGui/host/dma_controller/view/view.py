@@ -84,7 +84,7 @@ class View(QWidget):
         sa = QGroupBox()
         fl = QVBoxLayout()
         for s in range(self.source_count):
-            sw = SourceWidget(self.status, self.actions, s, self.sink_count)
+            sw = SourceWidget(self.status, self.actions, s, self.instruction_count, self.sink_count)
             self.sources.append(sw)
             fl.addWidget(sw)
         #sa.setLayout(fl)

@@ -198,14 +198,17 @@ class HostController(QObject):
         self.fv.setup_bus_properties(self.uid, self.config_dict, n, scripts)
 
     def script_item_selected(self, name, script):
+        print "urn: %s" % self.urn
+        device_name = self.urn.rpartition("/")[2]
         self.status.Debug("Script Item selected: %s: %s" % (name, str(script)))
         #print "UID: %s" % str(self.uid)
         platform = self.n
         #print "Script for: %s" % name
         uid = create_hash(self.uid)
-        name = "%s:%s" % (self.uid, script.get_name())
+        name = "%s:%s:%s" % (self.uid, script.get_name(), device_name)
         for s in self.scripts:
             if s[0] == uid and s[1] == name:
+                #print "Found a duplicate item: uid: %s, name: %s" % (uid, name)
                 return
 
         widget = script()

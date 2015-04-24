@@ -108,6 +108,7 @@ class Controller(NysaBaseController):
         for i in range(source_count):
             sd = {}
             sd["SINK_ADDR"] = self.dma.get_channel_sink_addr(i)
+            sd["INST_ADDR"] = self.dma.get_channel_instruction_pointer(i)
             sd["INC_ADDR"] = self.dma.is_source_address_increment(i)
             sd["DEC_ADDR"] = self.dma.is_source_address_decrement(i)
             self.v.update_source_settings(i, sd)
@@ -142,6 +143,7 @@ class Controller(NysaBaseController):
         return self.v
 
     def source_commit(self, index, source_dict):
+        self.dma.set_channel_instruction_pointer(index, source_dict["INST_ADDR"])
         self.dma.set_channel_sink_addr(index, source_dict["SINK_ADDR"])
         self.dma.enable_source_address_increment(index, source_dict["INC_ADDR"])
         self.dma.enable_source_address_decrement(index, source_dict["DEC_ADDR"])
@@ -170,6 +172,7 @@ class Controller(NysaBaseController):
         self.dma.enable_dma(enable)
 
     def channel_enable(self, index, enable):
+        self.status.Important("Enabling Channel: %s: %s" % (index, enable))
         self.dma.enable_channel(index, enable)
 
 def main():
