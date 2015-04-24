@@ -34,8 +34,10 @@ from instruction_widget import InstructionWidget
 
 class View(QWidget):
 
-    def __init__(self, status = None, Actions = None):
+    def __init__(self, status = None, actions = None):
         super (View, self).__init__()
+        self.actions = actions
+        self.status = status
 
         self.setWindowTitle("Standalone View")
         layout = QVBoxLayout()
@@ -59,6 +61,9 @@ class View(QWidget):
         self.source_count = source_count
         self.instruction_count = instruction_count
         self.sink_count = sink_count
+        self.status.Verbose("Source count: %d" % self.source_count)
+        self.status.Verbose("Instruction count: %d" % self.instruction_count)
+        self.status.Verbose("Sink count: %d" % self.sink_count)
 
         for i in reversed(range(self.columns_layout.count())):
             item = self.columns_layout.itemAt(i)
@@ -72,8 +77,7 @@ class View(QWidget):
         sa = QGroupBox()
         fl = QVBoxLayout()
         for s in range(self.source_count):
-            print "Source: %d" % s
-            sw = SourceWidget(s)
+            sw = SourceWidget(self.status, self.actions, s)
             fl.addWidget(sw)
         #sa.setLayout(fl)
         #self.source_layout.setWidget(sa)
@@ -83,8 +87,7 @@ class View(QWidget):
         sa = QGroupBox()
         fl = QVBoxLayout()
         for s in range(self.instruction_count):
-            print "Instruction Count: %d" % s
-            sw = InstructionWidget(s, self.instruction_count)
+            sw = InstructionWidget(self.status, self.actions, s, self.instruction_count)
             fl.addWidget(sw)
         sa.setLayout(fl)
         self.instruction_layout.setWidget(sa)
@@ -93,8 +96,7 @@ class View(QWidget):
         sa = QGroupBox()
         fl = QVBoxLayout()
         for s in range(self.sink_count):
-            print "Sink: %d" % s
-            sw = SinkWidget(s)
+            sw = SinkWidget(self.status, self.actions, s)
             fl.addWidget(sw)
         #sa.setLayout(fl)
         #self.sink_layout.setWidget(sa)

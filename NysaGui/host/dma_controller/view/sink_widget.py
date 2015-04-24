@@ -23,8 +23,10 @@ from DMA_DEFINES import *
 
 class SinkWidget(QWidget):
 
-    def __init__(self, index):
+    def __init__(self, status, actions, index):
         super (SinkWidget, self).__init__()
+        self.status = status
+        self.actions = actions
         self.index = index
         layout = QVBoxLayout()
         self.label = QLabel("Sink %d" % index)

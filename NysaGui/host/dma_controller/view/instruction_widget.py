@@ -33,8 +33,10 @@ from NysaGui.common.hex_validator import HexValidator
 
 class InstructionWidget(QWidget):
 
-    def __init__(self, index, instruction_count):
+    def __init__(self, status, actions, index, instruction_count):
         super (InstructionWidget, self).__init__()
+        self.status = status
+        self.actions = actions
         self.instruction_count = instruction_count
         self.index = index
         self.label = QLabel("Instruction %d" % index)

@@ -23,8 +23,10 @@ from DMA_DEFINES import *
 
 class SourceWidget(QWidget):
 
-    def __init__(self, index):
+    def __init__(self, status, actions, index):
         super (SourceWidget, self).__init__()
+        self.status = status
+        self.actions = actions
         self.index = index
         layout = QVBoxLayout()
         self.label = QLabel("Source %d" % index)

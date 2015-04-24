@@ -35,6 +35,7 @@ from PyQt4.Qt import *
 from nysa.common import status
 from nysa.host import platform_scanner
 from nysa.host.driver.dma import DMA
+from dma_controller_actions import DMAControllerActions
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -80,6 +81,7 @@ class Controller(NysaBaseController):
 
     def __init__(self):
         super (Controller, self).__init__()
+        self.actions = DMAControllerActions()
 
     def _initialize(self, platform, urn):
         self.v = View(self.status, self.actions)
