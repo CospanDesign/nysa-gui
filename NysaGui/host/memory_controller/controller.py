@@ -121,6 +121,7 @@ class Controller(NysaBaseController):
         self.urn = urn
         self.v = View(self.status, self.memory_actions)
         self.v.setup_view()
+        self.status.Verbose("URN: %s" % urn)
         self.v.add_test("Single Read/Write at Start", True, self.test_single_rw_start)
         self.v.add_test("Single Read/Write at End", True, self.test_single_rw_end)
         self.v.add_test("Long Read/Write Test", True, self.test_long_burst)
@@ -199,7 +200,7 @@ class Controller(NysaBaseController):
             self.status.Verbose( "Test Single Read/Write at End")
         data_out = Array('B', [0xAA, 0xBB, 0xCC, 0xDD, 0x55, 0x66, 0x77, 0x88])
         self.n.write_memory(offset + (size - 16), data_out)
-        print "Reading from location: 0x%08X" % (size - 16)
+        print "Reading from location: 0x%08X" % (offset + (size - 16))
         data_in = self.n.read_memory(offset + (size - 16), 2)
 
         for i in range (len(data_out)):
@@ -227,24 +228,19 @@ class Controller(NysaBaseController):
         else:
             size = total_size
 
+        #Generate Data to Write
+        data_out = Array('B')
+        for i in range (0, size * 4):
+            data_out.append((i % 256))
+
+        print "Length of data: 0x%08X" % len(data_out)
+        print "32-bit Length: 0x%08X" % (len(data_out) / 2)
+
         #Write Data Out
         while position < total_size:
-            data_out = Array('B')
-
-            if self.status.is_command_line():
-                self.status.Verbose( "long rw")
-            data_out = Array('B')
-            for i in range (0, size * 4):
-                data_out.append((i % 256))
-
-            if self.status.is_command_line():
-                self.status.Verbose( "Writing 0x%08X bytes of data" % (len(data_out)))
             start = time.time()
             self.n.write_memory(offset + position, data_out)
             end = time.time()
-            if self.status.is_command_line():
-                self.status.Verbose( "Write Time : %f" % (end - start))
-                self.status.Verbose( "Reading 0x%08X bytes of data" % (len(data_out)))
 
             #Increment the position
             prev_pos = position
@@ -253,8 +249,8 @@ class Controller(NysaBaseController):
             if position + size > total_size:
                 size = total_size - position
 
-            if self.status:
-                self.status.Info("Wrote: 0x%08X - 0x%08X" % (prev_pos, position))
+            self.status.Info("Wrote: 0x%08X - 0x%08X" % (prev_pos, position))
+            self.status.Verbose( "Write Time : %f" % (end - start))
 
 
         position = 0
@@ -272,12 +268,11 @@ class Controller(NysaBaseController):
 
             data_in = self.n.read_memory(offset + position, len(data_out) / 4)
             end = time.time()
-            if self.status.is_command_line():
-                self.status.Verbose( "Read Time: %f" % (end - start))
-                self.status.Verbose( "Comparing Values")
+            self.status.Verbose( "Read Time: %f" % (end - start))
+            self.status.Verbose( "Comparing Values...")
             if len(data_out) != len(data_in):
                 if self.status.is_command_line():
-                    self.status.Error( "Data in lenght not equal to data_out length")
+                    self.status.Error( "Data in length not equal to data_out length")
                     self.status.Error( "\toutgoing: %d" % len(data_out))
                     self.status.Error( "\tincomming: %d" % len(data_in))
 
@@ -290,7 +285,7 @@ class Controller(NysaBaseController):
                 if out_val != in_val:
                     fail = True
                     status = "Failed"
-                    self.status.Error("%d and %d not equal" % (out_val, in_val))
+                    self.status.Error("Mismatch @ 0x%08X: %d and %d not equal" % (position + i, out_val, in_val))
                     self.status.Error("Mismatch @ 0x%08X: Write: (Hex): 0x%08X Read (Hex): 0x%08X" % (i, data_out[i], data_in[i]))
                     if fail_count >= 16:
                         break
@@ -298,11 +293,11 @@ class Controller(NysaBaseController):
 
             prev_pos = position
             position += size
+            prev_size = size
             if position + size > total_size:
                 size = total_size - position
 
-            if self.status:
-                self.status.Info("Read: 0x%08X - 0x%08X" % (prev_pos, position))
+            self.status.Info("Read: 0x%08X - 0x%08X Size: 0x%08X" % (prev_pos, position, prev_size))
 
         return status
 
