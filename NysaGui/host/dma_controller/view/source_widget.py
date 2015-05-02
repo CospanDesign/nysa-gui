@@ -50,6 +50,10 @@ class SourceWidget(QWidget):
         self.commit_button = QPushButton("Commit")
         self.commit_button.clicked.connect(self.commit)
         self.enable_button = QPushButton("Enable")
+        self.status_button = QPushButton("Get Status")
+        self.status_button.clicked.connect(self.update_status)
+        self.status_label = QLabel("update..")
+        self.state_label = QLabel("??")
         self.enable_button.setCheckable(True)
         self.enable_button.clicked.connect(self.enable_clicked)
 
@@ -57,6 +61,8 @@ class SourceWidget(QWidget):
         form_layout.addRow(QString("Decrement Address"), self.decrement_addr)
         form_layout.addRow(QString("Bind to Sink"), self.sink_addr_select)
         form_layout.addRow(QString("Instruction Address"), self.instruction_select)
+        form_layout.addRow(self.status_button, self.status_label)
+        form_layout.addRow(self.state_label)
         form_layout.addRow(self.commit_button)
         form_layout.addRow(self.enable_button)
         layout.addLayout(form_layout)
@@ -74,6 +80,15 @@ class SourceWidget(QWidget):
 
     def instruction_addr_changed(self, index):
         self.label.setStyleSheet("background-color: %s" % DMA_WARNING)
+
+    def update_status(self):
+        self.actions.update_status.emit(self.index)
+
+    def set_status(self, status):
+        self.status_label.setText(status)
+
+    def set_state(self, state):
+        self.state_label.setText(state)
 
     def update_settings(self, source_dict):
         self.instruction_select.setCurrentIndex(source_dict["INST_ADDR"])

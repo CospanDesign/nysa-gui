@@ -11,4 +11,5 @@ class DMAControllerActions(QtCore.QObject):
 
     enable_dma = QtCore.pyqtSignal(bool, name = "enable_dma")
     channel_enable = QtCore.pyqtSignal(int, bool, name = "enable_channel")
+    update_status = QtCore.pyqtSignal(int, name = "update_status")
 

@@ -123,6 +123,11 @@ class View(QWidget):
     def update_source_settings(self, index, source_dict):
         self.sources[index].update_settings(source_dict)
 
+    def update_channel_status(self, index, status, state):
+        self.sources[index].set_status(status)
+        self.sources[index].set_state(state)
+
+
     def update_instruction_settings(self, index, instruction_dict):
         self.instructions[index].update_settings(instruction_dict)
 

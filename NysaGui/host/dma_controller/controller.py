@@ -87,6 +87,7 @@ class Controller(NysaBaseController):
         self.actions.instruction_commit.connect(self.instruction_commit)
         self.actions.enable_dma.connect(self.enable_dma)
         self.actions.channel_enable.connect(self.channel_enable)
+        self.actions.update_status.connect(self.update_status)
 
     def _initialize(self, platform, urn):
         self.v = View(self.status, self.actions)
@@ -174,6 +175,81 @@ class Controller(NysaBaseController):
     def channel_enable(self, index, enable):
         self.status.Important("Enabling Channel: %s: %s" % (index, enable))
         self.dma.enable_channel(index, enable)
+
+    def update_status(self, channel):
+        print "Getting status for chanenl: %d" % channel
+        status = self.dma.get_channel_status(channel)
+        value = ""
+        if ((status & 0x04) > 0):
+            value = "F  "
+        elif ((status & 0x02) > 0):
+            value = "B  "
+        elif ((status & 0x01) > 0):
+            value = "En "
+        else:
+            value = "I  "
+
+        value += "R R"
+        if (status & 0x200) > 0:
+            value += "1"
+        else:
+            value += "0"
+        value += " "
+
+        value += "A"
+        if (status & 0x100) > 0:
+            value += "1"
+        else:
+            value += "0"
+
+        value += " W R"
+
+        if (status & 0x080) > 0:
+            value += "1"
+        else:
+            value += "0"
+
+        if (status & 0x040) > 0:
+            value += "1"
+        else:
+            value += "0"
+
+        value += " A"
+
+        if (status & 0x20) > 0:
+            value += "1"
+        else:
+            value += "0"
+
+        if (status & 0x010) > 0:
+            value += "1"
+        else:
+            value += "0"
+
+        state = (status & 0x3C00) >> 10 & 0x0F
+        lbl = "IDLE"
+
+        if state == 0:
+            lbl = "IDLE"
+        elif state == 1:
+            lbl = "SETUP_CHANNEL"
+        elif state == 2:
+            lbl = "SETUP_COMMAND"
+        elif state == 3:
+            lbl = "EGRESS_WAIT"
+        elif state == 4:
+            lbl = "INGRESS_WAIT"
+        elif state == 5:
+            lbl = "ACTIVE"
+        elif state == 6:
+            lbl = "END_COMMAND"
+        elif state == 7:
+            lbl = "FLUSH"
+        elif state == 8:
+            lbl = "FINISHED"
+
+        self.v.update_channel_status(channel, value, lbl)
+
 
 def main():
     #Parse out the commandline arguments
