@@ -54,7 +54,7 @@ PITCH = WIDTH * BYTE_COUNT
 DEBUG = True
 
 class View(QWidget):
-    """A simple Media Player using VLC and Qt
+    """A simple Media Player using opencv
     """
     def __init__(self, actions = None, status = None):
         QWidget.__init__(self)
