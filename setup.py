@@ -7,19 +7,20 @@ from setuptools import setup, find_packages
 from distutils.command.install import install as DistutilsInstall
 
 
-long_desc=open("README.md").read(),
+long_desc="",
 
 try:
     #Try and convert the readme from markdown to pandoc
     from pypandoc import convert
     long_desc = convert("README.md", 'rst')
 except:
-    pass
+    long_desc="Graphical FPGA Development Interaction Environment"
+
 
 setup(
     name='nysa-gui',
     version='0.0.1',
-    description='Graphical FPGA Development and Interactin Environment',
+    description='Graphical FPGA Development and Interaction Environment',
     author='Cospan Design',
     author_email='dave.mccoy@cospandesign.com',
     packages=find_packages('.'),
@@ -35,7 +36,7 @@ setup(
     install_requires=[
         'nysa >= 0.8.6',
         'networkx >= 1.9.1',
-        'yaml >= 0.1.0',
+        'pyYAML >= 3.11',
         'numpy >= 1.8.2',
         'pyqtgraph >= 0.9.10'
     ],
