@@ -1,0 +1,3 @@
+recursive-include NysaGui/docs/*.txt
+recursive-include nysa-gui *.md
+recursive-include nysa-gui *.json

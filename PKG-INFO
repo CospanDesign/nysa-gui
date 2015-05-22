@@ -1,0 +1,34 @@
+
+Name: nysa-gui
+Version: 0.1.1
+Summary: FPGA development and interface tools
+Home-page: http://nysa.cospandesign.com
+Author: Cospan Design
+Author-email: dave.mccoy@cospandesign.com
+License: LICENSE
+Description:
+===========
+
+How to run: nui
+  
+Interact with FPGA in an easy to use environment.
+
+If the Nysa environment is not initialized the GUI will install the required backend infrastructure to develop and interact with FPGAs
+
+When the application is started the GUI will scan your computer for compatible 
+boards (even simulated boards). After this it will interrogate the first 
+boards and determine it's behavior. The GUI will then show a visual 
+representation of the FPGA image. Users can click on a core to show what 
+controllers are available. Double clicking on a script will open up a visual 
+controller for that core.
+
+For example clicking on a 'GPIO' slave will display 'GPIO Controller' 
+double clicking on the GPIO Controller will open up a visual interface to 
+control the GPIOs allowing users to set the direction of pins and set the 
+values
+  
+Clicking on the 'ibuilder' tab on the bottom left of the GUI will open up the 
+visual programming interface that allows users to build images for their FPGA 
+
+
+'cbuilder' interface is under development
