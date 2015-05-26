@@ -23,6 +23,7 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
+import argparse
 
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
@@ -41,6 +42,16 @@ from NysaGui.cbuilder.cbuilder_controller import CBuilderController
 from view.main_view import MainForm
 from actions import Actions
 
+DESCRIPTION = "\n" \
+              "\n" \
+              "usage: nui [options]\n"
+
+EPILOG = "\n" \
+         "\n" \
+         "Examples:\n" \
+         "\tSomething\n" \
+         "\t\ttest_dionysus.py\n" \
+         "\n"
 
 class NysaGui(QObject):
     def __init__(self, debug=False):
