@@ -32,7 +32,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.Qt import *
 
-from artemis_platform_actions import ArtemisActions
+from artemis_usb2_platform_actions import ArtemisUSB2Actions
 
 from nysa.common import status
 from nysa.host import platform_scanner
@@ -43,7 +43,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              "common"))
 
 from nysa_base_controller import NysaBaseController
-from artemis.driver.artemis_driver import ArtemisDriver
+from artemis_usb2.driver.artemis_usb2_driver import ArtemisUSB2Driver
 from view.view import View
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
@@ -52,8 +52,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 
 # Put your device name (GPIO, SPI, I2C, etc...)
-DRIVER = ArtemisDriver
-APP_NAME = "Artemis Platform"
+DRIVER = ArtemisUSB2Driver
+APP_NAME = "ArtemisUSB2 Platform"
 
 #Module Defines
 n = str(os.path.split(__file__)[1])
@@ -82,12 +82,20 @@ class Controller(NysaBaseController):
 
     def __init__(self):
         super (Controller, self).__init__()
-        self.actions = ArtemisActions()
+        self.actions = ArtemisUSB2Actions()
         self.actions.artemis_refresh.connect(self.refresh)
+
+        self.actions.pcie_rx_reset.connect(self.pcie_rx_reset)
+        self.actions.pcie_rx_polarity.connect(self.pcie_rx_polarity)
+        self.actions.pcie_reset.connect(self.pcie_reset)
+        self.actions.sata_reset.connect(self.sata_reset)
+        self.actions.gtp_preamp_changed.connect(self.gtp_preamp_changed)
+        self.actions.gtp_tx_swing_changed.connect(self.gtp_tx_swing_changed)
+
 
     def _initialize(self, platform, urn):
         self.v = View(self.status, self.actions)
-        self.drv = ArtemisDriver(platform, urn)
+        self.drv = ArtemisUSB2Driver(platform, urn)
         self.refresh()
 
     def start_tab_view(self, platform, urn, status):
@@ -99,21 +107,43 @@ class Controller(NysaBaseController):
         return self.v
 
     def refresh(self):
-        self.v.set_ddr3_reset(self.drv.is_ddr3_rst())
-        self.v.set_ddr3_calibration_done(self.drv.is_ddr3_calibration_done())
-        channels = 6
-        channel_en = self.drv.get_ddr3_channel_enable()
-        for i in range (channels):
-            channel_status = self.drv.get_ddr3_channel_status(i)
-            self.v.set_channel_enable(i, self.drv.static_is_ddr3_channel_enable(channel_en, i))
-            self.v.set_channel_status(i,
-                                        self.drv.static_is_ddr3_channel_rd_full(channel_status),
-                                        self.drv.static_is_ddr3_channel_rd_empty(channel_status),
-                                        self.drv.static_is_ddr3_channel_rd_overflow(channel_status),
-                                        self.drv.static_is_ddr3_channel_rd_error(channel_status),
-                                        self.drv.static_is_ddr3_channel_wr_empty(channel_status),
-                                        self.drv.static_is_ddr3_channel_wr_full(channel_status),
-                                        self.drv.static_is_ddr3_channel_wr_underrun(channel_status))
+        self.status.Debug("Refresh")
+        self.v.set_pcie_rx_reset(self.drv.is_pcie_rx_reset())
+        self.v.set_pcie_rx_polarity(self.drv.is_pcie_rx_polarity_positive())
+        self.v.set_pcie_reset(self.drv.is_pcie_reset())
+        self.v.set_sata_reset(self.drv.is_sata_reset())
+        self.v.set_gtp_tx_diff_swing(self.drv.get_gtp_tx_diff_swing())
+        self.v.set_gtp_rx_preamp(self.drv.get_gtp_rx_preamp())
+        self.v.set_sata_gtp_pll_locked(self.drv.is_sata_pll_locked())
+        self.v.set_pcie_gtp_pll_locked(self.drv.is_pcie_pll_locked())
+        self.v.set_sata_reset_done(self.drv.is_sata_reset_done())
+        self.v.set_pcie_reset_done(self.drv.is_pcie_reset_done())
+        self.v.set_sata_dcm_pll_locked(self.drv.is_sata_dcm_pll_locked())
+        self.v.set_pcie_dcm_pll_locked(self.drv.is_pcie_dcm_pll_locked())
+        self.v.set_sata_rx_idle(self.drv.is_sata_rx_idle())
+        self.v.set_pcie_rx_idle(self.drv.is_pcie_rx_idle())
+        self.v.set_sata_tx_idle(self.drv.is_sata_tx_idle())
+        self.v.set_pcie_tx_idle(self.drv.is_pcie_tx_idle())
+
+
+    def pcie_rx_reset(self, enable):
+        self.drv.enable_pcie_rx_reset(enable)
+
+    def pcie_rx_polarity(self, enable):
+        self.drv.set_pcie_rx-polarity(enable)
+
+    def pcie_reset(self, enable):
+        self.drv.enable_pcie_reset(enable)
+
+    def sata_reset(self, enable):
+        self.drv.enable_sata_reset(enable)
+
+    def gtp_preamp_changed(self, value):
+        self.drv.set_gtp_rx_preamp(value)
+
+    def gtp_tx_swing_changed(self, value):
+        self.drv.set_gtp_tx_diff_swing(value)
+
 
 def main():
     #Parse out the commandline arguments

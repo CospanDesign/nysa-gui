@@ -73,9 +73,14 @@ class ScriptManager(QObject):
         from NysaGui.host.register_viewer.controller import Controller as register_viewer_controller
         from NysaGui.host.dma_controller.controller import Controller as dma_controller
         try:
-            from NysaGui.host.artemis_platform.controller import Controller as artemis_driver
+            from NysaGui.host.artemis_platform.controller import Controller as artemis_controller
         except ImportError:
             self.status.Warning("Artemis Platform was not found")
+            pass
+        try:
+            from NysaGui.host.artemis_usb2_platform.controller import Controller as artemis_usb2_controller
+        except ImportError:
+            self.status.Warning("Artemis USB2 Platform was not found")
             pass
         #print "DIR: %s" % (str(dir(self)))
         #self.status.Debug("Directory: %s" % str(dir(self)))
