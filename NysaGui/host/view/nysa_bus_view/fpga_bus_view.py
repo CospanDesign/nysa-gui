@@ -41,7 +41,7 @@ class FPGABusView(GraphicsWidget):
 
     def fit_in_view(self):
         self.view.fit_in_view()
-        
+
     def clear(self):
         #self.status.Verbose( "Clearing the FPGA Image")
         #print "Items: %s" % str(self.view.items())
