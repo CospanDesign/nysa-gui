@@ -101,6 +101,7 @@ class Controller(NysaBaseController):
     def refresh(self):
         self.v.set_ddr3_reset(self.drv.is_ddr3_rst())
         self.v.set_ddr3_calibration_done(self.drv.is_ddr3_calibration_done())
+        self.v.set_main_pll_locked(self.drv.is_main_pll_locked())
         channels = 6
         channel_en = self.drv.get_ddr3_channel_enable()
         for i in range (channels):

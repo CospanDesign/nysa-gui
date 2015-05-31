@@ -61,7 +61,10 @@ class View(QWidget):
         self.ddr3_reset_box.setEnabled(False)
         self.calibration_done_box = QCheckBox()
         self.calibration_done_box.setEnabled(False)
+        self.main_pll_locked_box = QCheckBox()
+        self.main_pll_locked_box.setEnabled(False)
         control_layout.addRow("DDR3 Reset", self.ddr3_reset_box)
+        control_layout.addRow("Main PLL Locked", self.main_pll_locked_box)
         control_layout.addRow("Calibration Done", self.calibration_done_box)
         self.enable_boxes = []
         for i in range (0, 6):
@@ -126,6 +129,9 @@ class View(QWidget):
 
     def set_ddr3_calibration_done(self, enable):
         self.calibration_done_box.setChecked(enable)
+
+    def set_main_pll_locked(self, enable):
+        self.main_pll_locked_box.setChecked(enable)
 
     def set_channel_enable(self, channel, enable):
         self.enable_boxes[channel].setChecked(enable)

@@ -85,7 +85,6 @@ class Controller(NysaBaseController):
         self.actions = ArtemisUSB2Actions()
         self.actions.artemis_refresh.connect(self.refresh)
 
-        self.actions.pcie_rx_reset.connect(self.pcie_rx_reset)
         self.actions.pcie_rx_polarity.connect(self.pcie_rx_polarity)
         self.actions.pcie_reset.connect(self.pcie_reset)
         self.actions.sata_reset.connect(self.sata_reset)
@@ -108,7 +107,6 @@ class Controller(NysaBaseController):
 
     def refresh(self):
         self.status.Debug("Refresh")
-        self.v.set_pcie_rx_reset(self.drv.is_pcie_rx_reset())
         self.v.set_pcie_rx_polarity(self.drv.is_pcie_rx_polarity_positive())
         self.v.set_pcie_reset(self.drv.is_pcie_reset())
         self.v.set_sata_reset(self.drv.is_sata_reset())
@@ -125,9 +123,6 @@ class Controller(NysaBaseController):
         self.v.set_sata_tx_idle(self.drv.is_sata_tx_idle())
         self.v.set_pcie_tx_idle(self.drv.is_pcie_tx_idle())
 
-
-    def pcie_rx_reset(self, enable):
-        self.drv.enable_pcie_rx_reset(enable)
 
     def pcie_rx_polarity(self, enable):
         self.drv.set_pcie_rx-polarity(enable)

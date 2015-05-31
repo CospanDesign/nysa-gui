@@ -39,8 +39,6 @@ class View(QWidget):
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.clicked.connect(self.refresh)
 
-        self.pcie_rx_reset_checkbox       = QCheckBox()
-        self.pcie_rx_reset_checkbox.clicked.connect(self.pcie_rx_reset_changed)
         self.pcie_rx_polarity_checkbox    = QCheckBox()
         self.pcie_rx_polarity_checkbox.clicked.connect(self.pcie_polarity_changed)
         self.pcie_reset_checkbox          = QCheckBox()
@@ -52,7 +50,7 @@ class View(QWidget):
         self.gtp_rx_pre_amp.setCurrentIndex(0)
         self.gtp_rx_pre_amp.currentIndexChanged.connect(self.gtp_rx_pre_amp_changed)
         self.gtp_tx_diff_swing            = QComboBox()
-        self.gtp_tx_diff_swing.addItems(["0", "1", "2", "3", "4", "5", "6", "7"])
+        self.gtp_tx_diff_swing.addItems(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"])
         self.gtp_tx_diff_swing.setCurrentIndex(0)
         self.gtp_tx_diff_swing.currentIndexChanged.connect(self.gtp_tx_diff_swing_changed)
         
@@ -87,7 +85,6 @@ class View(QWidget):
         control_layout.addRow("PCIE Reset", self.pcie_reset_checkbox)
         control_layout.addRow("PCIE Reset Done", self.pcie_reset_done_checkbox)
         control_layout.addRow("PCIE GTP PLL Locked", self.pcie_pll_detect_k_checkbox)
-        control_layout.addRow("PCIE RX Reset", self.pcie_rx_reset_checkbox)
         control_layout.addRow("PCIE RX Polarity (positive)", self.pcie_rx_polarity_checkbox)
         control_layout.addRow("PCIE RX Idle", self.pcie_rx_idle_checkbox)
         control_layout.addRow("PCIE TX Idle", self.pcie_tx_idle_checkbox)
@@ -113,9 +110,6 @@ class View(QWidget):
         self.status.Debug("Refresh")
         self.actions.artemis_refresh.emit()
 
-    def set_pcie_rx_reset(self, enable):
-        self.pcie_rx_reset_checkbox.setChecked(enable)
-    
     def set_pcie_rx_polarity(self, enable):
         self.pcie_rx_polarity_checkbox.setChecked(enable)
 
@@ -160,11 +154,6 @@ class View(QWidget):
 
     def set_pcie_tx_idle(self, enable):
         self.pcie_tx_idle_checkbox.setChecked(enable)
-
-
-    def pcie_rx_reset_changed(self):
-        c = (self.pcie_rx_reset_checkbox.checkState() == 2)
-        self.actions.pcie_rx_reset.emit(c)
 
     def pcie_polarity_changed(self):
         c = (self.pcie_rx_polarity_checkbox.checkState() == 2)
