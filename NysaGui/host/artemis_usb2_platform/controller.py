@@ -91,7 +91,6 @@ class Controller(NysaBaseController):
         self.actions.gtp_preamp_changed.connect(self.gtp_preamp_changed)
         self.actions.gtp_tx_swing_changed.connect(self.gtp_tx_swing_changed)
 
-
     def _initialize(self, platform, urn):
         self.v = View(self.status, self.actions)
         self.drv = ArtemisUSB2Driver(platform, urn)
@@ -122,7 +121,8 @@ class Controller(NysaBaseController):
         self.v.set_pcie_rx_idle(self.drv.is_pcie_rx_idle())
         self.v.set_sata_tx_idle(self.drv.is_sata_tx_idle())
         self.v.set_pcie_tx_idle(self.drv.is_pcie_tx_idle())
-
+        self.v.set_sata_lost_sync(self.drv.is_sata_lost_sync())
+        self.v.set_pcie_lost_sync(self.drv.is_pcie_lost_sync())
 
     def pcie_rx_polarity(self, enable):
         self.drv.set_pcie_rx-polarity(enable)

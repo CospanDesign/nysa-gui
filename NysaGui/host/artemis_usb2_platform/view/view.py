@@ -75,6 +75,12 @@ class View(QWidget):
         self.sata_tx_idle_checkbox.setEnabled(False)
         self.pcie_tx_idle_checkbox        = QCheckBox()
         self.pcie_tx_idle_checkbox.setEnabled(False)
+        self.sata_lost_sync_checkbox      = QCheckBox()
+        self.sata_lost_sync_checkbox.setEnable(True)
+        self.pcie_lost_sync_checkbox      = QCheckBox()
+        self.pcie_lost_sync_checkbox.setEnable(True)
+
+
 
 
         control_layout = QFormLayout()
@@ -88,12 +94,14 @@ class View(QWidget):
         control_layout.addRow("PCIE RX Polarity (positive)", self.pcie_rx_polarity_checkbox)
         control_layout.addRow("PCIE RX Idle", self.pcie_rx_idle_checkbox)
         control_layout.addRow("PCIE TX Idle", self.pcie_tx_idle_checkbox)
+        control_layout.addRow("PCIE Lost Sync", self.pcie_lost_sync_checkbox)
 
         control_layout.addRow("SATA Reset", self.sata_reset_checkbox)
         control_layout.addRow("SATA Reset Done", self.sata_reset_done_checkbox)
         control_layout.addRow("SATA RX Idle", self.sata_rx_idle_checkbox)
         control_layout.addRow("SATA TX Idle", self.sata_tx_idle_checkbox)
         control_layout.addRow("SATA GTP PLL Locked", self.sata_pll_detect_k_checkbox)
+        control_layout.addRow("SATA Lost Sync", self.sata_lost_sync_checkbox)
 
         control_layout.addRow("PLLs", QLabel("Phase Lock Loops that generate clocks"))
         control_layout.addRow("SATA 300MHz/75MHz Locked", self.sata_dcm_pll_locked_checkbox)
@@ -175,4 +183,12 @@ class View(QWidget):
         value = int(str(value), 10)
         self.actions.gtp_tx_swing_changed.emit(value)
         
+    def set_sata_rx_lost_sync(self, enable):
+        self.sata_lost_sync_checkbox.setChecked(enable)
+
+    def set_pcie_rx_lost_sync(self, enable):
+        self.pcie_lost_sync_checkbox.setChecked(enable)
+
+
+
 
