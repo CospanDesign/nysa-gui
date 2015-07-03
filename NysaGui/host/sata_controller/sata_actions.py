@@ -2,15 +2,19 @@ import sys
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 
-class ArtemisUSB2Actions(QtCore.QObject):
+class SataActions(QtCore.QObject):
 
     #Raw Register signals
-    artemis_refresh = QtCore.pyqtSignal(name = "artemis_refresh")
-
-    pcie_rx_reset        = QtCore.pyqtSignal(bool, name = "pcie_rx_reset")
-    pcie_rx_polarity     = QtCore.pyqtSignal(bool, name = "pcie_rx_polarity")
-    pcie_reset           = QtCore.pyqtSignal(bool, name = "pcie_reset")
-    sata_reset           = QtCore.pyqtSignal(bool, name = "sata_reset")
-    gtp_preamp_changed   = QtCore.pyqtSignal(int,  name = "gtp_preamp_changed")
-    gtp_tx_swing_changed = QtCore.pyqtSignal(int,  name = "gtp_tx_swing_changed")
+    sata_refresh                     = QtCore.pyqtSignal(name = "sata_refresh")
+    sata_reset                       = QtCore.pyqtSignal(bool, name = "sata_reset")
+    sata_command_layer_reset         = QtCore.pyqtSignal(bool, name = "command_layer_reset")
+    en_hd_int_changed                = QtCore.pyqtSignal(bool, name = "en_hd_int_changed")
+    en_dma_activate_int_changed      = QtCore.pyqtSignal(bool, name = "en_dma_activate_int_changed")
+    en_d2h_reg_int_changed           = QtCore.pyqtSignal(bool, name = "en_d2h_reg_int_changed")
+    en_pio_setup_int_changed         = QtCore.pyqtSignal(bool, name = "en_pio_setup_int_changed")
+    en_d2h_data_int_changed          = QtCore.pyqtSignal(bool, name = "en_d2h_data_int_changed")
+    en_dma_setup_int_changed         = QtCore.pyqtSignal(bool, name = "en_dma_setup_int_changed")
+    en_set_device_bits_int_changed   = QtCore.pyqtSignal(bool, name = "en_set_device_bits_int_changed")
+    send_hard_drive_command          = QtCore.pyqtSignal(int, name = "send_hard_drive_command")
+    send_hard_drive_features         = QtCore.pyqtSignal(int, name = "send_hard_drive_features")
 

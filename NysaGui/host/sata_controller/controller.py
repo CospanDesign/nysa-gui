@@ -52,7 +52,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 
 # Put your device name (GPIO, SPI, I2C, etc...)
-DRIVER = SATA
+DRIVER = SATADriver
 APP_NAME = "Sata Platform"
 
 #Module Defines
@@ -83,19 +83,23 @@ class Controller(NysaBaseController):
     def __init__(self):
         super (Controller, self).__init__()
         self.actions = SataActions()
-        self.actions.artemis_refresh.connect(self.refresh)
+        self.actions.sata_refresh.connect(self.refresh)
 
-        self.actions.pcie_rx_reset.connect(self.pcie_rx_reset)
-        self.actions.pcie_rx_polarity.connect(self.pcie_rx_polarity)
-        self.actions.pcie_reset.connect(self.pcie_reset)
-        self.actions.sata_reset.connect(self.sata_reset)
-        self.actions.gtp_preamp_changed.connect(self.gtp_preamp_changed)
-        self.actions.gtp_tx_swing_changed.connect(self.gtp_tx_swing_changed)
-
+        self.actions.sata_command_layer_reset.connect         (self.sata_command_layer_reset       )
+        self.actions.en_hd_int_changed.connect                (self.en_hd_int_changed              )
+        self.actions.en_dma_activate_int_changed.connect      (self.en_dma_activate_int_changed    )
+        self.actions.en_d2h_reg_int_changed.connect           (self.en_d2h_reg_int_changed         )
+        self.actions.en_pio_setup_int_changed.connect         (self.en_pio_setup_int_changed       )
+        self.actions.en_d2h_data_int_changed.connect          (self.en_d2h_data_int_changed        )
+        self.actions.en_dma_setup_int_changed.connect         (self.en_dma_setup_int_changed       )
+        self.actions.en_set_device_bits_int_changed.connect   (self.en_set_device_bits_int_changed )
+        self.actions.sata_reset.connect                       (self.sata_reset                     )
+        self.actions.send_hard_drive_command.connect          (self.send_hard_drive_command        )
+        self.actions.send_hard_drive_features.connect         (self.send_hard_drive_features       )
 
     def _initialize(self, platform, urn):
         self.v = View(self.status, self.actions)
-        self.drv = SATA(platform, urn)
+        self.drv = SATADriver(platform, urn)
         self.refresh()
 
     def start_tab_view(self, platform, urn, status):
@@ -108,41 +112,76 @@ class Controller(NysaBaseController):
 
     def refresh(self):
         self.status.Debug("Refresh")
-        self.v.set_pcie_rx_reset(self.drv.is_pcie_rx_reset())
-        self.v.set_pcie_rx_polarity(self.drv.is_pcie_rx_polarity_positive())
-        self.v.set_pcie_reset(self.drv.is_pcie_reset())
-        self.v.set_sata_reset(self.drv.is_sata_reset())
-        self.v.set_gtp_tx_diff_swing(self.drv.get_gtp_tx_diff_swing())
-        self.v.set_gtp_rx_preamp(self.drv.get_gtp_rx_preamp())
-        self.v.set_sata_gtp_pll_locked(self.drv.is_sata_pll_locked())
-        self.v.set_pcie_gtp_pll_locked(self.drv.is_pcie_pll_locked())
-        self.v.set_sata_reset_done(self.drv.is_sata_reset_done())
-        self.v.set_pcie_reset_done(self.drv.is_pcie_reset_done())
-        self.v.set_sata_dcm_pll_locked(self.drv.is_sata_dcm_pll_locked())
-        self.v.set_pcie_dcm_pll_locked(self.drv.is_pcie_dcm_pll_locked())
-        self.v.set_sata_rx_idle(self.drv.is_sata_rx_idle())
-        self.v.set_pcie_rx_idle(self.drv.is_pcie_rx_idle())
-        self.v.set_sata_tx_idle(self.drv.is_sata_tx_idle())
-        self.v.set_pcie_tx_idle(self.drv.is_pcie_tx_idle())
+        self.v.enable_sata_reset(self.drv.is_sata_reset())
+        self.v.enable_sata_reset_active(self.drv.is_sata_reset_active())
+        self.v.enable_command_layer_reset_checkbox(self.drv.is_sata_command_layer_reset())
+        self.v.enable_hd_int(self.drv.is_hd_interrupt())
+        self.v.enable_dma_activate_int(self.drv.is_dma_activate_stb())
+        self.v.enable_d2h_reg_int(self.drv.is_d2h_reg_stb())
+        self.v.enable_pio_setup_int(self.drv.is_pio_setup_stb())
+        self.v.enable_d2h_data_int(self.drv.is_d2h_data_stb())
+        self.v.enable_dma_setup_int(self.drv.is_dma_setup_stb())
+        self.v.enable_set_device_bits_int(self.drv.is_set_device_bits_stb())
+        self.v.enable_platform_ready(self.drv.is_platform_ready())
+        self.v.enable_platform_error(self.drv.is_platform_error())
+        self.v.enable_linkup(self.drv.is_linkup())
+        self.v.enable_sata_busy(self.drv.is_sata_busy())
+        self.v.enable_command_layer_ready(self.drv.is_command_layer_ready())
+        self.v.enable_transport_layer_ready(self.drv.is_transport_layer_ready())
+        self.v.enable_link_layer_ready(self.drv.is_link_layer_ready())
+        self.v.enable_phy_layer_ready(self.drv.is_phy_ready())
+        self.v.enable_hard_drive_error(self.drv.is_hard_drive_error())
+        self.v.enable_pio_data_ready(self.drv.is_pio_data_ready())
+        self.v.enable_d2h_interrupt(self.drv.is_d2h_interrupt())
+        self.v.enable_d2h_notification(self.drv.is_d2h_notification())
+        self.v.enable_d2h_pmult(self.drv.get_d2h_pmult())
+        self.v.enable_d2h_status(self.drv.get_d2h_status())
+        self.v.enable_d2h_error(self.drv.get_d2h_error())
 
+        self.v.enable_rx_comm_init_detect(self.drv.get_rx_comm_init_detect())
+        self.v.enable_rx_comm_wake_detect(self.drv.get_rx_comm_wake_detect())
+        self.v.enable_tx_oob_complete(self.drv.get_tx_oob_complete())
+        self.v.enable_tx_comm_reset(self.drv.get_tx_comm_reset())
+        self.v.enable_tx_comm_wake(self.drv.get_tx_comm_wake())
 
-    def pcie_rx_reset(self, enable):
-        self.drv.enable_pcie_rx_reset(enable)
-
-    def pcie_rx_polarity(self, enable):
-        self.drv.set_pcie_rx-polarity(enable)
-
-    def pcie_reset(self, enable):
-        self.drv.enable_pcie_reset(enable)
+        self.v.set_oob_state(self.drv.get_oob_state())
+        self.v.set_debug_linkup_data(self.drv.get_debug_linkup_data())
+        self.v.set_d2h_lba(self.drv.get_hard_drive_lba())
+        self.v.set_d2h_fis(self.drv.get_d2h_fis())
 
     def sata_reset(self, enable):
         self.drv.enable_sata_reset(enable)
 
-    def gtp_preamp_changed(self, value):
-        self.drv.set_gtp_rx_preamp(value)
+    def sata_command_layer_reset(self, enable):
+        self.drv.enable_sata_command_layer_reset(enable)
 
-    def gtp_tx_swing_changed(self, value):
-        self.drv.set_gtp_tx_diff_swing(value)
+    def en_hd_int_changed(self, enable):
+        self.drv.enable_hd_interrupt(enable)
+
+    def en_dma_activate_int_changed(self, enable):
+        self.drv.enable_dma_activate_stb(enable)
+
+    def en_d2h_reg_int_changed(self, enable):
+        self.enable_d2h_reg_stb(enable)
+
+    def en_pio_setup_int_changed(self, enable):
+        self.enable_d2h_reg_stb(enable)
+
+    def en_d2h_data_int_changed(self, enable):
+        self.enable_d2h_data_stb(enable)
+
+    def en_dma_setup_int_changed(self, enable):
+        self.enable_dma_setup_stb(enable)
+
+    def en_set_device_bits_int_changed(self, enable):
+        self.enable_set_device_bits_set(enable)
+
+    def send_hard_drive_features(self, features):
+        self.drv.send_hard_drive_features(features)
+
+    def send_hard_drive_command(self, command):
+        self.status.Info("Sending Command: 0x%02X" % command)
+        self.drv.send_hard_drive_command(command)
 
 
 def main():

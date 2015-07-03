@@ -123,6 +123,10 @@ class Controller(NysaBaseController):
         self.v.set_pcie_tx_idle(self.drv.is_pcie_tx_idle())
         self.v.set_sata_lost_sync(self.drv.is_sata_lost_sync())
         self.v.set_pcie_lost_sync(self.drv.is_pcie_lost_sync())
+        self.v.set_ref_clock_count(self.drv.get_ref_clock_count())
+        self.v.set_ref_fst_clock_count(self.drv.get_ref_fst_clock_count())
+        self.v.set_sata_rx_byte_aligned(self.drv.is_sata_byte_aligned())
+        self.v.set_pcie_rx_byte_aligned(self.drv.is_pcie_byte_aligned())
 
     def pcie_rx_polarity(self, enable):
         self.drv.set_pcie_rx-polarity(enable)
