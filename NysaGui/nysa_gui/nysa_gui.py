@@ -34,6 +34,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 from NysaGui.common.status import Status
 from NysaGui.common.status import StatusLevel
 from NysaGui.common.xmsgs.xmsgs import Xmsgs
+from NysaGui.common.backend import Backend
 
 from NysaGui.host.host_controller import HostController
 from NysaGui.ibuilder.ibuilder_controller import IBuilderController
@@ -60,11 +61,14 @@ class NysaGui(QObject):
         QThread.currentThread().setObjectName("main")
         self.actions = Actions()
         self.status = Status()
+        #XXX:
+        self.backend = Backend()
         self.xmsgs = Xmsgs(self.status)
 
         if debug:
             self.status.set_level(StatusLevel.VERBOSE)
 
+        self.backend.analyze_system()
         # Get Host Controller
         self.hc = HostController(self.actions, self.status)
         hv = self.hc.get_view()
