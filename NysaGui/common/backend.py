@@ -15,6 +15,8 @@ class Backend(object):
             check_call(["git", "--version"], stdout = PIPE, stderr = PIPE)
         except CalledProcessError:
             return False
+        except WindowsError:
+            return False
         return True
 
     def is_pip_installed(self):
@@ -22,17 +24,30 @@ class Backend(object):
             check_call(["pip", "--version"], stdout = PIPE, stderr = PIPE)
         except CalledProcessError:
             return False
+        except WindowsError:
+            return False
         return True
 
+    @property
     def is_nysa_installed(self):
         try:
             import nysa
-        except CalledProcessError:
+        except OSError:
             return False
         return True
 
     def analyze_system(self):
         # See if nysa is available
+        print "Looking for Nysa...",
+        if self.is_nysa_installed:
+            print "Found"
+            return
+        else:
+            print "Not Found"
+            print "Attempt to install"
+            self.install_nysa_backend()
+
+        '''
         print "Looking for Git...",
         if self.is_git_installed():
             print "Found"
@@ -44,15 +59,9 @@ class Backend(object):
             print "Found"
         else:
             print "Not Found"
+        '''
 
-        print "Looking for Nysa...",
 
-        if self.is_nysa_installed():
-            print "Found"
-        else:
-            print "Not Found"
-            print "Attempt to install"
-            self.install_nysa_backend()
 
     def install_nysa_backend(self):
         if self.is_git_installed() and self.is_pip_installed():
@@ -61,7 +70,7 @@ class Backend(object):
             if os.name != "nt":
                 command.prepend("sudo")
 
-            v = subprocess.call(command)
+            v = check_call(command)
 
     def initialize_nysa(self):
         print "Initialize Nysa"
