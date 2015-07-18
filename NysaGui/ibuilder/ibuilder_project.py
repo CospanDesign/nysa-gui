@@ -293,10 +293,6 @@ DEFAULT_CONFIG = {
             "o_ftdi_siwu":{
                 "loc":"siwua",
                 "direction":"output"
-            },
-            "i_ftdi_suspend_n":{
-                "loc":"suspend_n",
-                "direction":"input"
             }
         }
     },
