@@ -16,6 +16,8 @@ class _MemoryActions(QtCore.QObject):
     #Memory Test
     memory_test_start = QtCore.pyqtSignal(name = "memory_test_start")
     memory_read_finished = QtCore.pyqtSignal(str, name = "memory_read_finished")
+    memory_file_2_memory = QtCore.pyqtSignal(str, int, int, name = "memory_file_2_memory")
+    memory_memory_2_file = QtCore.pyqtSignal(str, int, int, name = "memory_memory_2_file")
 
 
     def __init__(self, parent = None):

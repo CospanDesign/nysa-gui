@@ -68,6 +68,7 @@ class NysaGui(QObject):
         if debug:
             self.status.set_level(StatusLevel.VERBOSE)
 
+        #Determine If all Components are Loaded Correctly
         self.backend.analyze_system()
         # Get Host Controller
         self.hc = HostController(self.actions, self.status)

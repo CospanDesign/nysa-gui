@@ -28,6 +28,8 @@ from PyQt4.QtGui import QWidget
 from PyQt4.QtGui import QCheckBox
 from PyQt4.QtGui import QGridLayout
 from PyQt4.QtGui import QLabel
+from PyQt4.QtGui import QPushButton
+from PyQt4.QtGui import QVBoxLayout
 
 RESULT_ENUM = [
         "Not Tested",
@@ -39,13 +41,18 @@ RESULT_ENUM = [
 
 class MemoryTesterWidget(QWidget):
 
-    def __init__(self):
+    def __init__(self, actions):
         super (MemoryTesterWidget, self).__init__()
+        self.actions = actions
+        l = QVBoxLayout()
         self.lyt = QGridLayout()
         self.test_enabled = []
         self.test_funcs = []
         self.test_results = []
         self.pos = 1
+        btn = QPushButton("Run Tests")
+        btn.clicked.connect(self.actions.memory_test_start.emit)
+
 
         self.single_rw_cb = QCheckBox()
         self.single_rw_cb.setChecked(True)
@@ -59,7 +66,10 @@ class MemoryTesterWidget(QWidget):
         self.long_burst_rw_cb = QCheckBox()
         self.long_burst_rw_cb.setChecked(True)
 
-        self.setLayout(self.lyt)
+        l.addLayout(self.lyt)
+        l.addWidget(btn)
+
+        self.setLayout(l)
 
     def add_row(self, name, default_enable, func):
         cb = QCheckBox()

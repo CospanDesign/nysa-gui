@@ -109,6 +109,8 @@ class Controller(NysaBaseController):
         self.reader_thread = None
         self.memory_actions.memory_test_start.connect(self.start_tests)
         self.memory_actions.memory_read_finished.connect(self.run_test)
+        self.memory_actions.memory_file_2_memory.connect(self.file_2_memory)
+        self.memory_actions.memory_memory_2_file.connect(self.memory_2_file)
 
     def __del__(self):
         if self.reader_thread is not None:
@@ -136,6 +138,27 @@ class Controller(NysaBaseController):
 
     def get_view(self):
         return self.v
+
+    def file_2_memory(self, filename, address, count = None):
+        """
+        Data should be in the form of a byte array
+        """
+        f = open(filename, 'rb')
+        d = Array('B')
+        d.fromstring(f.read())
+        f.close()
+        if count is None:
+            count = len(d)
+        mem_base = self.n.get_device_address(self.urn)
+        print "Writing %d bytes down" % len(d[0:count])
+        self.n.write_memory(mem_base + address, d[0:count])
+
+    def memory_2_file(self, filename, address, byte_count):
+        f = open(filename, 'wb')
+        mem_base = self.n.get_device_address(self.urn) 
+        data = self.n.read_memory(mem_base + address, ((byte_count + 3) / 4))
+        data[0:byte_count].tofile(f)
+        f.close()
 
     def start_tests(self):
         print "Start Tests!"
@@ -334,6 +357,8 @@ class Controller(NysaBaseController):
 
             if self.status:
                 self.status.Verbose("Cleared: 0x%08X - 0x%08X" % (prev_pos, position))
+
+
 
 def test_iterator(count):
     index = 0

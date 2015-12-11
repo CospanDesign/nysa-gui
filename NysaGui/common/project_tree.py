@@ -297,7 +297,11 @@ class ProjectTreeTableModel(QAbstractItemModel):
             if isinstance(node, RootBranch):
                 return
 
-            return QBrush(node.get_color(index.column()))
+            if node.get_color(index.column()) is not None:
+                return QBrush(node.get_color(index.column()))
+
+            else:
+                return None
 
         node = self.nodeFromIndex(index)
         if role == Qt.FontRole:

@@ -38,7 +38,7 @@ PYQT signal name conflicts
 """
 class SaveLoader(QWidget):
 
-    def __init__(self, extensions = [], directory = None, initial_file = None):
+    def __init__(self, extensions = [], directory = None, initial_file = None, load_only = False, save_only = False):
         super(SaveLoader, self).__init__()
 
         #Move all incoming values to class vaues
@@ -70,11 +70,13 @@ class SaveLoader(QWidget):
         save_as_button.clicked.connect(self.save_as)
 
         
-        layout.addWidget(load_from_button)
-        layout.addWidget(load_button)
+        if not save_only:
+            layout.addWidget(load_from_button)
+            layout.addWidget(load_button)
         layout.addWidget(self.filename_le)
-        layout.addWidget(save_button)
-        layout.addWidget(save_as_button)
+        if not load_only:
+            layout.addWidget(save_button)
+            layout.addWidget(save_as_button)
 
         self.load_callback = None
         self.save_callback = None

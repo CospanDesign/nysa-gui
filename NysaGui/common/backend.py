@@ -28,11 +28,10 @@ class Backend(object):
             return False
         return True
 
-    @property
     def is_nysa_installed(self):
         try:
             import nysa
-        except OSError:
+        except ImportError:
             return False
         return True
 
@@ -60,8 +59,6 @@ class Backend(object):
         else:
             print "Not Found"
         '''
-
-
 
     def install_nysa_backend(self):
         if self.is_git_installed() and self.is_pip_installed():
