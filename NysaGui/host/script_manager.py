@@ -73,6 +73,7 @@ class ScriptManager(QObject):
         from NysaGui.host.register_viewer.controller import Controller as register_viewer_controller
         from NysaGui.host.dma_controller.controller import Controller as dma_controller
         from NysaGui.host.sata_controller.controller import Controller as sata_controller
+        from NysaGui.host.logic_analyzer.controller import Controller as logic_analyzer_controller
         try:
             from NysaGui.host.artemis_platform.controller import Controller as artemis_controller
         except ImportError:
