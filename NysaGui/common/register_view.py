@@ -122,6 +122,9 @@ class RegisterView(QWidget):
     def set_register(self, index, value):
         self.registers[index].setText("0x%08X" % value)
 
+    def get_register(self, index):
+        return int(str(self.registers[index].text()), 0)
+
     def _create_register_controller(self):
         l = [QPushButton("Get >>"), QLineEdit(), QPushButton("Set >>")]
         l[1].setText("00000000")

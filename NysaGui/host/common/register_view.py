@@ -90,7 +90,6 @@ class RegisterView(QWidget):
         self.pos = 0
 
         self.setLayout(layout)
-        
 
     def add_register(self, index, name, initial_value = 0):
         r = self._create_register_controller()
@@ -122,6 +121,9 @@ class RegisterView(QWidget):
     def set_register(self, index, value):
         self.registers[index].setText("0x%08X" % value)
 
+    def get_register(self, index):
+        return int(self.registers[index].getText(), 16)
+
     def _create_register_controller(self):
         l = [QPushButton("Get >>"), QLineEdit(), QPushButton("Set >>")]
         l[1].setText("00000000")
@@ -132,16 +134,16 @@ class RegisterView(QWidget):
         return l
 
     def get_pressed(self, index):
-        print "Get Button %d pressed" % index
+        #print "Get Button %d pressed" % index
         self.get_pressed_signal.emit(index)
 
     def set_pressed(self, index):
-        print "Set Button %s pressed" % index
+        #print "Set Button %s pressed" % index
         try:
             val = int(str(self.registers[index].text()), 16)
         except ValueError:
             pass
-        print "Setting: 0x%08X" % val
+        #print "Setting: 0x%08X" % val
         self.set_pressed_signal.emit(index, val)
 
     def custom_validator(self, index):
